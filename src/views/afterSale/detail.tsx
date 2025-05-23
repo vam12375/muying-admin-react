@@ -29,8 +29,8 @@ interface RefundData {
   status: string;
   statusName: string;
   amount: number;
-  reason: string;
-  description: string;
+  refundReason: string;
+  refundReasonDetail: string;
   images: string[];
   createTime: string;
   updateTime: string;
@@ -77,15 +77,39 @@ const RefundDetail: React.FC = () => {
     'CANCELLED': 'default',
   };
 
+  // 状态中文映射
+  const statusNameMap = {
+    'PENDING': '待审核',
+    'APPROVED': '已审核',
+    'REJECTED': '已拒绝',
+    'PROCESSING': '处理中',
+    'COMPLETED': '已完成',
+    'FAILED': '退款失败',
+    'CANCELLED': '已取消',
+  };
+
   // 获取退款详情
   const fetchRefundDetail = async () => {
-    if (!id) return;
+    if (!id) {
+      console.error('缺少退款ID参数');
+      message.error('缺少退款ID参数');
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
       const response = await getRefundDetail(id);
-      if (response && response.data) {
+      console.log('获取退款详情响应:', response);
+      
+      if (response && response.data && response.data.data) {
+        setRefund(response.data.data);
+      } else if (response && response.data) {
+        // 兼容直接返回数据的情况
         setRefund(response.data);
+      } else {
+        console.error('获取退款详情失败：响应数据为空');
+        message.error('获取退款详情失败：数据为空');
       }
     } catch (error) {
       console.error('获取退款详情失败:', error);
@@ -143,19 +167,19 @@ const RefundDetail: React.FC = () => {
       const adminName = 'admin';
       
       const response = await reviewRefund(
-        refund.refundId,
+        refund.refundId || refund.id,
         approved,
         adminId,
         adminName,
         rejectReason
       );
       
-      if (response && response.code === 200) {
+      if (response && response.data && response.data.code === 200) {
         message.success(approved ? '退款申请已批准' : '退款申请已拒绝');
         setReviewModalVisible(false);
         fetchRefundDetail();
       } else {
-        message.error(response?.message || '操作失败');
+        message.error(response?.data?.message || '操作失败');
       }
     } catch (error) {
       console.error('审核失败:', error);
@@ -176,19 +200,19 @@ const RefundDetail: React.FC = () => {
       const adminName = 'admin';
       
       const response = await processRefund(
-        refund.refundId,
+        refund.refundId || refund.id,
         refundChannel,
         adminId,
         adminName,
         refundAccount
       );
       
-      if (response && response.code === 200) {
+      if (response && response.data && response.data.code === 200) {
         message.success('退款处理已开始');
         setProcessModalVisible(false);
         fetchRefundDetail();
       } else {
-        message.error(response?.message || '操作失败');
+        message.error(response?.data?.message || '操作失败');
       }
     } catch (error) {
       console.error('处理失败:', error);
@@ -209,18 +233,18 @@ const RefundDetail: React.FC = () => {
       const adminName = 'admin';
       
       const response = await completeRefund(
-        refund.refundId,
+        refund.refundId || refund.id,
         transactionId,
         adminId,
         adminName
       );
       
-      if (response && response.code === 200) {
+      if (response && response.data && response.data.code === 200) {
         message.success('退款已完成');
         setCompleteModalVisible(false);
         fetchRefundDetail();
       } else {
-        message.error(response?.message || '操作失败');
+        message.error(response?.data?.message || '操作失败');
       }
     } catch (error) {
       console.error('完成失败:', error);
@@ -241,18 +265,18 @@ const RefundDetail: React.FC = () => {
       const adminName = 'admin';
       
       const response = await failRefund(
-        refund.refundId,
+        refund.refundId || refund.id,
         reason,
         adminId,
         adminName
       );
       
-      if (response && response.code === 200) {
+      if (response && response.data && response.data.code === 200) {
         message.success('退款已标记为失败');
         setFailModalVisible(false);
         fetchRefundDetail();
       } else {
-        message.error(response?.message || '操作失败');
+        message.error(response?.data?.message || '操作失败');
       }
     } catch (error) {
       console.error('标记失败错误:', error);
@@ -360,17 +384,17 @@ const RefundDetail: React.FC = () => {
                 </Descriptions.Item>
                 <Descriptions.Item label="退款状态">
                   <Tag color={statusColors[refund.status] || 'default'}>
-                    {refund.statusName || refund.status}
+                    {statusNameMap[refund.status] || refund.status}
                   </Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="申请时间" span={2}>
                   {dayjs(refund.createTime).format('YYYY-MM-DD HH:mm:ss')}
                 </Descriptions.Item>
                 <Descriptions.Item label="申请原因" span={2}>
-                  {refund.reason}
+                  {refund.refundReason}
                 </Descriptions.Item>
                 <Descriptions.Item label="详细说明" span={2}>
-                  {refund.description || '无'}
+                  {refund.refundReasonDetail || '无'}
                 </Descriptions.Item>
               </Descriptions>
 
@@ -396,6 +420,180 @@ const RefundDetail: React.FC = () => {
           </Col>
         </Row>
       </Card>
+
+      {/* 审核模态框 */}
+      <Modal
+        title="审核退款申请"
+        open={reviewModalVisible}
+        onCancel={() => setReviewModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={reviewForm}
+          layout="vertical"
+          onFinish={handleReviewSubmit}
+        >
+          <Form.Item
+            name="approved"
+            label="审核结果"
+            rules={[{ required: true, message: '请选择审核结果' }]}
+          >
+            <Select placeholder="请选择审核结果">
+              <Option value={true}>批准</Option>
+              <Option value={false}>拒绝</Option>
+            </Select>
+          </Form.Item>
+          
+          <Form.Item
+            noStyle
+            shouldUpdate={(prevValues, currentValues) => prevValues.approved !== currentValues.approved}
+          >
+            {({ getFieldValue }) => 
+              getFieldValue('approved') === false && (
+                <Form.Item
+                  name="rejectReason"
+                  label="拒绝原因"
+                  rules={[{ required: true, message: '请填写拒绝原因' }]}
+                >
+                  <Input.TextArea rows={4} placeholder="请输入拒绝原因" />
+                </Form.Item>
+              )
+            }
+          </Form.Item>
+          
+          <Form.Item style={{ marginTop: '16px', textAlign: 'right' }}>
+            <Space>
+              <Button onClick={() => setReviewModalVisible(false)}>
+                取消
+              </Button>
+              <Button type="primary" htmlType="submit">
+                提交
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 处理模态框 */}
+      <Modal
+        title="处理退款"
+        open={processModalVisible}
+        onCancel={() => setProcessModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={processForm}
+          layout="vertical"
+          onFinish={handleProcessSubmit}
+        >
+          <Form.Item
+            name="refundChannel"
+            label="退款渠道"
+            rules={[{ required: true, message: '请选择退款渠道' }]}
+          >
+            <Select placeholder="请选择退款渠道">
+              <Option value="ALIPAY">支付宝</Option>
+              <Option value="WECHAT">微信支付</Option>
+              <Option value="BANK_TRANSFER">银行转账</Option>
+              <Option value="WALLET">账户余额</Option>
+            </Select>
+          </Form.Item>
+          
+          <Form.Item
+            noStyle
+            shouldUpdate={(prevValues, currentValues) => prevValues.refundChannel !== currentValues.refundChannel}
+          >
+            {({ getFieldValue }) => 
+              getFieldValue('refundChannel') === 'BANK_TRANSFER' && (
+                <Form.Item
+                  name="refundAccount"
+                  label="退款账户"
+                  rules={[{ required: true, message: '请填写退款账户信息' }]}
+                >
+                  <Input.TextArea rows={4} placeholder="请输入完整的退款账户信息，包括开户行、账号、姓名等" />
+                </Form.Item>
+              )
+            }
+          </Form.Item>
+          
+          <Form.Item style={{ marginTop: '16px', textAlign: 'right' }}>
+            <Space>
+              <Button onClick={() => setProcessModalVisible(false)}>
+                取消
+              </Button>
+              <Button type="primary" htmlType="submit">
+                提交
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 完成退款模态框 */}
+      <Modal
+        title="完成退款"
+        open={completeModalVisible}
+        onCancel={() => setCompleteModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={completeForm}
+          layout="vertical"
+          onFinish={handleCompleteSubmit}
+        >
+          <Form.Item
+            name="transactionId"
+            label="交易ID"
+            rules={[{ required: true, message: '请输入交易ID' }]}
+          >
+            <Input placeholder="请输入支付宝交易号或其他交易凭证ID" />
+          </Form.Item>
+          
+          <Form.Item style={{ marginTop: '16px', textAlign: 'right' }}>
+            <Space>
+              <Button onClick={() => setCompleteModalVisible(false)}>
+                取消
+              </Button>
+              <Button type="primary" htmlType="submit">
+                提交
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 失败模态框 */}
+      <Modal
+        title="标记退款失败"
+        open={failModalVisible}
+        onCancel={() => setFailModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={failForm}
+          layout="vertical"
+          onFinish={handleFailSubmit}
+        >
+          <Form.Item
+            name="reason"
+            label="失败原因"
+            rules={[{ required: true, message: '请填写失败原因' }]}
+          >
+            <Input.TextArea rows={4} placeholder="请输入退款失败的具体原因" />
+          </Form.Item>
+          
+          <Form.Item style={{ marginTop: '16px', textAlign: 'right' }}>
+            <Space>
+              <Button onClick={() => setFailModalVisible(false)}>
+                取消
+              </Button>
+              <Button type="primary" htmlType="submit" danger>
+                确认标记失败
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

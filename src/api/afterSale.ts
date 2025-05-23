@@ -10,7 +10,7 @@ import request from '@/utils/request';
  */
 export const getRefundList = (params: any) => {
   return request({
-    url: '/api/admin/refund/list',
+    url: '/admin/refund/list',
     method: 'get',
     params
   });
@@ -22,7 +22,7 @@ export const getRefundList = (params: any) => {
  */
 export const getRefundDetail = (refundId: number | string) => {
   return request({
-    url: `/api/admin/refund/${refundId}`,
+    url: `/admin/refund/${refundId}`,
     method: 'get'
   });
 };
@@ -42,10 +42,11 @@ export const reviewRefund = (
   adminName: string,
   rejectReason?: string
 ) => {
+  console.log(`请求审核退款, refundId=${refundId}`);
   return request({
-    url: '/api/admin/refund/review',
+    url: '/admin/refund/review',
     method: 'post',
-    params: {
+    data: {
       refundId,
       approved,
       rejectReason,
@@ -71,9 +72,9 @@ export const processRefund = (
   refundAccount?: string
 ) => {
   return request({
-    url: '/api/admin/refund/process',
+    url: '/admin/refund/process',
     method: 'post',
-    params: {
+    data: {
       refundId,
       refundChannel,
       refundAccount,
@@ -97,9 +98,9 @@ export const completeRefund = (
   adminName: string
 ) => {
   return request({
-    url: '/api/admin/refund/complete',
+    url: '/admin/refund/complete',
     method: 'post',
-    params: {
+    data: {
       refundId,
       transactionId,
       adminId,
@@ -122,9 +123,9 @@ export const failRefund = (
   adminName: string
 ) => {
   return request({
-    url: '/api/admin/refund/fail',
+    url: '/admin/refund/fail',
     method: 'post',
-    params: {
+    data: {
       refundId,
       reason,
       adminId,
@@ -140,7 +141,7 @@ export const failRefund = (
  */
 export const getRefundStatistics = (startTime?: string, endTime?: string) => {
   return request({
-    url: '/api/admin/refund/statistics',
+    url: '/admin/refund/statistics',
     method: 'get',
     params: {
       startTime,
@@ -154,7 +155,7 @@ export const getRefundStatistics = (startTime?: string, endTime?: string) => {
  */
 export const getPendingRefundCount = () => {
   return request({
-    url: '/api/admin/refund/pending/count',
+    url: '/admin/refund/pending/count',
     method: 'get'
   });
 }; 
