@@ -1,118 +1,144 @@
-import { type ReactNode } from 'react'
-import { Card as AntCard } from 'antd'
-import { motion } from 'framer-motion'
-import clsx from 'clsx'
-import { useTheme } from '@/theme/useTheme'
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import type { HTMLMotionProps } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { hoverCardAnimation } from '@/components/animations/MotionVariants';
 
-interface CardProps {
-  children: ReactNode
-  title?: ReactNode
-  extra?: ReactNode
-  loading?: boolean
-  hoverable?: boolean
-  bordered?: boolean
-  className?: string
-  bodyClassName?: string
-  onClick?: () => void
-  animate?: boolean
-  shadow?: 'none' | 'sm' | 'md' | 'lg'
+export interface CardProps {
+  title?: React.ReactNode;
+  extra?: React.ReactNode;
+  children: React.ReactNode;
+  className?: string;
+  glass?: boolean;
+  gradient?: boolean;
+  gradientColor?: 'primary' | 'success' | 'warning' | 'danger' | 'info';
+  hoverable?: boolean;
+  bordered?: boolean;
+  shadow?: 'none' | 'sm' | 'md' | 'lg';
+  padding?: 'none' | 'sm' | 'md' | 'lg';
+  onClick?: () => void;
 }
 
-/**
- * 自定义卡片组件
- * 扩展Ant Design卡片，添加动画和主题支持
- */
 const Card: React.FC<CardProps> = ({
-  children,
   title,
   extra,
-  loading = false,
+  children,
+  className,
+  glass = false,
+  gradient = false,
+  gradientColor = 'primary',
   hoverable = false,
   bordered = true,
-  className = '',
-  bodyClassName = '',
+  shadow = 'sm',
+  padding = 'md',
   onClick,
-  animate = false,
-  shadow = 'sm'
+  ...props
 }) => {
-  const { isDark } = useTheme()
-
-  // 阴影样式
-  const getShadowClass = () => {
-    switch (shadow) {
-      case 'none': return ''
-      case 'sm': return isDark ? 'shadow-sm shadow-gray-900' : 'shadow-sm shadow-gray-200'
-      case 'md': return isDark ? 'shadow-md shadow-gray-900' : 'shadow-md shadow-gray-200'
-      case 'lg': return isDark ? 'shadow-lg shadow-gray-900' : 'shadow-lg shadow-gray-200'
-      default: return isDark ? 'shadow-sm shadow-gray-900' : 'shadow-sm shadow-gray-200'
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const handleMouseEnter = () => {
+    if (hoverable) {
+      setIsHovered(true);
     }
-  }
-
-  // 基础卡片样式
-  const cardClass = clsx(
-    className,
-    getShadowClass(),
-    'transition-all duration-300',
-    {
-      'cursor-pointer': onClick || hoverable,
-      'card-hover': hoverable,
-      'border-gray-100 dark:border-gray-800': bordered,
-      'bg-white dark:bg-gray-800': true
+  };
+  
+  const handleMouseLeave = () => {
+    if (hoverable) {
+      setIsHovered(false);
     }
-  )
-
-  // 卡片主体样式
-  const bodyClass = clsx(
-    bodyClassName,
-    'transition-colors duration-300'
-  )
-
-  // 最终类名合并
-  const finalClassName = clsx(cardClass, bodyClass)
-
-  // 基础卡片
-  const baseCard = (
-    <AntCard
-      title={title}
-      extra={extra}
-      loading={loading}
-      hoverable={hoverable}
-      variant={bordered ? 'outlined' : 'borderless'}
-      className={finalClassName}
-      onClick={onClick}
-      styles={{ 
-        body: { padding: '1rem' },
-        header: { 
-          borderBottom: isDark ? '1px solid #374151' : '1px solid #f3f4f6',
-          backgroundColor: isDark ? '#1f2937' : '#fff',
-          color: isDark ? '#f9fafb' : '#1f2937'
-        }
-      }}
-    >
-      {children}
-    </AntCard>
-  )
-
-  // 带动画的卡片
-  if (animate) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ 
-          duration: 0.5,
-          type: 'spring',
-          stiffness: 100,
-          damping: 10
-        }}
-      >
-        {baseCard}
-      </motion.div>
+  };
+  
+  // 渐变背景样式映射
+  const gradientStyles = {
+    primary: 'bg-gradient-to-r from-primary-500 to-primary-600 text-white',
+    success: 'bg-gradient-to-r from-success-500 to-success-600 text-white',
+    warning: 'bg-gradient-to-r from-warning-500 to-warning-600 text-white',
+    danger: 'bg-gradient-to-r from-danger-500 to-danger-600 text-white',
+    info: 'bg-gradient-to-r from-info-500 to-info-600 text-white',
+  };
+  
+  // 阴影样式映射
+  const shadowStyles = {
+    none: '',
+    sm: 'shadow-sm',
+    md: 'shadow-md',
+    lg: 'shadow-lg',
+  };
+  
+  // 内边距样式映射
+  const paddingStyles = {
+    none: 'p-0',
+    sm: 'p-4',
+    md: 'p-6',
+    lg: 'p-8',
+  };
+  
+  // 定义motion组件props
+  const motionProps: HTMLMotionProps<"div"> = {
+    initial: "rest",
+    animate: isHovered ? "hover" : "rest",
+    whileTap: hoverable ? "tap" : undefined,
+    variants: hoverable ? hoverCardAnimation : undefined,
+    onMouseEnter: handleMouseEnter,
+    onMouseLeave: handleMouseLeave,
+    onClick: onClick,
+    className: cn(
+      // 基础样式
+      'rounded-xl overflow-hidden',
+      // 背景样式条件
+      {
+        'bg-white dark:bg-gray-800': !glass && !gradient,
+        'bg-white/80 dark:bg-gray-800/80 backdrop-blur-md': glass && !gradient,
+        [gradientStyles[gradientColor]]: gradient,
+      },
+      // 边框样式条件
+      {
+        'border border-gray-100 dark:border-gray-700': bordered && !gradient,
+        'border border-white/50 dark:border-gray-700/50': bordered && glass,
+        'border-0': !bordered || gradient,
+      },
+      // 阴影样式
+      shadowStyles[shadow],
+      // 额外类名
+      className
     )
-  }
+  };
+  
+  return (
+    <motion.div {...motionProps}>
+      {/* 卡片标题区域 */}
+      {title && (
+        <div className={cn(
+          'flex justify-between items-center',
+          {
+            'px-4 py-3 border-b border-gray-100 dark:border-gray-700': !gradient,
+            'px-4 py-3 border-b border-white/10': gradient,
+            'px-4 py-3 border-b border-white/20 dark:border-gray-700/50': glass
+          }
+        )}>
+          <div className={cn(
+            'text-lg font-medium',
+            {
+              'text-gray-900 dark:text-gray-100': !gradient,
+              'text-white': gradient
+            }
+          )}>
+            {title}
+          </div>
+          {extra && (
+            <div className="flex items-center">
+              {extra}
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* 卡片内容区域 */}
+      <div className={paddingStyles[title ? 'sm' : padding]}>
+        {children}
+      </div>
+    </motion.div>
+  );
+};
 
-  return baseCard
-}
-
-export default Card 
+export default Card; 

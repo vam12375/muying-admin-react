@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { Layout, Menu } from 'antd'
+import { Menu } from 'antd'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   DashboardOutlined,
   ShoppingOutlined,
@@ -14,13 +15,18 @@ import {
   ShopOutlined,
   BarcodeOutlined,
   PieChartOutlined,
-  BellOutlined
+  BellOutlined,
+  DatabaseOutlined,
+  FileSearchOutlined,
+  TrophyOutlined,
+  CarOutlined,
+  MessageOutlined,
+  MoneyCollectOutlined,
+  CustomerServiceOutlined
 } from '@ant-design/icons'
-import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import MotionWrapper from '@/components/animations/MotionWrapper'
-
-const { Sider } = Layout
+import './Sidebar.css'
 
 interface SidebarProps {
   collapsed: boolean
@@ -64,200 +70,209 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
       label: '仪表盘',
     },
     {
-      key: '/products',
+      key: '/product',
       icon: <ShoppingOutlined />,
       label: '商品管理',
       children: [
         {
-          key: '/products/list',
+          key: '/product/list',
           label: '商品列表',
         },
         {
-          key: '/products/categories',
+          key: '/product/category',
           label: '商品分类',
         },
         {
-          key: '/products/attributes',
-          label: '商品属性',
+          key: '/product/brand',
+          label: '品牌管理',
         },
         {
-          key: '/products/brands',
-          label: '品牌管理',
+          key: '/product/analysis',
+          label: '商品分析',
         },
       ],
     },
     {
-      key: '/orders',
+      key: '/order',
       icon: <FileTextOutlined />,
       label: '订单管理',
       children: [
         {
-          key: '/orders/list',
+          key: '/order/list',
           label: '订单列表',
+        }
+      ],
+    },
+    {
+      key: '/afterSale',
+      icon: <CustomerServiceOutlined />,
+      label: '售后管理',
+      children: [
+        {
+          key: '/afterSale/list',
+          label: '退款申请列表',
         },
         {
-          key: '/orders/returns',
-          label: '退货管理',
+          key: '/afterSale/statistics',
+          label: '退款统计',
         },
       ],
     },
     {
-      key: '/users',
+      key: '/user',
       icon: <UserOutlined />,
       label: '用户管理',
       children: [
         {
-          key: '/users/list',
+          key: '/user/list',
           label: '用户列表',
         },
-        {
-          key: '/users/levels',
-          label: '会员等级',
-        },
       ],
     },
     {
-      key: '/marketing',
-      icon: <GiftOutlined />,
-      label: '营销管理',
+      key: '/coupon',
+      icon: <TagOutlined />,
+      label: '优惠券管理',
       children: [
         {
-          key: '/marketing/promotions',
-          label: '促销活动',
+          key: '/coupon/list',
+          label: '优惠券列表',
         },
         {
-          key: '/marketing/coupons',
-          label: '优惠券',
+          key: '/coupon/form',
+          label: '优惠券表单',
         },
         {
-          key: '/marketing/flash-sales',
-          label: '限时抢购',
+          key: '/coupon/batch',
+          label: '批量发放',
+        },
+        {
+          key: '/coupon/rule',
+          label: '优惠规则',
         },
       ],
     },
     {
-      key: '/content',
-      icon: <AppstoreOutlined />,
-      label: '内容管理',
+      key: '/points',
+      icon: <TrophyOutlined />,
+      label: '积分管理',
       children: [
         {
-          key: '/content/banners',
-          label: '轮播图',
+          key: '/points/history',
+          label: '积分列表',
         },
         {
-          key: '/content/articles',
-          label: '文章管理',
+          key: '/points/product',
+          label: '积分商品',
+        },
+        {
+          key: '/points/rule',
+          label: '积分规则',
+        },
+        {
+          key: '/points/user',
+          label: '用户积分',
+        },
+        {
+          key: '/points/exchange',
+          label: '兑换记录',
         },
       ],
     },
     {
-      key: '/statistics',
-      icon: <PieChartOutlined />,
-      label: '统计分析',
+      key: '/message',
+      icon: <MessageOutlined />,
+      label: '消息管理',
       children: [
         {
-          key: '/statistics/sales',
-          label: '销售统计',
+          key: '/message/list',
+          label: '消息列表',
         },
         {
-          key: '/statistics/users',
-          label: '用户统计',
-        },
-        {
-          key: '/statistics/products',
-          label: '商品统计',
+          key: '/message/template',
+          label: '消息模板',
         },
       ],
     },
     {
-      key: '/settings',
+      key: '/logistics',
+      icon: <CarOutlined />,
+      label: '物流管理',
+      children: [
+        {
+          key: '/logistics/list',
+          label: '物流列表',
+        },
+        {
+          key: '/logistics/company',
+          label: '物流公司',
+        },
+      ],
+    },
+    {
+      key: '/system',
       icon: <SettingOutlined />,
       label: '系统设置',
       children: [
         {
-          key: '/settings/basic',
-          label: '基础设置',
+          key: '/system/config',
+          label: '系统配置',
         },
         {
-          key: '/settings/payment',
-          label: '支付设置',
+          key: '/system/log',
+          label: '系统日志',
         },
         {
-          key: '/settings/shipping',
-          label: '物流设置',
-        },
-        {
-          key: '/settings/admin',
-          label: '管理员',
-        },
-        {
-          key: '/settings/roles',
-          label: '角色权限',
+          key: '/system/redis',
+          label: 'Redis管理',
         },
       ],
     },
   ]
 
-  const sidebarVariants = {
-    expanded: {
-      width: 220,
-      transition: { duration: 0.3, ease: 'easeInOut' }
-    },
-    collapsed: {
-      width: 80,
-      transition: { duration: 0.3, ease: 'easeInOut' }
-    }
-  }
-
   return (
-    <motion.div
-      initial={false}
-      animate={collapsed ? 'collapsed' : 'expanded'}
-      variants={sidebarVariants}
-    >
-      <Sider
-        trigger={null}
-        collapsible
-        collapsed={collapsed}
-        width={220}
-        className={cn(
-          "h-screen fixed left-0 top-0 z-10 overflow-auto",
-          "bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700",
-          "transition-all duration-300"
-        )}
-      >
-        <MotionWrapper animation="slideDown" delay={0.1}>
-          <div className={cn(
-            "logo h-16 flex items-center justify-center",
-            "border-b border-gray-200 dark:border-gray-700"
-          )}>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center">
-                <BarcodeOutlined className="text-white text-lg" />
-              </div>
-              {!collapsed && (
-                <h1 className="text-lg font-bold text-gray-800 dark:text-gray-100">母婴商城</h1>
-              )}
-            </div>
+    <div className={cn(
+      "sidebar-container",
+      collapsed && "sidebar-collapsed"
+    )}>
+      <div className="sidebar-logo">
+        <motion.div 
+          initial={false}
+          animate={{ opacity: 1 }}
+          className="flex items-center gap-4"
+        >
+          <div className="logo-icon">
+            <BarcodeOutlined className="text-white text-xl" />
           </div>
-        </MotionWrapper>
-
-        <div className="mt-4">
-          <Menu
-            mode="inline"
-            items={menuItems}
-            selectedKeys={selectedKeys}
-            openKeys={openKeys}
-            onOpenChange={handleOpenChange}
-            onClick={handleMenuClick}
-            className={cn(
-              "border-none bg-transparent",
-              "text-gray-700 dark:text-gray-300"
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.h1 
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                className="logo-text"
+              >
+                母婴商城
+              </motion.h1>
             )}
-          />
-        </div>
-      </Sider>
-    </motion.div>
+          </AnimatePresence>
+        </motion.div>
+      </div>
+
+      <div className="sidebar-menu-container">
+        <Menu
+          mode="inline"
+          items={menuItems}
+          selectedKeys={selectedKeys}
+          openKeys={openKeys}
+          onOpenChange={handleOpenChange}
+          onClick={handleMenuClick}
+          className="sidebar-menu"
+          inlineCollapsed={collapsed}
+        />
+      </div>
+    </div>
   )
 }
 

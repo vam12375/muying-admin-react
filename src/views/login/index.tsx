@@ -1,34 +1,83 @@
-import React, { useState } from 'react'
-import { Form, Input, Button, Checkbox, message, Spin } from 'antd'
-import { UserOutlined, LockOutlined, SafetyOutlined } from '@ant-design/icons'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { Form, Input, Button, Checkbox, Alert } from 'antd'
+import { UserOutlined, LockOutlined } from '@ant-design/icons'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useTheme } from '@/theme/useTheme'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import MotionWrapper from '@/components/animations/MotionWrapper'
+import { adminLogin } from '@/api/auth'
+import type { LoginResponseData } from '@/api/auth'
+import { setToken, setUserInfo } from '@/utils/auth'
 import './login.css'
+
+interface LoginParams {
+  admin_name: string;
+  admin_pass: string;
+  remember?: boolean;
+}
 
 const Login: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const { isDark, toggleTheme } = useTheme()
   const [form] = Form.useForm()
-
-  // 模拟登录
-  const handleLogin = async (values: any) => {
+  const [errorMsg, setErrorMsg] = useState<string | null>(null) // 添加错误信息状态
+  
+  // 处理表单提交
+  const handleLogin = async (values: LoginParams) => {
     try {
       setLoading(true)
-      // 模拟API请求
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      setErrorMsg(null) // 清除之前的错误信息
       
-      message.success('登录成功！')
-      navigate('/dashboard')
-    } catch (error) {
-      message.error('登录失败，请检查用户名和密码')
+      // 调用真实登录API
+      const response = await adminLogin({
+        admin_name: values.admin_name,
+        admin_pass: values.admin_pass
+      })
+      
+      const { data } = response
+      
+      // 处理登录成功
+      if (data) {
+        // 保存token和用户信息
+        setToken(data.token)
+        setUserInfo(data.user)
+        
+        // 记住登录状态
+        if (values.remember) {
+          localStorage.setItem('remember_admin', values.admin_name)
+        } else {
+          localStorage.removeItem('remember_admin')
+        }
+        
+        // 重定向到之前尝试访问的页面，或默认到仪表盘
+        const redirect = new URLSearchParams(location.search).get('redirect')
+        navigate(redirect || '/dashboard')
+      } else {
+        setErrorMsg('登录失败，请检查用户名和密码')
+      }
+    } catch (error: any) {
+      // 处理登录错误
+      const errorMessage = error.response?.data?.message || error.message || '登录失败，请稍后再试'
+      setErrorMsg(errorMessage)
     } finally {
       setLoading(false)
     }
   }
+  
+  // 初始化表单
+  useEffect(() => {
+    // 如果有记住的用户名则自动填充
+    const rememberedUser = localStorage.getItem('remember_admin')
+    if (rememberedUser) {
+      form.setFieldsValue({
+        admin_name: rememberedUser,
+        remember: true
+      })
+    }
+  }, [form])
 
   return (
     <div className={cn(
@@ -84,6 +133,18 @@ const Login: React.FC = () => {
               <p className="text-gray-500 dark:text-gray-400">请输入您的账号和密码</p>
             </div>
 
+            {/* 错误提示 */}
+            {errorMsg && (
+              <Alert
+                message={errorMsg}
+                type="error"
+                showIcon
+                closable
+                className="mb-6"
+                onClose={() => setErrorMsg(null)}
+              />
+            )}
+
             <Form
               form={form}
               name="login"
@@ -93,18 +154,18 @@ const Login: React.FC = () => {
               className="login-form"
             >
               <Form.Item
-                name="username"
+                name="admin_name"
                 rules={[{ required: true, message: '请输入用户名!' }]}
               >
                 <Input 
                   prefix={<UserOutlined />} 
-                  placeholder="用户名" 
+                  placeholder="管理员用户名" 
                   className="rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
               </Form.Item>
 
               <Form.Item
-                name="password"
+                name="admin_pass"
                 rules={[{ required: true, message: '请输入密码!' }]}
               >
                 <Input.Password 
@@ -112,22 +173,6 @@ const Login: React.FC = () => {
                   placeholder="密码" 
                   className="rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 />
-              </Form.Item>
-
-              <Form.Item
-                name="captcha"
-                rules={[{ required: true, message: '请输入验证码!' }]}
-              >
-                <div className="flex items-center gap-4">
-                  <Input 
-                    prefix={<SafetyOutlined />} 
-                    placeholder="验证码" 
-                    className="rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                  />
-                  <div className="captcha-image h-10 w-24 bg-gray-200 dark:bg-gray-700 flex items-center justify-center rounded-lg cursor-pointer">
-                    1234
-                  </div>
-                </div>
               </Form.Item>
 
               <Form.Item>

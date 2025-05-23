@@ -1,8 +1,9 @@
 #root {
-  max-width: 1280px;
+  max-width: 1920px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  font-family: 'MuYingFont', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .logo {
@@ -45,6 +46,7 @@
 .app-container {
   min-height: 100vh;
   transition: all 0.3s ease;
+  font-family: 'MuYingFont', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* 自定义滚动条 */
@@ -68,14 +70,19 @@
 /* 表格增强样式 */
 .custom-table .ant-table {
   @apply rounded-lg overflow-hidden;
+  font-family: 'MuYingFont', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .custom-table .ant-table-thead > tr > th {
   @apply font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700;
+  font-family: 'MuYingFont', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: 0.015em;
 }
 
 .custom-table .ant-table-tbody > tr > td {
   @apply text-gray-700 dark:text-gray-300 border-gray-100 dark:border-gray-700;
+  font-family: 'MuYingFont', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  letter-spacing: 0.015em;
 }
 
 .custom-table .ant-table-tbody > tr:hover > td {
@@ -144,4 +151,17 @@ body, .app-container, .ant-layout, .ant-layout-sider, .ant-layout-header,
               color 0.3s ease, 
               border-color 0.3s ease, 
               box-shadow 0.3s ease;
+  font-family: 'MuYingFont', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* 确保按钮文本使用正确的字体 */
+.ant-btn {
+  font-family: 'MuYingFont', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  letter-spacing: 0.015em;
+}
+
+/* 确保输入框使用正确的字体 */
+.ant-input, .ant-input-affix-wrapper {
+  font-family: 'MuYingFont', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+  letter-spacing: 0.015em;
 }

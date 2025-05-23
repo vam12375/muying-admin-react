@@ -10,7 +10,7 @@ import request from '@/utils/request';
  */
 export const getOrderList = (params: any) => {
   return request({
-    url: '/orders',
+    url: '/api/admin/orders',
     method: 'get',
     params
   });
@@ -22,7 +22,7 @@ export const getOrderList = (params: any) => {
  */
 export const getOrderDetail = (id: number | string) => {
   return request({
-    url: `/orders/${id}`,
+    url: `/api/admin/orders/${id}`,
     method: 'get'
   });
 };
@@ -34,7 +34,7 @@ export const getOrderDetail = (id: number | string) => {
  */
 export const updateOrderStatus = (id: number | string, data: any) => {
   return request({
-    url: `/orders/${id}/status`,
+    url: `/api/admin/orders/${id}/status`,
     method: 'put',
     data
   });
@@ -43,13 +43,30 @@ export const updateOrderStatus = (id: number | string, data: any) => {
 /**
  * 订单发货
  * @param id 订单ID
- * @param data 发货数据
+ * @param companyId 物流公司ID
+ * @param trackingNo 物流单号，可选，不传则自动生成
+ * @param receiverName 收件人姓名，可选，不传则使用订单收件人
+ * @param receiverPhone 收件人电话，可选，不传则使用订单收件人电话
+ * @param receiverAddress 收件人地址，可选，不传则使用订单收件人地址
  */
-export const shipOrder = (id: number | string, data: any) => {
+export const shipOrder = (
+  id: number | string, 
+  companyId: number, 
+  trackingNo?: string, 
+  receiverName?: string, 
+  receiverPhone?: string, 
+  receiverAddress?: string
+) => {
   return request({
-    url: `/orders/${id}/ship`,
-    method: 'post',
-    data
+    url: `/api/admin/orders/${id}/ship`,
+    method: 'put',
+    params: {
+      companyId,
+      trackingNo,
+      receiverName,
+      receiverPhone,
+      receiverAddress
+    }
   });
 };
 
@@ -60,7 +77,7 @@ export const shipOrder = (id: number | string, data: any) => {
  */
 export const cancelOrder = (id: number | string, data: any) => {
   return request({
-    url: `/orders/${id}/cancel`,
+    url: `/api/admin/orders/${id}/cancel`,
     method: 'post',
     data
   });
@@ -71,7 +88,7 @@ export const cancelOrder = (id: number | string, data: any) => {
  */
 export const getOrderStatistics = () => {
   return request({
-    url: '/orders/statistics',
+    url: '/api/admin/orders/statistics',
     method: 'get'
   });
 };
@@ -82,7 +99,7 @@ export const getOrderStatistics = () => {
  */
 export const exportOrders = (params: any) => {
   return request({
-    url: '/orders/export',
+    url: '/api/admin/orders/export',
     method: 'get',
     params,
     responseType: 'blob'

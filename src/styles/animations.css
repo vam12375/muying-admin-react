@@ -1,0 +1,303 @@
+/* 
+ * 通用动画样式
+ * 可在各个组件中复用的CSS动画效果
+ */
+
+/* 淡入淡出动画 */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* 上滑入场动画 */
+.slide-up-in {
+  animation: slideUpIn 0.3s ease-out;
+}
+
+.slide-up-out {
+  animation: slideUpOut 0.3s ease-in;
+}
+
+@keyframes slideUpIn {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUpOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+}
+
+/* 下滑入场动画 */
+.slide-down-in {
+  animation: slideDownIn 0.3s ease-out;
+}
+
+.slide-down-out {
+  animation: slideDownOut 0.3s ease-in;
+}
+
+@keyframes slideDownIn {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDownOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+}
+
+/* 左滑入场动画 */
+.slide-left-in {
+  animation: slideLeftIn 0.3s ease-out;
+}
+
+.slide-left-out {
+  animation: slideLeftOut 0.3s ease-in;
+}
+
+@keyframes slideLeftIn {
+  from {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideLeftOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+}
+
+/* 右滑入场动画 */
+.slide-right-in {
+  animation: slideRightIn 0.3s ease-out;
+}
+
+.slide-right-out {
+  animation: slideRightOut 0.3s ease-in;
+}
+
+@keyframes slideRightIn {
+  from {
+    transform: translateX(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideRightOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(30px);
+    opacity: 0;
+  }
+}
+
+/* 缩放动画 */
+.zoom-in {
+  animation: zoomIn 0.3s ease-out;
+}
+
+.zoom-out {
+  animation: zoomOut 0.3s ease-in;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes zoomOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* 脉冲动画 */
+.pulse {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 抖动动画 */
+.shake {
+  animation: shake 0.5s;
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+/* 旋转动画 */
+.rotate {
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 闪烁动画 */
+.blink {
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* 边框脉冲 */
+.border-pulse {
+  animation: borderPulse 1.5s infinite;
+}
+
+@keyframes borderPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(24, 144, 255, 0);
+  }
+}
+
+/* 卡片悬浮效果 */
+.hover-float {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-float:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* 进度条动画 */
+.progress-bar {
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 30%;
+  background-image: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: progressShimmer 1.5s infinite;
+}
+
+@keyframes progressShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(300%);
+  }
+} 

@@ -12,14 +12,21 @@ import {
   Typography,
   Tag,
   DatePicker,
-  Popconfirm
+  Popconfirm,
+  Row,
+  Col,
+  Statistic,
+  App
 } from 'antd';
 import { 
   PlusOutlined, 
   SearchOutlined, 
   EditOutlined, 
   DeleteOutlined, 
-  ExclamationCircleOutlined 
+  ExclamationCircleOutlined,
+  ReloadOutlined,
+  EyeOutlined,
+  StopOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,42 +34,29 @@ import type { ColumnsType } from 'antd/es/table';
 import { AppDispatch, RootState } from '@/store';
 import { 
   fetchCouponList, 
-  setPagination 
+  setPagination,
+  fetchCouponStats
 } from '@/store/slices/couponSlice';
-import { deleteCoupon } from '@/api/coupon';
+import { deleteCoupon, updateCouponStatus, CouponData } from '@/api/coupon';
 import { formatDateTime } from '@/utils/dateUtils';
 
 const { Title } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
-// 定义优惠券数据类型
-interface CouponData {
-  id: number;
-  name: string;
-  code: string;
-  type: string;
-  value: number;
-  minAmount: number;
-  startTime: string;
-  endTime: string;
-  status: string;
-  quantity: number;
-  usedCount: number;
-  createTime: string;
-}
-
 const CouponList: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const [form] = Form.useForm();
+  const { message: contextMessage } = App.useApp(); // 使用App上下文中的message
   
   // 从Redux获取状态
-  const { couponList, pagination, loading } = useSelector((state: RootState) => state.coupon);
+  const { couponList, pagination, loading, stats } = useSelector((state: RootState) => state.coupon);
   
   // 初始加载
   useEffect(() => {
     fetchCoupons();
+    dispatch(fetchCouponStats());
   }, [dispatch, pagination.current, pagination.pageSize]);
   
   // 获取优惠券列表
@@ -70,7 +64,7 @@ const CouponList: React.FC = () => {
     const values = form.getFieldsValue();
     const params = {
       page: pagination.current,
-      pageSize: pagination.pageSize,
+      size: pagination.pageSize,
       ...values,
       // 处理日期范围
       startTime: values.timeRange && values.timeRange[0] ? values.timeRange[0].format('YYYY-MM-DD HH:mm:ss') : undefined,
@@ -121,13 +115,26 @@ const CouponList: React.FC = () => {
   // 删除优惠券
   const handleDelete = async (id: number) => {
     try {
-      const hide = message.loading('正在删除...', 0);
+      const hide = contextMessage.loading('正在删除...', 0);
       await deleteCoupon(id);
       hide();
-      message.success('删除成功');
+      contextMessage.success('删除成功');
       fetchCoupons();
     } catch (error) {
-      message.error('删除失败');
+      contextMessage.error('删除失败');
+    }
+  };
+  
+  // 更新优惠券状态
+  const handleUpdateStatus = async (id: number, status: string) => {
+    try {
+      const hide = contextMessage.loading('正在更新状态...', 0);
+      await updateCouponStatus(id, status);
+      hide();
+      contextMessage.success('状态更新成功');
+      fetchCoupons();
+    } catch (error) {
+      contextMessage.error('状态更新失败');
     }
   };
   
@@ -143,15 +150,18 @@ const CouponList: React.FC = () => {
     });
   };
   
+  // 查看详情
+  const viewDetail = (record: CouponData) => {
+    navigate(`/coupon/detail/${record.id}`);
+  };
+  
   // 获取优惠券类型标签
   const getCouponTypeTag = (type: string) => {
     switch (type) {
-      case 'fixed':
+      case 'FIXED':
         return <Tag color="blue">固定金额</Tag>;
-      case 'percentage':
+      case 'PERCENTAGE':
         return <Tag color="green">折扣比例</Tag>;
-      case 'free_shipping':
-        return <Tag color="purple">免运费</Tag>;
       default:
         return <Tag>{type}</Tag>;
     }
@@ -160,14 +170,12 @@ const CouponList: React.FC = () => {
   // 获取优惠券状态标签
   const getCouponStatusTag = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'ACTIVE':
         return <Tag color="success">生效中</Tag>;
-      case 'inactive':
+      case 'INACTIVE':
         return <Tag color="default">未生效</Tag>;
-      case 'expired':
+      case 'EXPIRED':
         return <Tag color="error">已过期</Tag>;
-      case 'depleted':
-        return <Tag color="warning">已领完</Tag>;
       default:
         return <Tag>{status}</Tag>;
     }
@@ -185,13 +193,8 @@ const CouponList: React.FC = () => {
       title: '优惠券名称',
       dataIndex: 'name',
       key: 'name',
-      width: 200
-    },
-    {
-      title: '优惠券代码',
-      dataIndex: 'code',
-      key: 'code',
-      width: 150
+      width: 200,
+      render: (text) => <a>{text}</a>
     },
     {
       title: '类型',
@@ -201,75 +204,103 @@ const CouponList: React.FC = () => {
       render: (type) => getCouponTypeTag(type)
     },
     {
-      title: '优惠值',
+      title: '面值/折扣',
       dataIndex: 'value',
       key: 'value',
       width: 120,
       render: (value, record) => {
-        if (record.type === 'fixed') {
+        if (record.type === 'FIXED') {
           return `¥${value.toFixed(2)}`;
-        } else if (record.type === 'percentage') {
-          return `${value}%`;
-        } else {
-          return '-';
+        } else if (record.type === 'PERCENTAGE') {
+          return `${value}折`;
         }
+        return value;
       }
     },
     {
       title: '最低消费',
-      dataIndex: 'minAmount',
-      key: 'minAmount',
+      dataIndex: 'minSpend',
+      key: 'minSpend',
       width: 120,
-      render: (minAmount) => minAmount > 0 ? `¥${minAmount.toFixed(2)}` : '无限制'
-    },
-    {
-      title: '有效期',
-      key: 'validPeriod',
-      width: 240,
-      render: (_, record) => (
-        <span>
-          {formatDateTime(record.startTime, 'YYYY-MM-DD')} 至 {formatDateTime(record.endTime, 'YYYY-MM-DD')}
-        </span>
-      )
+      render: (value) => value ? `¥${value.toFixed(2)}` : '无限制'
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
+      width: 120,
       render: (status) => getCouponStatusTag(status)
     },
     {
-      title: '数量/已使用',
+      title: '总数量',
+      dataIndex: 'totalQuantity',
+      key: 'totalQuantity',
+      width: 100,
+      render: (value) => value === 0 ? '不限量' : value
+    },
+    {
+      title: '已领取/已使用',
       key: 'usage',
-      width: 120,
+      width: 150,
       render: (_, record) => (
         <span>
-          {record.quantity === -1 ? '无限' : record.quantity}/{record.usedCount}
+          {record.receivedQuantity || 0}/{record.usedQuantity || 0}
         </span>
       )
     },
     {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      width: 180,
-      render: (time) => formatDateTime(time)
+      title: '有效期',
+      key: 'validPeriod',
+      width: 280,
+      render: (_, record) => (
+        <span>
+          {record.startTime ? formatDateTime(record.startTime) : '无限制'} ~ 
+          {record.endTime ? formatDateTime(record.endTime) : '无限制'}
+        </span>
+      )
     },
     {
       title: '操作',
       key: 'action',
-      fixed: 'right',
-      width: 150,
+      width: 220,
       render: (_, record) => (
-        <Space size="middle">
+        <Space size="small">
           <Button 
-            type="link" 
+            type="text" 
+            size="small" 
+            icon={<EyeOutlined />} 
+            onClick={() => viewDetail(record)}
+          >
+            查看
+          </Button>
+          <Button 
+            type="text" 
+            size="small" 
             icon={<EditOutlined />} 
             onClick={() => handleEdit(record)}
           >
             编辑
           </Button>
+          {record.status === 'ACTIVE' ? (
+            <Button 
+              type="text" 
+              size="small" 
+              danger
+              icon={<StopOutlined />} 
+              onClick={() => handleUpdateStatus(record.id, 'INACTIVE')}
+            >
+              停用
+            </Button>
+          ) : (
+            <Button 
+              type="text" 
+              size="small" 
+              icon={<ReloadOutlined />} 
+              onClick={() => handleUpdateStatus(record.id, 'ACTIVE')}
+            >
+              启用
+            </Button>
+          )}
           <Popconfirm
             title="确定要删除此优惠券吗？"
             onConfirm={() => handleDelete(record.id)}
@@ -277,8 +308,9 @@ const CouponList: React.FC = () => {
             cancelText="取消"
           >
             <Button 
-              type="link" 
-              danger 
+              type="text" 
+              size="small"
+              danger
               icon={<DeleteOutlined />}
             >
               删除
@@ -290,81 +322,110 @@ const CouponList: React.FC = () => {
   ];
   
   return (
-    <div className="coupon-list-container">
-      <Title level={2}>优惠券管理</Title>
-      
-      <Card className="filter-container" style={{ marginBottom: 16 }}>
-        <Form 
-          form={form} 
-          layout="inline" 
-          onFinish={handleSearch}
-        >
-          <Form.Item name="name" label="优惠券名称">
-            <Input placeholder="优惠券名称" allowClear />
-          </Form.Item>
-          <Form.Item name="code" label="优惠券代码">
-            <Input placeholder="优惠券代码" allowClear />
-          </Form.Item>
-          <Form.Item name="type" label="类型">
-            <Select placeholder="类型" style={{ width: 120 }} allowClear>
-              <Option value="">全部</Option>
-              <Option value="fixed">固定金额</Option>
-              <Option value="percentage">折扣比例</Option>
-              <Option value="free_shipping">免运费</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="status" label="状态">
-            <Select placeholder="状态" style={{ width: 120 }} allowClear>
-              <Option value="">全部</Option>
-              <Option value="active">生效中</Option>
-              <Option value="inactive">未生效</Option>
-              <Option value="expired">已过期</Option>
-              <Option value="depleted">已领完</Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="timeRange" label="有效期">
-            <RangePicker style={{ width: 240 }} />
-          </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button type="primary" icon={<SearchOutlined />} htmlType="submit">
-                查询
-              </Button>
-              <Button onClick={resetQuery}>重置</Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Card>
-      
-      <Card>
-        <div style={{ marginBottom: 16 }}>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            onClick={handleAdd}
-          >
-            添加优惠券
-          </Button>
-        </div>
+    <App> {/* 使用App组件作为上下文提供者 */}
+      <div className="coupon-list-container" style={{ padding: '24px' }}>
+        <Card style={{ marginBottom: '24px' }}>
+          <Row gutter={24}>
+            <Col span={6}>
+              <Statistic
+                title="优惠券总数"
+                value={stats?.totalCount || 0}
+                suffix="张"
+              />
+            </Col>
+            <Col span={6}>
+              <Statistic
+                title="已领取优惠券"
+                value={stats?.receivedCount || 0}
+                suffix="张"
+              />
+            </Col>
+            <Col span={6}>
+              <Statistic
+                title="已使用优惠券"
+                value={stats?.usedCount || 0}
+                suffix="张"
+              />
+            </Col>
+            <Col span={6}>
+              <Statistic
+                title="优惠总金额"
+                value={stats?.totalDiscount || 0}
+                precision={2}
+                prefix="¥"
+              />
+            </Col>
+          </Row>
+        </Card>
         
-        <Table<CouponData>
-          columns={columns}
-          dataSource={couponList}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            showSizeChanger: true,
-            showTotal: (total) => `共 ${total} 条记录`,
-            onChange: handlePageChange,
-            onShowSizeChange: handleSizeChange
-          }}
-          scroll={{ x: 1500 }}
-        />
-      </Card>
-    </div>
+        <Card>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
+            <Title level={4}>优惠券列表</Title>
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+              添加优惠券
+            </Button>
+          </div>
+          
+          <div style={{ marginBottom: '16px' }}>
+            <Form
+              form={form}
+              layout="inline"
+              onFinish={handleSearch}
+            >
+              <Form.Item name="name">
+                <Input placeholder="优惠券名称" allowClear />
+              </Form.Item>
+              
+              <Form.Item name="type">
+                <Select placeholder="优惠券类型" allowClear style={{ width: 120 }}>
+                  <Option value="FIXED">固定金额</Option>
+                  <Option value="PERCENTAGE">折扣比例</Option>
+                </Select>
+              </Form.Item>
+              
+              <Form.Item name="status">
+                <Select placeholder="优惠券状态" allowClear style={{ width: 120 }}>
+                  <Option value="ACTIVE">生效中</Option>
+                  <Option value="INACTIVE">未生效</Option>
+                  <Option value="EXPIRED">已过期</Option>
+                </Select>
+              </Form.Item>
+              
+              <Form.Item name="timeRange">
+                <RangePicker placeholder={['开始日期', '结束日期']} />
+              </Form.Item>
+              
+              <Form.Item>
+                <Space>
+                  <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                    搜索
+                  </Button>
+                  <Button onClick={resetQuery}>重置</Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </div>
+          
+          <Table
+            rowKey="id"
+            columns={columns}
+            dataSource={couponList}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total) => `共 ${total} 条记录`,
+              onChange: handlePageChange,
+              onShowSizeChange: handleSizeChange
+            }}
+            loading={loading}
+            scroll={{ x: 1500 }}
+          />
+        </Card>
+      </div>
+    </App>
   );
 };
 

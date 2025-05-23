@@ -1,9 +1,9 @@
 import React from 'react'
-import { lazy, Suspense } from 'react'
-import { Navigate, useRoutes } from 'react-router-dom'
-import { Spin } from 'antd'
-import { isLoggedIn } from '@/utils/auth'
-import { RouteObject } from 'react-router'
+import { lazy, Suspense, useEffect } from 'react'
+import { Navigate, useRoutes, useNavigate, useLocation } from 'react-router-dom'
+import { Spin, message } from 'antd'
+import { isLoggedIn, getToken } from '@/utils/auth'
+import type { RouteObject } from 'react-router'
 import { motion } from 'framer-motion'
 import FadeIn from '@/components/animations/FadeIn'
 
@@ -22,8 +22,14 @@ const ProductAnalysis = lazy(() => import('@/views/product/analysis'))
 const OrderList = lazy(() => import('@/views/order/list'))
 const OrderDetail = lazy(() => import('@/views/order/detail'))
 const LogisticsList = lazy(() => import('@/views/logistics/list'))
+const LogisticsDetail = lazy(() => import('@/views/logistics/detail'))
 const LogisticsCompany = lazy(() => import('@/views/logistics/company'))
 const ComponentsShowcase = lazy(() => import('@/views/components'))
+const RedisManage = lazy(() => import('@/views/system/redis'))
+// 售后管理组件
+const AfterSaleList = lazy(() => import('@/views/afterSale/list'))
+const AfterSaleDetail = lazy(() => import('@/views/afterSale/detail'))
+const AfterSaleStatistics = lazy(() => import('@/views/afterSale/statistics'))
 
 // 加载动画组件
 const LoadingAnimation = () => (
@@ -55,11 +61,51 @@ const LazyLoad = (Component: React.LazyExoticComponent<any>) => {
   )
 }
 
-// 需要认证的路由
-const AuthRoute = ({ children }: { children: JSX.Element }) => {
-  if (!isLoggedIn()) {
-    return <Navigate to="/login" replace />
+// 需要认证的路由守卫组件
+const AuthRoute = ({ children }: { children: React.ReactElement }) => {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const isAuthenticated = isLoggedIn()
+  
+  useEffect(() => {
+    // 检查token是否存在
+    if (!isAuthenticated) {
+      message.warning('请先登录')
+      // 保存当前路径，以便登录后重定向回来
+      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
+    }
+  }, [isAuthenticated, navigate, location.pathname])
+  
+  // 如果未登录，返回null，等待useEffect中的重定向
+  if (!isAuthenticated) {
+    return null
   }
+  
+  // 已登录，渲染子组件
+  return children
+}
+
+// 登录页面路由守卫
+const LoginRoute = ({ children }: { children: React.ReactElement }) => {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const isAuthenticated = isLoggedIn()
+  
+  useEffect(() => {
+    // 如果已登录且在登录页，重定向到首页或查询参数中的redirect
+    if (isAuthenticated) {
+      const params = new URLSearchParams(location.search)
+      const redirect = params.get('redirect')
+      navigate(redirect || '/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, navigate, location.search])
+  
+  // 如果已登录，返回null，等待useEffect中的重定向
+  if (isAuthenticated) {
+    return null
+  }
+  
+  // 未登录，渲染登录页
   return children
 }
 
@@ -67,7 +113,7 @@ const AuthRoute = ({ children }: { children: JSX.Element }) => {
 const routeConfig: RouteObject[] = [
   {
     path: '/login',
-    element: LazyLoad(Login)
+    element: <LoginRoute>{LazyLoad(Login)}</LoginRoute>
   },
   {
     path: '/',
@@ -129,11 +175,32 @@ const routeConfig: RouteObject[] = [
         ]
       },
       {
+        path: 'afterSale',
+        children: [
+          {
+            path: 'list',
+            element: LazyLoad(AfterSaleList)
+          },
+          {
+            path: 'detail/:id',
+            element: LazyLoad(AfterSaleDetail)
+          },
+          {
+            path: 'statistics',
+            element: LazyLoad(AfterSaleStatistics)
+          }
+        ]
+      },
+      {
         path: 'logistics',
         children: [
           {
             path: 'list',
             element: LazyLoad(LogisticsList)
+          },
+          {
+            path: 'detail/:id',
+            element: LazyLoad(LogisticsDetail)
           },
           {
             path: 'company',
@@ -184,14 +251,56 @@ const routeConfig: RouteObject[] = [
           {
             path: 'product',
             element: LazyLoad(lazy(() => import('@/views/points/product')))
+          },
+          {
+            path: 'exchange',
+            element: LazyLoad(lazy(() => import('@/views/points/exchange')))
+          }
+        ]
+      },
+      {
+        path: 'message',
+        children: [
+          {
+            path: '',
+            element: LazyLoad(lazy(() => import('@/views/message/list')))
+          },
+          {
+            path: 'list',
+            element: LazyLoad(lazy(() => import('@/views/message/list')))
+          },
+          {
+            path: 'detail/:id',
+            element: LazyLoad(lazy(() => import('@/views/message/template')))
+          }
+        ]
+      },
+      {
+        path: 'system',
+        children: [
+          {
+            path: 'redis',
+            element: LazyLoad(RedisManage)
+          },
+          {
+            path: 'log',
+            element: LazyLoad(lazy(() => import('@/views/system/log')))
+          },
+          {
+            path: 'config',
+            element: LazyLoad(lazy(() => import('@/views/system/config')))
           }
         ]
       }
     ]
   },
   {
-    path: '*',
+    path: '/404',
     element: LazyLoad(NotFound)
+  },
+  {
+    path: '*',
+    element: <Navigate to="/404" replace />
   }
 ]
 

@@ -1,744 +1,482 @@
-import { useState, useEffect, useMemo } from 'react'
-import { Row, Col, Spin, Segmented, Select } from 'antd'
-import {
+import React, { useState, useEffect } from 'react'
+import { Row, Col, Statistic, Progress, Tooltip, Table, DatePicker } from 'antd'
+import { 
+  ArrowUpOutlined, 
+  ArrowDownOutlined, 
+  ShoppingOutlined, 
   UserOutlined,
   ShoppingCartOutlined,
   DollarOutlined,
-  ShoppingOutlined,
-  RiseOutlined,
-  FallOutlined,
-  CalendarOutlined
+  FireOutlined,
+  RiseOutlined
 } from '@ant-design/icons'
-import { 
-  LineChart, 
-  Line, 
-  AreaChart,
-  Area,
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  Cell,
-  RadialBarChart,
-  RadialBar
-} from 'recharts'
-import clsx from 'clsx'
-import { motion, AnimatePresence } from 'framer-motion'
-
-import StatsCard from '@/components/StatsCard'
+import { motion } from 'framer-motion'
+import { Line, Bar, Pie } from '@ant-design/charts'
 import Card from '@/components/Card'
 import Button from '@/components/Button'
-import Tag from '@/components/Tag'
-import PageTransition from '@/components/PageTransition'
-import { useTheme } from '@/theme/useTheme'
-import FadeIn from '@/components/animations/FadeIn'
-import { FadeInItem } from '@/components/animations/FadeIn'
-import StatusIndicator from '@/components/StatusIndicator'
+import MotionWrapper from '@/components/animations/MotionWrapper'
+import { formatPrice, formatNumber } from '@/lib/utils'
+import { 
+  slideUpAnimation,
+  staggerContainerAnimation,
+  fadeAnimation,
+  hoverCardAnimation
+} from '@/components/animations/MotionVariants'
 
-// 销售数据
-const salesData = [
-  { month: '1月', 婴儿用品: 1200, 孕妇用品: 800, 儿童用品: 1000, total: 3000 },
-  { month: '2月', 婴儿用品: 1350, 孕妇用品: 750, 儿童用品: 1100, total: 3200 },
-  { month: '3月', 婴儿用品: 1400, 孕妇用品: 880, 儿童用品: 1300, total: 3580 },
-  { month: '4月', 婴儿用品: 1500, 孕妇用品: 900, 儿童用品: 1400, total: 3800 },
-  { month: '5月', 婴儿用品: 1600, 孕妇用品: 1000, 儿童用品: 1500, total: 4100 },
-  { month: '6月', 婴儿用品: 1750, 孕妇用品: 1050, 儿童用品: 1600, total: 4400 },
-]
-
-// 订单数据
-const orderStatusData = [
-  { name: '已完成', value: 850, color: '#22c55e' },
-  { name: '处理中', value: 320, color: '#3b82f6' },
-  { name: '待支付', value: 200, color: '#f59e0b' },
-  { name: '已取消', value: 100, color: '#ef4444' },
-]
-
-// 产品类别数据
-const categoryData = [
-  { name: '婴儿用品', 销量: 1800 },
-  { name: '孕妇用品', 销量: 1200 },
-  { name: '儿童服饰', 销量: 1400 },
-  { name: '玩具', 销量: 1000 },
-  { name: '童车', 销量: 600 },
-  { name: '洗护', 销量: 800 },
-]
-
-// 用户增长数据
-const userGrowthData = [
-  { day: '周一', 新用户: 120, 活跃用户: 220 },
-  { day: '周二', 新用户: 132, 活跃用户: 232 },
-  { day: '周三', 新用户: 101, 活跃用户: 201 },
-  { day: '周四', 新用户: 134, 活跃用户: 234 },
-  { day: '周五', 新用户: 190, 活跃用户: 290 },
-  { day: '周六', 新用户: 230, 活跃用户: 330 },
-  { day: '周日', 新用户: 210, 活跃用户: 310 },
-]
-
-// 转化率数据
-const conversionData = [
-  { name: '访问', value: 1000 },
-  { name: '浏览商品', value: 800 },
-  { name: '加入购物车', value: 600 },
-  { name: '下单', value: 300 },
-  { name: '支付', value: 200 },
-];
-
-// 最近订单数据
-const recentOrders = [
-  { id: 'ORD-2023-06-28-1', customer: '王小明', amount: 1250, status: 'success', time: '10分钟前' },
-  { id: 'ORD-2023-06-28-2', customer: '李小红', amount: 890, status: 'processing', time: '30分钟前' },
-  { id: 'ORD-2023-06-28-3', customer: '张三', amount: 2300, status: 'warning', time: '1小时前' },
-  { id: 'ORD-2023-06-27-4', customer: '赵四', amount: 1650, status: 'error', time: '2小时前' },
-  { id: 'ORD-2023-06-27-5', customer: '刘备', amount: 780, status: 'success', time: '3小时前' },
-];
-
-// 区域销售数据
-const regionData = [
-  { name: '华东区', value: 38 },
-  { name: '华南区', value: 25 },
-  { name: '华北区', value: 22 },
-  { name: '西南区', value: 15 },
-];
-
+/**
+ * 仪表盘页面
+ * 展示系统关键数据和统计信息
+ */
 const Dashboard: React.FC = () => {
-  const [loading, setLoading] = useState(true)
-  const [timeRange, setTimeRange] = useState<string | number>('monthly')
-  const [chartView, setChartView] = useState<string | number>('line')
-  const { isDark } = useTheme()
+  const [statsLoading, setStatsLoading] = useState(true)
   
-  // 模拟数据加载
+  // 模拟加载数据
   useEffect(() => {
     const timer = setTimeout(() => {
-      setLoading(false)
+      setStatsLoading(false)
     }, 1000)
     
     return () => clearTimeout(timer)
   }, [])
-  
-  // 图表主题色
-  const chartColors = useMemo(() => ({
-    text: isDark ? '#d1d5db' : '#4b5563',
-    grid: isDark ? 'rgba(55, 65, 81, 0.6)' : 'rgba(229, 231, 235, 0.6)',
-    tooltip: isDark ? '#1f2937' : '#ffffff',
-    gradientStart: isDark ? 'rgba(59, 130, 246, 0.2)' : 'rgba(59, 130, 246, 0.1)',
-    gradientEnd: isDark ? 'rgba(59, 130, 246, 0.01)' : 'rgba(59, 130, 246, 0.01)',
-  }), [isDark]);
 
-  // 根据状态获取对应组件
-  const getStatusComponent = (status: string) => {
-    switch (status) {
-      case 'success': return <StatusIndicator type="success" text="已完成" />
-      case 'processing': return <StatusIndicator type="processing" text="处理中" ping />
-      case 'warning': return <StatusIndicator type="warning" text="待支付" />
-      case 'error': return <StatusIndicator type="error" text="已取消" />
-      default: return null
-    }
+  // 销售数据
+  const salesData = [
+    { month: '1月', sales: 3500 },
+    { month: '2月', sales: 4200 },
+    { month: '3月', sales: 3800 },
+    { month: '4月', sales: 5000 },
+    { month: '5月', sales: 4800 },
+    { month: '6月', sales: 6000 },
+    { month: '7月', sales: 6500 },
+    { month: '8月', sales: 5800 },
+    { month: '9月', sales: 7200 },
+    { month: '10月', sales: 8500 },
+    { month: '11月', sales: 9200 },
+    { month: '12月', sales: 11000 },
+  ]
+
+  // 品类销售数据
+  const categoryData = [
+    { category: '奶粉', value: 28 },
+    { category: '尿布', value: 22 },
+    { category: '玩具', value: 15 },
+    { category: '辅食', value: 12 },
+    { category: '童装', value: 11 },
+    { category: '洗护', value: 8 },
+    { category: '其它', value: 4 },
+  ]
+
+  // 流量来源数据
+  const trafficData = [
+    { type: '直接访问', value: 35 },
+    { type: '搜索引擎', value: 30 },
+    { type: '社交媒体', value: 20 },
+    { type: '外部链接', value: 10 },
+    { type: '其他', value: 5 },
+  ]
+
+  // 近期订单数据
+  const orderColumns = [
+    {
+      title: '订单号',
+      dataIndex: 'id',
+      key: 'id',
+    },
+    {
+      title: '客户',
+      dataIndex: 'customer',
+      key: 'customer',
+    },
+    {
+      title: '商品',
+      dataIndex: 'product',
+      key: 'product',
+    },
+    {
+      title: '金额',
+      dataIndex: 'amount',
+      key: 'amount',
+      render: (amount: number) => formatPrice(amount),
+    },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => {
+        let color = ''
+        switch (status) {
+          case '已付款':
+            color = 'bg-success-100 text-success-700 dark:bg-success-900/20 dark:text-success-300'
+            break
+          case '已发货':
+            color = 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+            break
+          case '已完成':
+            color = 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+            break
+          case '已取消':
+            color = 'bg-danger-100 text-danger-700 dark:bg-danger-900/20 dark:text-danger-300'
+            break
+          default:
+            color = 'bg-warning-100 text-warning-700 dark:bg-warning-900/20 dark:text-warning-300'
+        }
+        
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>
+            {status}
+          </span>
+        )
+      },
+    },
+  ]
+
+  const orderData = [
+    {
+      key: '1',
+      id: 'ORD-20230001',
+      customer: '张小姐',
+      product: '婴儿奶粉套装',
+      amount: 568,
+      status: '已付款',
+    },
+    {
+      key: '2',
+      id: 'ORD-20230002',
+      customer: '王先生',
+      product: '婴儿推车',
+      amount: 1299,
+      status: '已发货',
+    },
+    {
+      key: '3',
+      id: 'ORD-20230003',
+      customer: '李女士',
+      product: '尿不湿纸尿裤',
+      amount: 298,
+      status: '已完成',
+    },
+    {
+      key: '4',
+      id: 'ORD-20230004',
+      customer: '赵先生',
+      product: '婴儿玩具套装',
+      amount: 458,
+      status: '已付款',
+    },
+    {
+      key: '5',
+      id: 'ORD-20230005',
+      customer: '孙女士',
+      product: '儿童餐椅',
+      amount: 899,
+      status: '已取消',
+    },
+  ]
+
+  // 销售趋势图配置
+  const salesConfig = {
+    data: salesData,
+    xField: 'month',
+    yField: 'sales',
+    smooth: true,
+    color: '#3182ff',
+    point: {
+      size: 4,
+      shape: 'diamond',
+      style: {
+        fill: 'white',
+        stroke: '#3182ff',
+        lineWidth: 2,
+      },
+    },
+    tooltip: {
+      formatter: (datum: any) => {
+        return { name: '销售额', value: formatPrice(datum.sales) }
+      },
+    },
+    areaStyle: {
+      fill: 'l(270) 0:#3182ff20 1:#3182ff00',
+    },
   }
 
-  // 自定义图表工具提示
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className={clsx(
-          'p-3 shadow-lg rounded-lg border',
-          isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'
-        )}>
-          <p className="font-medium mb-1">{label}</p>
-          {payload.map((entry: any) => (
-            <p key={entry.name} className="text-sm flex items-center">
-              <span 
-                className="inline-block w-2 h-2 rounded-full mr-2"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="mr-2">{entry.name}:</span>
-              <span className={clsx('font-bold', {
-                'text-blue-500': entry.name === '婴儿用品',
-                'text-yellow-500': entry.name === '孕妇用品',
-                'text-green-500': entry.name === '儿童用品',
-              })}>
-                {entry.value}
-              </span>
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
+  // 品类销售图配置
+  const categoryConfig = {
+    data: categoryData,
+    xField: 'value',
+    yField: 'category',
+    seriesField: 'category',
+    legend: {
+      position: 'bottom',
+    },
+    barBackground: {
+      style: {
+        fill: 'rgba(0, 0, 0, 0.05)',
+      },
+    },
+    colorField: 'category',
+    color: ['#3182ff', '#4e6fff', '#60a5fa', '#7dd3fc', '#93c5fd', '#c7d2fe', '#ddd6fe'],
+  }
 
-  // 渲染销售图表
-  const renderSalesChart = () => {
-    switch (chartView) {
-      case 'area':
-        return (
-          <AreaChart
-            data={salesData}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-          >
-            <defs>
-              <linearGradient id="colorBaby" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-              </linearGradient>
-              <linearGradient id="colorPregnant" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-              </linearGradient>
-              <linearGradient id="colorChildren" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-            <XAxis dataKey="month" tick={{ fill: chartColors.text }} />
-            <YAxis tick={{ fill: chartColors.text }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Area 
-              type="monotone" 
-              dataKey="婴儿用品" 
-              stroke="#3b82f6" 
-              fillOpacity={1} 
-              fill="url(#colorBaby)"
-              strokeWidth={2}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="孕妇用品" 
-              stroke="#f59e0b" 
-              fillOpacity={1} 
-              fill="url(#colorPregnant)"
-              strokeWidth={2}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="儿童用品" 
-              stroke="#22c55e" 
-              fillOpacity={1} 
-              fill="url(#colorChildren)"
-              strokeWidth={2}
-            />
-          </AreaChart>
-        );
-        
-      case 'bar':
-        return (
-          <BarChart
-            data={salesData}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-            <XAxis dataKey="month" tick={{ fill: chartColors.text }} />
-            <YAxis tick={{ fill: chartColors.text }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar dataKey="婴儿用品" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="孕妇用品" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="儿童用品" fill="#22c55e" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        );
-        
-      default:
-        return (
-          <LineChart
-            data={salesData}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-          >
-            <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-            <XAxis dataKey="month" tick={{ fill: chartColors.text }} />
-            <YAxis tick={{ fill: chartColors.text }} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Line 
-              type="monotone" 
-              dataKey="婴儿用品" 
-              stroke="#3b82f6" 
-              activeDot={{ r: 8 }}
-              strokeWidth={2}
-              dot={{ r: 4 }}
-              animationDuration={1200}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="孕妇用品" 
-              stroke="#f59e0b" 
-              strokeWidth={2}
-              dot={{ r: 4 }}
-              animationDuration={1200}
-              animationBegin={300}
-            />
-            <Line 
-              type="monotone" 
-              dataKey="儿童用品" 
-              stroke="#22c55e" 
-              strokeWidth={2}
-              dot={{ r: 4 }}
-              animationDuration={1200}
-              animationBegin={600}
-            />
-          </LineChart>
-        );
-    }
-  };
+  // 流量来源图配置
+  const trafficConfig = {
+    data: trafficData,
+    angleField: 'value',
+    colorField: 'type',
+    radius: 0.8,
+    innerRadius: 0.6,
+    label: {
+      type: 'inner',
+      offset: '-30%',
+      content: ({ percent }: { percent: number }) => `${(percent * 100).toFixed(0)}%`,
+      style: {
+        fontSize: 12,
+        textAlign: 'center',
+      },
+    },
+    color: ['#3182ff', '#22c55e', '#f59e0b', '#ef4444', '#a855f7'],
+    legend: {
+      position: 'bottom',
+    },
+  }
 
-  if (loading) {
+  // 统计卡片数据
+  const statCards = [
+    {
+      title: '今日销售额',
+      value: 12680,
+      prefix: <DollarOutlined />,
+      suffix: '元',
+      color: '#3182ff',
+      formatter: (value: number) => `¥ ${formatNumber(value)}`,
+      change: {
+        type: 'increase',
+        value: '12.5%',
+        text: '较昨日增长'
+      },
+      gradient: ['from-primary-500', 'to-primary-600'],
+      icon: <DollarOutlined className="text-2xl" />,
+    },
+    {
+      title: '今日订单数',
+      value: 186,
+      prefix: <ShoppingCartOutlined />,
+      suffix: '笔',
+      color: '#22c55e',
+      change: {
+        type: 'increase',
+        value: '8.2%',
+        text: '较昨日增长'
+      },
+      gradient: ['from-success-500', 'to-success-600'],
+      icon: <ShoppingCartOutlined className="text-2xl" />,
+    },
+    {
+      title: '产品销量',
+      value: 352,
+      prefix: <ShoppingOutlined />,
+      suffix: '件',
+      color: '#f59e0b',
+      change: {
+        type: 'increase',
+        value: '5.3%',
+        text: '较昨日增长'
+      },
+      gradient: ['from-warning-500', 'to-warning-600'],
+      icon: <ShoppingOutlined className="text-2xl" />,
+    },
+    {
+      title: '新增用户',
+      value: 28,
+      prefix: <UserOutlined />,
+      suffix: '人',
+      color: '#a855f7',
+      change: {
+        type: 'decrease',
+        value: '2.1%',
+        text: '较昨日下降'
+      },
+      gradient: ['from-purple-500', 'to-purple-600'],
+      icon: <UserOutlined className="text-2xl" />,
+    },
+  ]
+
+  // 渲染统计卡片
+  const renderStatCard = (stat: any, index: number) => {
+    const { title, value, color, change, formatter, gradient, icon } = stat;
+    
     return (
-      <div className="flex items-center justify-center h-[70vh]">
+      <Col xs={24} sm={12} md={6} key={index}>
         <motion.div 
-          animate={{ 
-            scale: [1, 1.1, 1],
-            opacity: [0.7, 1, 0.7],
-          }}
-          transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-          className="flex flex-col items-center"
+          variants={slideUpAnimation}
+          whileHover={{ y: -5, transition: { duration: 0.2 } }}
+          whileTap={{ y: 0, transition: { duration: 0.2 } }}
         >
-          <Spin size="large" />
-          <p className="mt-3 text-gray-500 dark:text-gray-400">加载仪表盘数据...</p>
+          <Card 
+            hoverable 
+            glass 
+            className="h-full overflow-hidden"
+          >
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">{title}</div>
+                <div className="mt-2 text-2xl font-bold" style={{ color }}>
+                  {formatter ? formatter(value) : value}
+                  <span className="text-sm font-normal ml-1">{stat.suffix}</span>
+                </div>
+                
+                <div className="mt-2 text-xs flex items-center">
+                  {change.type === 'increase' ? (
+                    <RiseOutlined className="text-success-500 mr-1" />
+                  ) : (
+                    <ArrowDownOutlined className="text-danger-500 mr-1" />
+                  )}
+                  <span className={change.type === 'increase' ? 'text-success-500' : 'text-danger-500'}>
+                    {change.value}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400 ml-1">
+                    {change.text}
+                  </span>
+                </div>
+              </div>
+              
+              <div className={`w-12 h-12 rounded-full bg-gradient-to-r ${gradient[0]} ${gradient[1]} flex items-center justify-center text-white`}>
+                {icon}
+              </div>
+            </div>
+            
+            <div className="mt-4 -mx-6 -mb-6 pb-1">
+              <div className="h-1 bg-gradient-to-r from-white/5 via-white/10 to-transparent dark:from-gray-700/30 dark:via-gray-700/20 dark:to-transparent"></div>
+              <div className="flex justify-between px-6 pt-3">
+                <div className="text-xs text-gray-500 dark:text-gray-400">今日目标</div>
+                <div className="text-xs font-medium">
+                  {Math.floor(Math.random() * 30) + 70}%
+                </div>
+              </div>
+              <div className="px-6 pt-1">
+                <Progress 
+                  percent={Math.floor(Math.random() * 30) + 70} 
+                  showInfo={false}
+                  strokeColor={color}
+                  size="small"
+                />
+              </div>
+            </div>
+          </Card>
         </motion.div>
-      </div>
-    )
-  }
+      </Col>
+    );
+  };
 
   return (
-    <PageTransition>
-      <div className="dashboard-container pb-10">
-        <FadeIn className="mb-6">
-          <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">
-                商城概览
-              </h1>
-              <p className="text-gray-500 dark:text-gray-400">
-                欢迎回来，这里展示了您的商城数据分析和关键指标
-              </p>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Tag color="blue" variant="light" rounded="full">
-                <CalendarOutlined className="mr-1" /> 最近30天
-              </Tag>
-              <Button type="primary" size="middle" animated>
-                数据导出
-              </Button>
-            </div>
+    <div className="p-1">
+      <motion.div 
+        variants={staggerContainerAnimation}
+        initial="initial"
+        animate="animate"
+        className="space-y-6"
+      >
+        {/* 页面标题 */}
+        <MotionWrapper 
+          animation="slideDown"
+          className="flex justify-between items-center mb-6"
+        >
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 flex items-center">
+              <FireOutlined className="mr-2 text-primary-500" /> 仪表盘
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400">
+              欢迎回来，这是您的业务概览
+            </p>
           </div>
-        </FadeIn>
-        
-        {/* 统计卡片 */}
-        <Row gutter={[16, 16]} className="mb-6">
-          <Col xs={24} sm={12} md={6}>
-            <StatsCard
-              title="总用户数"
-              value={15840}
-              icon={<UserOutlined />}
-              color="primary"
-              trend={{ value: 4.25, isUpward: true, text: '本月' }}
-              duration={1.2}
-            />
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <StatsCard
-              title="总订单数"
-              value={3628}
-              icon={<ShoppingCartOutlined />}
-              color="success"
-              trend={{ value: 6.8, isUpward: true, text: '本月' }}
-              duration={1.2}
-            />
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <StatsCard
-              title="总收入"
-              value={128650}
-              prefix="¥"
-              icon={<DollarOutlined />}
-              color="warning"
-              trend={{ value: 2.5, isUpward: false, text: '本周' }}
-              duration={1.2}
-            />
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <StatsCard
-              title="总商品数"
-              value={1268}
-              icon={<ShoppingOutlined />}
-              color="default"
-              trend={{ value: 12, isUpward: true, text: '本月' }}
-              duration={1.2}
-            />
-          </Col>
-        </Row>
-        
-        {/* 图表组件 */}
-        <FadeIn staggerChildren={0.15}>
+          <DatePicker.RangePicker 
+            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200 dark:border-gray-700"
+          />
+        </MotionWrapper>
+
+        {/* 数据卡片区域 */}
+        <MotionWrapper staggerChildren={true} staggerDelay={0.1}>
           <Row gutter={[16, 16]}>
-            {/* 销售趋势图表 */}
+            {statCards.map(renderStatCard)}
+          </Row>
+        </MotionWrapper>
+
+        {/* 图表区域 */}
+        <MotionWrapper animation="fade" delay={0.2}>
+          <Row gutter={[16, 16]}>
             <Col xs={24} lg={16}>
-              <FadeInItem>
-                <Card 
-                  title={
-                    <div className="flex justify-between items-center">
-                      <span>销售趋势</span>
-                      <div className="flex items-center space-x-2">
-                        <Select 
-                          defaultValue="monthly" 
-                          style={{ width: 100 }}
-                          options={[
-                            { value: 'weekly', label: '按周' },
-                            { value: 'monthly', label: '按月' },
-                            { value: 'quarterly', label: '按季度' },
-                          ]}
-                          onChange={setTimeRange}
-                          size="small"
-                        />
-                        <Segmented
-                          options={[
-                            { value: 'line', label: '折线图' },
-                            { value: 'area', label: '面积图' },
-                            { value: 'bar', label: '柱状图' }
-                          ]}
-                          value={chartView}
-                          onChange={setChartView}
-                          size="small"
-                        />
-                      </div>
-                    </div>
-                  } 
-                  className="mb-6 overflow-visible"
-                  shadow="sm"
-                >
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AnimatePresence mode="wait">
-                        <motion.div
-                          key={chartView.toString()}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ duration: 0.3 }}
-                          className="w-full h-full"
-                        >
-                          {renderSalesChart()}
-                        </motion.div>
-                      </AnimatePresence>
-                    </ResponsiveContainer>
-                  </div>
-                </Card>
-              </FadeInItem>
-              
-              {/* 用户增长图表 */}
-              <FadeInItem>
-                <Card 
-                  title="用户增长" 
-                  className="mb-6"
-                  shadow="sm"
-                >
-                  <div className="mb-3 flex flex-wrap gap-2">
-                    <Tag color="blue" rounded="full">新增用户: +320</Tag>
-                    <Tag color="green" rounded="full">转化率: 32%</Tag>
-                    <Tag color="purple" rounded="full" variant="light">环比: +5.4%</Tag>
-                  </div>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={userGrowthData}
-                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-                        barSize={20}
-                      >
-                        <defs>
-                          <linearGradient id="colorNewUser" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.5}/>
-                          </linearGradient>
-                          <linearGradient id="colorActiveUser" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#9333ea" stopOpacity={0.8}/>
-                            <stop offset="95%" stopColor="#9333ea" stopOpacity={0.5}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                        <XAxis 
-                          dataKey="day" 
-                          tick={{ fill: chartColors.text }}
-                        />
-                        <YAxis 
-                          tick={{ fill: chartColors.text }}
-                        />
-                        <Tooltip
-                          contentStyle={{ 
-                            backgroundColor: chartColors.tooltip,
-                            border: `1px solid ${chartColors.grid}`
-                          }}
-                        />
-                        <Legend />
-                        <Bar 
-                          dataKey="新用户" 
-                          fill="url(#colorNewUser)" 
-                          radius={[4, 4, 0, 0]}
-                          animationDuration={1200}
-                        />
-                        <Bar 
-                          dataKey="活跃用户" 
-                          fill="url(#colorActiveUser)" 
-                          radius={[4, 4, 0, 0]}
-                          animationDuration={1200}
-                          animationBegin={300}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </Card>
-              </FadeInItem>
-              
-              {/* 最近订单 */}
-              <FadeInItem>
-                <Card 
-                  title={
-                    <div className="flex justify-between items-center">
-                      <span>最近订单</span>
-                      <Button type="link" size="small">查看全部</Button>
-                    </div>
-                  }
-                  className="mb-6 overflow-visible"
-                  shadow="sm"
-                >
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                      <thead>
-                        <tr>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">订单号</th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">客户</th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">金额</th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">状态</th>
-                          <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">时间</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {recentOrders.map((order, index) => (
-                          <motion.tr 
-                            key={order.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className={clsx(
-                              'hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
-                              index % 2 === 0 ? 'bg-white dark:bg-gray-800/20' : 'bg-gray-50/50 dark:bg-gray-800/10'
-                            )}
-                          >
-                            <td className="px-3 py-3 text-sm font-medium text-gray-900 dark:text-gray-200">{order.id}</td>
-                            <td className="px-3 py-3 text-sm text-gray-700 dark:text-gray-300">{order.customer}</td>
-                            <td className="px-3 py-3 text-sm text-gray-700 dark:text-gray-300">¥{order.amount.toLocaleString()}</td>
-                            <td className="px-3 py-3 text-sm">{getStatusComponent(order.status)}</td>
-                            <td className="px-3 py-3 text-sm text-gray-500 dark:text-gray-400">{order.time}</td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </Card>
-              </FadeInItem>
+              <Card
+                title="销售趋势"
+                glass
+                extra={
+                  <Button 
+                    variant="glass" 
+                    size="sm"
+                  >
+                    查看详情
+                  </Button>
+                }
+                className="h-full"
+              >
+                <div className="h-80">
+                  <Line {...salesConfig} />
+                </div>
+              </Card>
             </Col>
-            
-            {/* 侧边图表 */}
+
             <Col xs={24} lg={8}>
-              {/* 订单状态图表 */}
-              <FadeInItem>
-                <Card 
-                  title="订单状态" 
-                  className="mb-6"
-                  shadow="sm"
-                >
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={orderStatusData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          innerRadius={60}
-                          outerRadius={80}
-                          dataKey="value"
-                          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                          animationDuration={1500}
-                          animationBegin={300}
-                        >
-                          {orderStatusData.map((entry, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={entry.color} 
-                              className="hover:opacity-80 transition-opacity cursor-pointer"
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          contentStyle={{ 
-                            backgroundColor: chartColors.tooltip,
-                            border: `1px solid ${chartColors.grid}`
-                          }}
-                          formatter={(value, name) => [`${value} 个订单`, name]}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {orderStatusData.map((item) => (
-                      <div 
-                        key={item.name}
-                        className="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                      >
-                        <div className="flex items-center">
-                          <div 
-                            className="w-3 h-3 rounded-full mr-2" 
-                            style={{ backgroundColor: item.color }}
-                          ></div>
-                          <span className="text-sm text-gray-600 dark:text-gray-300">{item.name}</span>
-                        </div>
-                        <span className="text-sm font-medium">{item.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              </FadeInItem>
-              
-              {/* 产品类别图表 */}
-              <FadeInItem>
-                <Card 
-                  title="产品类别销量" 
-                  className="mb-6"
-                  shadow="sm"
-                >
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        layout="vertical"
-                        data={categoryData}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                      >
-                        <defs>
-                          {categoryData.map((entry, index) => (
-                            <linearGradient 
-                              key={`gradient-${index}`}
-                              id={`colorCategory${index}`} 
-                              x1="0" 
-                              y1="0" 
-                              x2="1" 
-                              y2="0"
-                            >
-                              <stop 
-                                offset="5%" 
-                                stopColor={
-                                  index % 3 === 0 ? '#3b82f6' : 
-                                  index % 3 === 1 ? '#22c55e' : '#f59e0b'
-                                }
-                                stopOpacity={0.8}
-                              />
-                              <stop 
-                                offset="95%" 
-                                stopColor={
-                                  index % 3 === 0 ? '#3b82f6' : 
-                                  index % 3 === 1 ? '#22c55e' : '#f59e0b'
-                                }
-                                stopOpacity={0.5}
-                              />
-                            </linearGradient>
-                          ))}
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                        <XAxis 
-                          type="number" 
-                          tick={{ fill: chartColors.text }}
-                        />
-                        <YAxis 
-                          dataKey="name" 
-                          type="category" 
-                          tick={{ fill: chartColors.text }}
-                          width={80}
-                        />
-                        <Tooltip
-                          contentStyle={{ 
-                            backgroundColor: chartColors.tooltip,
-                            border: `1px solid ${chartColors.grid}`
-                          }}
-                        />
-                        <Bar dataKey="销量" radius={[0, 4, 4, 0]}>
-                          {categoryData.map((entry, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={`url(#colorCategory${index})`}
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </Card>
-              </FadeInItem>
-              
-              {/* 区域销售分析 */}
-              <FadeInItem>
-                <Card 
-                  title="区域销售分析" 
-                  className="mb-6"
-                  shadow="sm"
-                >
-                  <div className="h-60">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RadialBarChart 
-                        cx="50%" 
-                        cy="50%" 
-                        innerRadius="20%" 
-                        outerRadius="90%" 
-                        barSize={15} 
-                        data={regionData}
-                      >
-                        <RadialBar
-                          background
-                          dataKey="value"
-                          cornerRadius={15}
-                          fill="#3b82f6"
-                          animationDuration={1500}
-                          label={{ position: 'insideStart', fill: '#fff', fontWeight: 'bold', fontSize: 12 }}
-                        >
-                          {regionData.map((entry, index) => (
-                            <Cell 
-                              key={`cell-${index}`} 
-                              fill={
-                                index === 0 ? '#3b82f6' : 
-                                index === 1 ? '#f59e0b' : 
-                                index === 2 ? '#22c55e' : '#9333ea'
-                              } 
-                            />
-                          ))}
-                        </RadialBar>
-                        <Legend 
-                          iconSize={10} 
-                          iconType="circle"
-                          layout="vertical" 
-                          verticalAlign="middle" 
-                          align="right"
-                        />
-                        <Tooltip
-                          contentStyle={{ 
-                            backgroundColor: chartColors.tooltip,
-                            border: `1px solid ${chartColors.grid}`
-                          }}
-                          formatter={(value) => [`${value}%`, '占比']}
-                        />
-                      </RadialBarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </Card>
-              </FadeInItem>
+              <Card
+                title="销售品类分布"
+                glass
+                className="h-full"
+              >
+                <div className="h-80">
+                  <Bar {...categoryConfig} />
+                </div>
+              </Card>
             </Col>
           </Row>
-        </FadeIn>
-      </div>
-    </PageTransition>
+        </MotionWrapper>
+
+        {/* 数据表格和环形图 */}
+        <MotionWrapper animation="fade" delay={0.3}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} lg={16}>
+              <Card
+                title="最近订单"
+                glass
+                extra={
+                  <Button 
+                    variant="glass" 
+                    size="sm"
+                  >
+                    查看全部
+                  </Button>
+                }
+              >
+                <Table 
+                  columns={orderColumns}
+                  dataSource={orderData}
+                  pagination={false}
+                  className="custom-table"
+                />
+              </Card>
+            </Col>
+
+            <Col xs={24} lg={8}>
+              <Card
+                title="流量来源"
+                glass
+                className="h-full"
+              >
+                <div className="h-80 flex items-center justify-center">
+                  <Pie {...trafficConfig} />
+                </div>
+              </Card>
+            </Col>
+          </Row>
+        </MotionWrapper>
+      </motion.div>
+    </div>
   )
 }
 

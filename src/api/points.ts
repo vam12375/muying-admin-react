@@ -10,7 +10,19 @@ import request from '@/utils/request';
  */
 export const getPointsHistoryList = (params: any) => {
   return request({
-    url: '/points/history',
+    url: '/admin/points/history/list',
+    method: 'get',
+    params
+  });
+};
+
+/**
+ * 获取积分操作日志列表
+ * @param params 查询参数
+ */
+export const getPointsOperationLogs = (params: any) => {
+  return request({
+    url: '/admin/points/operation/list',
     method: 'get',
     params
   });
@@ -22,7 +34,7 @@ export const getPointsHistoryList = (params: any) => {
  */
 export const getUserPointsList = (params: any) => {
   return request({
-    url: '/points/users',
+    url: '/admin/points/user/list',
     method: 'get',
     params
   });
@@ -34,7 +46,7 @@ export const getUserPointsList = (params: any) => {
  */
 export const getUserPointsDetail = (userId: number | string) => {
   return request({
-    url: `/points/users/${userId}`,
+    url: `/admin/points/user/${userId}`,
     method: 'get'
   });
 };
@@ -46,9 +58,12 @@ export const getUserPointsDetail = (userId: number | string) => {
  */
 export const adjustUserPoints = (userId: number | string, data: any) => {
   return request({
-    url: `/points/users/${userId}/adjust`,
+    url: `/admin/points/user/${userId}/adjust`,
     method: 'post',
-    data
+    params: {
+      points: data.type === 'increase' ? data.points : -data.points,
+      description: data.reason
+    }
   });
 };
 
@@ -58,7 +73,7 @@ export const adjustUserPoints = (userId: number | string, data: any) => {
  */
 export const getPointsRuleList = (params: any) => {
   return request({
-    url: '/points/rules',
+    url: '/admin/points/rule/list',
     method: 'get',
     params
   });
@@ -70,7 +85,7 @@ export const getPointsRuleList = (params: any) => {
  */
 export const createPointsRule = (data: any) => {
   return request({
-    url: '/points/rules',
+    url: '/admin/points/rule',
     method: 'post',
     data
   });
@@ -83,7 +98,7 @@ export const createPointsRule = (data: any) => {
  */
 export const updatePointsRule = (id: number | string, data: any) => {
   return request({
-    url: `/points/rules/${id}`,
+    url: `/admin/points/rule/${id}`,
     method: 'put',
     data
   });
@@ -95,7 +110,7 @@ export const updatePointsRule = (id: number | string, data: any) => {
  */
 export const deletePointsRule = (id: number | string) => {
   return request({
-    url: `/points/rules/${id}`,
+    url: `/admin/points/rule/${id}`,
     method: 'delete'
   });
 };
@@ -106,7 +121,7 @@ export const deletePointsRule = (id: number | string) => {
  */
 export const getPointsProductList = (params: any) => {
   return request({
-    url: '/points/products',
+    url: '/admin/points/product/list',
     method: 'get',
     params
   });
@@ -118,7 +133,7 @@ export const getPointsProductList = (params: any) => {
  */
 export const getPointsProductDetail = (id: number | string) => {
   return request({
-    url: `/points/products/${id}`,
+    url: `/admin/points/product/${id}`,
     method: 'get'
   });
 };
@@ -129,7 +144,7 @@ export const getPointsProductDetail = (id: number | string) => {
  */
 export const createPointsProduct = (data: any) => {
   return request({
-    url: '/points/products',
+    url: '/admin/points/product',
     method: 'post',
     data
   });
@@ -142,9 +157,22 @@ export const createPointsProduct = (data: any) => {
  */
 export const updatePointsProduct = (id: number | string, data: any) => {
   return request({
-    url: `/points/products/${id}`,
+    url: `/admin/points/product/${id}`,
     method: 'put',
     data
+  });
+};
+
+/**
+ * 更新积分商品状态
+ * @param id 商品ID
+ * @param status 状态值
+ */
+export const updatePointsProductStatus = (id: number | string, status: string) => {
+  return request({
+    url: `/admin/points/product/${id}/status`,
+    method: 'put',
+    params: { status }
   });
 };
 
@@ -154,7 +182,44 @@ export const updatePointsProduct = (id: number | string, data: any) => {
  */
 export const deletePointsProduct = (id: number | string) => {
   return request({
-    url: `/points/products/${id}`,
+    url: `/admin/points/product/${id}`,
     method: 'delete'
+  });
+};
+
+/**
+ * 获取积分兑换记录列表
+ * @param params 查询参数
+ */
+export const getPointsExchangeList = (params: any) => {
+  return request({
+    url: '/admin/points/exchange/list',
+    method: 'get',
+    params
+  });
+};
+
+/**
+ * 更新积分兑换状态
+ * @param id 兑换记录ID
+ * @param status 状态
+ */
+export const updateExchangeStatus = (id: number | string, status: string) => {
+  return request({
+    url: `/admin/points/exchange/${id}/status`,
+    method: 'put',
+    params: { status }
+  });
+};
+
+/**
+ * 获取积分统计数据
+ * @param params 查询参数
+ */
+export const getPointsStats = (params: any) => {
+  return request({
+    url: '/admin/points/stats',
+    method: 'get',
+    params
   });
 }; 

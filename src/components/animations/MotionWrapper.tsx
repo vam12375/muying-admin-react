@@ -1,219 +1,167 @@
-import * as React from "react";
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import type { HTMLMotionProps } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import {
-  HTMLMotionProps,
-  motion,
-  Variant,
-  AnimatePresence,
-  Transition,
-} from "framer-motion";
-import { cn } from "@/lib/utils";
+  fadeAnimation,
+  slideUpAnimation,
+  slideDownAnimation,
+  slideRightAnimation,
+  slideLeftAnimation,
+  scaleAnimation,
+  bounceAnimation,
+  glassCardAnimation
+} from './MotionVariants';
 
-// Animation types
-export type AnimationType = 
-  | "fade" 
-  | "slideUp" 
-  | "slideDown" 
-  | "slideLeft" 
-  | "slideRight" 
-  | "scale" 
-  | "blur" 
-  | "rotate";
+type AnimationVariant = 
+  | 'fade' 
+  | 'slideUp' 
+  | 'slideDown' 
+  | 'slideLeft' 
+  | 'slideRight' 
+  | 'scale' 
+  | 'bounce'
+  | 'glass';
 
-// Animation variants
-const ANIMATION_VARIANTS: Record<AnimationType, { initial: Variant; animate: Variant; exit?: Variant }> = {
-  fade: {
-    initial: { opacity: 0 },
-    animate: { opacity: 1 },
-    exit: { opacity: 0 },
-  },
-  slideUp: {
-    initial: { y: 50, opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    exit: { y: -50, opacity: 0 },
-  },
-  slideDown: {
-    initial: { y: -50, opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    exit: { y: 50, opacity: 0 },
-  },
-  slideLeft: {
-    initial: { x: 50, opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: -50, opacity: 0 },
-  },
-  slideRight: {
-    initial: { x: -50, opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: 50, opacity: 0 },
-  },
-  scale: {
-    initial: { scale: 0.8, opacity: 0 },
-    animate: { scale: 1, opacity: 1 },
-    exit: { scale: 0.8, opacity: 0 },
-  },
-  blur: {
-    initial: { filter: "blur(8px)", opacity: 0 },
-    animate: { filter: "blur(0px)", opacity: 1 },
-    exit: { filter: "blur(8px)", opacity: 0 },
-  },
-  rotate: {
-    initial: { rotate: -10, opacity: 0 },
-    animate: { rotate: 0, opacity: 1 },
-    exit: { rotate: 10, opacity: 0 },
-  },
-};
-
-// Default transition
-const DEFAULT_TRANSITION: Transition = {
-  type: "spring",
-  stiffness: 300,
-  damping: 30,
-  duration: 0.3,
-};
-
-export interface MotionWrapperProps extends Omit<HTMLMotionProps<"div">, "initial" | "animate" | "exit" | "transition"> {
-  /**
-   * The type of animation to apply
-   * @default "fade"
-   */
-  animation?: AnimationType;
-  
-  /**
-   * Custom transition properties
-   */
-  customTransition?: Transition;
-  
-  /**
-   * Whether to animate on mount
-   * @default true
-   */
-  animateOnMount?: boolean;
-  
-  /**
-   * Whether to animate when the component is removed
-   * @default true
-   */
-  animateOnExit?: boolean;
-  
-  /**
-   * Delay before animation starts (in seconds)
-   * @default 0
-   */
-  delay?: number;
-  
-  /**
-   * Whether to animate when in view
-   * @default false
-   */
-  animateWhenInView?: boolean;
-  
-  /**
-   * Amount of element that needs to be in view before animating (0-1)
-   * @default 0.1
-   */
-  viewportAmount?: number;
-  
-  /**
-   * Whether to animate only once when in view
-   * @default true
-   */
-  viewportOnce?: boolean;
-  
-  /**
-   * Children to animate
-   */
+interface MotionWrapperProps {
   children: React.ReactNode;
+  animation?: AnimationVariant;
+  delay?: number;
+  duration?: number;
+  className?: string;
+  once?: boolean;
+  threshold?: number;
+  staggerChildren?: boolean;
+  staggerDelay?: number;
+  custom?: any;
+  style?: React.CSSProperties;
+  responsive?: boolean;
+  mobileAnimation?: AnimationVariant;
 }
 
 /**
  * 动画包装组件
- * 用于给子组件添加各种入场动画效果
+ * 为子元素提供预设的动画效果
+ * 支持响应式动画和查看阈值控制
  */
-const MotionWrapper = ({
-  animation = "fade",
-  customTransition,
-  animateOnMount = true,
-  animateOnExit = true,
-  delay = 0,
-  animateWhenInView = false,
-  viewportAmount = 0.1,
-  viewportOnce = true,
+const MotionWrapper: React.FC<MotionWrapperProps> = ({
   children,
+  animation = 'fade',
+  mobileAnimation,
+  delay = 0,
+  duration,
+  once = true,
+  threshold = 0.1,
   className,
-  ...props
-}: MotionWrapperProps) => {
-  const [isVisible, setIsVisible] = React.useState(animateOnMount ? false : true);
-  const [key, setKey] = React.useState(0);
+  staggerChildren = false,
+  staggerDelay = 0.1,
+  custom,
+  style,
+  responsive = false,
+}) => {
+  const [isMobile, setIsMobile] = useState(false);
+  const [currentAnimation, setCurrentAnimation] = useState<AnimationVariant>(animation);
   
-  const variants = ANIMATION_VARIANTS[animation];
-  const transition = { ...DEFAULT_TRANSITION, delay, ...customTransition };
-  
-  React.useEffect(() => {
-    if (animateOnMount) {
-      setIsVisible(true);
+  // 检测设备类型
+  useEffect(() => {
+    if (!responsive) return;
+    
+    const checkDevice = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      
+      // 如果提供了移动端动画且当前是移动设备，使用移动端动画
+      if (mobileAnimation && mobile) {
+        setCurrentAnimation(mobileAnimation);
+      } else {
+        setCurrentAnimation(animation);
+      }
+    };
+    
+    // 初始检查
+    checkDevice();
+    
+    // 监听窗口变化
+    window.addEventListener('resize', checkDevice);
+    
+    return () => {
+      window.removeEventListener('resize', checkDevice);
+    };
+  }, [responsive, mobileAnimation, animation]);
+
+  // 根据动画类型选择变体
+  const getVariants = () => {
+    switch (currentAnimation) {
+      case 'fade':
+        return fadeAnimation;
+      case 'slideUp':
+        return slideUpAnimation;
+      case 'slideDown':
+        return slideDownAnimation;
+      case 'slideLeft':
+        return slideLeftAnimation;
+      case 'slideRight':
+        return slideRightAnimation;
+      case 'scale':
+        return scaleAnimation;
+      case 'bounce':
+        return bounceAnimation;
+      case 'glass':
+        return glassCardAnimation;
+      default:
+        return fadeAnimation;
     }
-  }, [animateOnMount]);
-  
-  // Force re-animation when animation type changes
-  React.useEffect(() => {
-    setKey(prev => prev + 1);
-  }, [animation]);
-  
-  const motionProps = {
-    initial: "initial",
-    animate: isVisible ? "animate" : "initial",
-    exit: "exit",
-    variants,
-    transition,
   };
+
+  // 设置动画配置
+  const variants = getVariants();
   
-  if (animateWhenInView) {
-    return (
-      <motion.div
-        key={key}
-        className={cn("", className)}
-        initial="initial"
-        whileInView="animate"
-        viewport={{ 
-          once: viewportOnce,
-          amount: viewportAmount 
-        }}
-        variants={variants}
-        transition={transition}
-        {...props}
-      >
-        {children}
-      </motion.div>
-    );
-  }
-  
-  if (animateOnExit) {
-    return (
-      <AnimatePresence mode="wait">
-        {isVisible && (
-          <motion.div
-            key={key}
-            className={cn("", className)}
-            {...motionProps}
-            {...props}
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    );
-  }
-  
+  // 自定义过渡设置
+  const customTransition = duration ? { 
+    transition: { 
+      duration,
+      delay
+    } 
+  } : { 
+    transition: { 
+      delay 
+    } 
+  };
+
+  // 子元素动画编排设置
+  const staggerConfig = staggerChildren ? {
+    animate: {
+      transition: {
+        staggerChildren: staggerDelay,
+        delayChildren: delay
+      }
+    }
+  } : {};
+
+  // 组合动画属性
+  const motionProps: HTMLMotionProps<"div"> = {
+    initial: "initial",
+    animate: "animate",
+    exit: "exit",
+    variants: variants,
+    custom: custom,
+    viewport: once ? { 
+      once: true, 
+      margin: "0px 0px -100px 0px",
+      amount: threshold
+    } : undefined,
+    whileInView: once ? "animate" : undefined,
+    className: cn(className),
+    style: style,
+    ...customTransition,
+    ...staggerConfig
+  };
+
   return (
-    <motion.div
-      key={key}
-      className={cn("", className)}
-      {...motionProps}
-      {...props}
-    >
+    <motion.div {...motionProps}>
       {children}
     </motion.div>
   );
-}
+};
 
 export default MotionWrapper; 

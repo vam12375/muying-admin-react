@@ -1,11 +1,10 @@
 import React, { useState } from 'react'
-import { Layout, Dropdown, Avatar, Badge, Button, Tooltip } from 'antd'
+import { Dropdown, Badge, Button, Tooltip, Avatar, Input } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   UserOutlined,
-  BellOutlined,
   SearchOutlined,
   SettingOutlined,
   LogoutOutlined,
@@ -13,9 +12,10 @@ import {
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useTheme } from '@/theme/useTheme'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import MotionWrapper from '@/components/animations/MotionWrapper'
+import MessageCenter from '@/components/MessageCenter'
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -25,7 +25,6 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ collapsed, toggle }) => {
-  const { Header } = Layout
   const navigate = useNavigate()
   const { isDark, toggleTheme } = useTheme()
   const [searchVisible, setSearchVisible] = useState(false)
@@ -59,87 +58,67 @@ const Header: React.FC<HeaderProps> = ({ collapsed, toggle }) => {
     }
   ]
 
-  const notificationItems: MenuItem[] = [
-    {
-      key: '1',
-      label: (
-        <div className="py-2">
-          <div className="font-medium">系统通知</div>
-          <div className="text-sm text-gray-500">系统将于今晚22:00进行维护</div>
-        </div>
-      )
-    },
-    {
-      key: '2',
-      label: (
-        <div className="py-2">
-          <div className="font-medium">订单提醒</div>
-          <div className="text-sm text-gray-500">有5个新订单待处理</div>
-        </div>
-      )
-    },
-    {
-      key: '3',
-      label: (
-        <div className="py-2">
-          <div className="font-medium">库存预警</div>
-          <div className="text-sm text-gray-500">3个产品库存不足</div>
-        </div>
-      )
-    },
-    {
-      type: 'divider',
-    },
-    {
-      key: 'all',
-      label: <div className="text-center text-primary-500">查看全部通知</div>
-    }
-  ]
-
   return (
-    <Header className="bg-white dark:bg-gray-800 px-4 flex items-center justify-between shadow-sm transition-all duration-300">
-      <div className="flex items-center">
+    <div className="px-4 h-full flex items-center justify-between">
+      {/* 左侧区域 */}
+      <div className="flex items-center gap-3">
         <MotionWrapper animation="fade" delay={0.1}>
           <Button
             type="text"
             icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
             onClick={toggle}
-            className="mr-4 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:bg-opacity-50 dark:hover:bg-opacity-50 rounded-lg"
+            size="large"
           />
         </MotionWrapper>
         
-        {searchVisible ? (
-          <MotionWrapper animation="slideRight" delay={0}>
-            <div className="relative">
-              <input
-                type="text"
+        <AnimatePresence mode="wait" initial={false}>
+          {searchVisible ? (
+            <motion.div
+              key="search-input"
+              initial={{ opacity: 0, width: 0 }}
+              animate={{ opacity: 1, width: 250 }}
+              exit={{ opacity: 0, width: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="relative"
+            >
+              <Input
                 placeholder="搜索..."
-                className="pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                prefix={<SearchOutlined className="text-gray-400" />}
+                className="rounded-lg bg-white dark:bg-gray-700 backdrop-blur-md bg-opacity-50 dark:bg-opacity-50 border-gray-200 dark:border-gray-600"
                 autoFocus
                 onBlur={() => setSearchVisible(false)}
               />
-              <SearchOutlined className="absolute left-3 top-2.5 text-gray-400" />
-            </div>
-          </MotionWrapper>
-        ) : (
-          <MotionWrapper animation="fade" delay={0.2}>
-            <Button
-              type="text"
-              icon={<SearchOutlined />}
-              onClick={() => setSearchVisible(true)}
-              className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-            />
-          </MotionWrapper>
-        )}
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="search-button"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Button
+                type="text"
+                icon={<SearchOutlined />}
+                onClick={() => setSearchVisible(true)}
+                className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:bg-opacity-50 dark:hover:bg-opacity-50 rounded-lg"
+                size="large"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
-      <div className="flex items-center space-x-3">
+      {/* 右侧区域 */}
+      <div className="flex items-center gap-2">
         <MotionWrapper animation="fade" delay={0.3}>
           <Tooltip title="帮助中心">
             <Button
               type="text"
               icon={<QuestionCircleOutlined />}
-              className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:bg-opacity-50 dark:hover:bg-opacity-50 rounded-lg"
+              size="large"
             />
           </Tooltip>
         </MotionWrapper>
@@ -160,41 +139,46 @@ const Header: React.FC<HeaderProps> = ({ collapsed, toggle }) => {
                 )
               }
               onClick={toggleTheme}
-              className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:bg-opacity-50 dark:hover:bg-opacity-50 rounded-lg"
+              size="large"
             />
           </Tooltip>
         </MotionWrapper>
 
         <MotionWrapper animation="fade" delay={0.5}>
-          <Dropdown
-            menu={{ items: notificationItems }}
-            placement="bottomRight"
-            trigger={['click']}
-            overlayClassName="min-w-[300px]"
-          >
-            <Badge count={3} className="cursor-pointer">
-              <Button
-                type="text"
-                icon={<BellOutlined />}
-                className="text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-              />
-            </Badge>
-          </Dropdown>
+          <MessageCenter />
         </MotionWrapper>
 
+        <div className="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2"></div>
+
         <MotionWrapper animation="fade" delay={0.6}>
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
+          <Dropdown 
+            menu={{ items: userMenuItems }} 
+            placement="bottomRight" 
+            trigger={['click']}
+            arrow={{ pointAtCenter: true }}
+            popupRender={(menu) => (
+              <div className="bg-white dark:bg-gray-800 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden">
+                {React.cloneElement(menu as React.ReactElement)}
+              </div>
+            )}
+          >
             <div className={cn(
-              "flex items-center cursor-pointer px-2 py-1 rounded-lg",
-              "hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              "flex items-center gap-2 cursor-pointer px-2 py-1 rounded-lg",
+              "hover:bg-gray-100 dark:hover:bg-gray-700 hover:bg-opacity-50 dark:hover:bg-opacity-50 transition-colors"
             )}>
-              <Avatar icon={<UserOutlined />} className="bg-primary-500" />
-              <span className="ml-2 text-gray-800 dark:text-gray-200 hidden sm:inline">管理员</span>
+              <Avatar 
+                className="bg-gradient-to-r from-primary-500 to-primary-600 shadow-sm"
+                icon={<UserOutlined />}
+              />
+              <span className="ml-2 text-gray-800 dark:text-gray-200 hidden sm:inline font-medium">
+                管理员
+              </span>
             </div>
           </Dropdown>
         </MotionWrapper>
       </div>
-    </Header>
+    </div>
   )
 }
 

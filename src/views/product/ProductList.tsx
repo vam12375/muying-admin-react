@@ -12,6 +12,14 @@ const { Title } = Typography
 const { Option } = Select
 const { TextArea } = Input
 
+// 安全的 toString 转换函数
+const safeToString = (value: any): string => {
+  if (value === undefined || value === null) {
+    return '';
+  }
+  return String(value);
+};
+
 // 移除模拟数据，使用后端API数据
 
 const ProductList: React.FC = () => {
@@ -29,6 +37,8 @@ const ProductList: React.FC = () => {
   const [currentProduct, setCurrentProduct] = useState<ProductData | null>(null)
   const [brands, setBrands] = useState<BrandData[]>([])
   const [categories, setCategories] = useState<CategoryData[]>([])
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugData, setDebugData] = useState<any>(null);
   
   // 获取商品列表数据
   const fetchProducts = async (page = 1, size = 10, searchParams: any = {}) => {
@@ -45,15 +55,46 @@ const ProductList: React.FC = () => {
         status !== undefined ? Number(status) : undefined
       )
       
+      // 添加调试信息，检查返回的数据结构
+      console.log('API返回的商品数据:', result)
+      console.log('商品列表数据类型:', Array.isArray(result.list) ? '数组' : typeof result.list)
+      console.log('商品列表长度:', result.list ? result.list.length : 0)
+      
+      // 保存调试数据
+      setDebugData(result);
+      
+      // 使用 list 字段，这个字段在 API 层已经被正确映射
       setProducts(result.list || [])
       setPagination({
-        current: result.pageNum,
-        pageSize: result.pageSize,
-        total: result.total
+        current: result.pageNum || result.current || 1,
+        pageSize: result.pageSize || result.size || 10,
+        total: result.total || 0
       })
-    } catch (error) {
-      message.error('获取商品列表失败')
+    } catch (error: any) {
+      // 根据错误类型显示不同的错误信息
+      if (error.response) {
+        const { status } = error.response
+        if (status === 401 || status === 403) {
+          // 认证错误已经在request.ts中处理，这里不需要额外处理
+          message.error('获取商品列表失败：请先登录或检查访问权限')
+        } else if (status === 404) {
+          message.error('获取商品列表失败：接口不存在')
+        } else {
+          message.error(`获取商品列表失败：${error.response.data?.message || '服务器错误'}`)
+        }
+      } else if (error.request) {
+        message.error('获取商品列表失败：服务器无响应，请检查网络连接')
+      } else {
+        message.error(`获取商品列表失败：${error.message || '未知错误'}`)
+      }
       console.error('获取商品列表失败:', error)
+      
+      // 设置空数据，避免显示旧数据
+      setProducts([])
+      setPagination({
+        ...pagination,
+        total: 0
+      })
     } finally {
       setLoading(false)
     }
@@ -62,20 +103,30 @@ const ProductList: React.FC = () => {
   // 获取所有品牌
   const fetchAllBrands = async () => {
     try {
-      const result = await brandApi.getAllBrands()
-      setBrands(result)
-    } catch (error) {
-      console.error('获取品牌列表失败:', error)
+      console.log('开始获取品牌列表');
+      const result = await brandApi.getAllBrands();
+      console.log('品牌列表获取结果:', result);
+      setBrands(result || []);
+    } catch (error: any) {
+      // 品牌数据不是核心功能，可以简化错误处理
+      console.error('获取品牌列表失败:', error);
+      message.error('获取品牌列表失败，将使用空列表');
+      setBrands([]); // 确保在错误情况下设置为空数组
     }
   }
   
   // 获取所有分类
   const fetchAllCategories = async () => {
     try {
-      const result = await categoryApi.getAllCategoriesFlat()
-      setCategories(result)
-    } catch (error) {
-      console.error('获取分类列表失败:', error)
+      console.log('开始获取分类列表');
+      const result = await categoryApi.getAllCategoriesFlat();
+      console.log('分类列表获取结果:', result);
+      setCategories(result || []);
+    } catch (error: any) {
+      // 分类数据不是核心功能，可以简化错误处理
+      console.error('获取分类列表失败:', error);
+      message.error('获取分类列表失败，将使用空列表');
+      setCategories([]); // 确保在错误情况下设置为空数组
     }
   }
   
@@ -125,7 +176,8 @@ const ProductList: React.FC = () => {
   const handleStatusChange = async (id: number, status: number) => {
     try {
       setLoading(true)
-      const newStatus = status === 1 ? 0 : 1
+      // 如果当前是上架状态(1)，则切换为下架(0)，反之亦然
+      const newStatus = status === 1 ? 0 : 1;
       const success = await productApi.updateProductStatus(id, newStatus)
       if (success) {
         message.success(`商品${newStatus === 1 ? '上架' : '下架'}成功`)
@@ -150,7 +202,14 @@ const ProductList: React.FC = () => {
       productForm.setFieldsValue({
         ...product,
         categoryId: product.categoryId?.toString(),
-        brandId: product.brandId?.toString()
+        brandId: product.brandId?.toString(),
+        name: product.productName,
+        image: product.productImg,
+        price: product.priceNew || 0,
+        originalPrice: product.priceOld || 0,
+        description: product.productDetail,
+        stock: product.stock || 0,
+        status: product.productStatus === '上架' ? 1 : 0
       })
       setIsModalVisible(true)
     } catch (error) {
@@ -168,7 +227,14 @@ const ProductList: React.FC = () => {
       productForm.setFieldsValue({
         ...product,
         categoryId: product.categoryId?.toString(),
-        brandId: product.brandId?.toString()
+        brandId: product.brandId?.toString(),
+        name: product.productName,
+        image: product.productImg,
+        price: product.priceNew || 0,
+        originalPrice: product.priceOld || 0,
+        description: product.productDetail,
+        stock: product.stock || 0,
+        status: product.productStatus === '上架' ? 1 : 0
       })
       setIsModalVisible(true)
     } catch (error) {
@@ -194,7 +260,14 @@ const ProductList: React.FC = () => {
       const productData = {
         ...values,
         categoryId: values.categoryId ? Number(values.categoryId) : undefined,
-        brandId: values.brandId ? Number(values.brandId) : undefined
+        brandId: values.brandId ? Number(values.brandId) : undefined,
+        // 映射字段名
+        productName: values.name,
+        productImg: values.image,
+        priceNew: values.price,
+        priceOld: values.originalPrice,
+        productDetail: values.description,
+        productStatus: values.status === 1 ? '上架' : '下架'
       }
       
       let success = false
@@ -232,40 +305,49 @@ const ProductList: React.FC = () => {
       title: 'ID',
       dataIndex: 'productId',
       key: 'productId',
-      width: 80
+      width: 60
     },
     {
       title: '图片',
-      dataIndex: 'image',
+      dataIndex: 'productImg',
       key: 'image',
       width: 100,
-      render: (image) => (
-        <Image
-          src={image || 'https://via.placeholder.com/60'}
-          alt="商品图片"
-          width={60}
-          height={60}
-          style={{ objectFit: 'cover' }}
-          fallback="https://via.placeholder.com/60?text=No+Image"
-        />
-      )
+      render: (image, record) => {
+        // 构建完整的图片URL
+        const imageUrl = image 
+          ? (image.startsWith('http') ? image : `http://localhost:5173/products/${image}`)
+          : 'https://via.placeholder.com/60?text=No+Image';
+          
+        return (
+          <Image
+            src={imageUrl}
+            alt="商品图片"
+            width={60}
+            height={60}
+            style={{ objectFit: 'cover' }}
+            fallback="https://via.placeholder.com/60?text=No+Image"
+          />
+        );
+      }
     },
     {
       title: '商品名称',
-      dataIndex: 'name',
+      dataIndex: 'productName',
       key: 'name',
-      ellipsis: true
+      ellipsis: true,
+      width: 200
     },
     {
       title: '价格',
-      dataIndex: 'price',
+      dataIndex: 'priceNew',
       key: 'price',
+      width: 100,
       render: (price, record) => (
         <>
-          <div>¥{price.toFixed(2)}</div>
-          {record.originalPrice && (
+          <div>¥{price !== undefined && price !== null ? price.toFixed(2) : '0.00'}</div>
+          {record.priceOld && (
             <div style={{ textDecoration: 'line-through', color: '#999' }}>
-              ¥{record.originalPrice.toFixed(2)}
+              ¥{typeof record.priceOld === 'number' ? record.priceOld.toFixed(2) : '0.00'}
             </div>
           )}
         </>
@@ -274,39 +356,48 @@ const ProductList: React.FC = () => {
     {
       title: '分类',
       dataIndex: 'categoryName',
-      key: 'categoryName'
+      key: 'categoryName',
+      width: 100
     },
     {
       title: '品牌',
       dataIndex: 'brandName',
-      key: 'brandName'
+      key: 'brandName',
+      width: 100
     },
     {
       title: '库存',
       dataIndex: 'stock',
-      key: 'stock'
+      key: 'stock',
+      width: 80
     },
     {
       title: '状态',
-      dataIndex: 'status',
+      dataIndex: 'productStatus',
       key: 'status',
-      render: (status) => (
-        <Tag color={status === 1 ? 'green' : 'red'}>
-          {status === 1 ? '在售' : '下架'}
-        </Tag>
-      )
+      width: 80,
+      render: (status) => {
+        // 根据状态文本显示不同颜色的标签
+        return (
+          <Tag color={status === '上架' ? 'green' : 'red'}>
+            {status}
+          </Tag>
+        );
+      }
     },
     {
       title: '创建时间',
       dataIndex: 'createTime',
       key: 'createTime',
+      width: 120,
       render: (time) => time ? time.substring(0, 10) : ''
     },
     {
       title: '操作',
       key: 'action',
+      width: 240,
       render: (_, record) => (
-        <Space size="middle">
+        <Space size="small" wrap>
           <Button 
             size="small" 
             icon={<EyeOutlined />}
@@ -337,11 +428,11 @@ const ProductList: React.FC = () => {
             </Button>
           </Popconfirm>
           <Button
-            type={record.status === 1 ? 'default' : 'primary'}
+            type={record.productStatus === '上架' ? 'default' : 'primary'}
             size="small"
-            onClick={() => handleStatusChange(record.productId, record.status)}
+            onClick={() => handleStatusChange(record.productId, record.productStatus === '上架' ? 1 : 0)}
           >
-            {record.status === 1 ? '下架' : '上架'}
+            {record.productStatus === '上架' ? '下架' : '上架'}
           </Button>
         </Space>
       )
@@ -390,10 +481,12 @@ const ProductList: React.FC = () => {
               style={{ width: 150 }}
               allowClear
             >
-              {categories.map(category => (
-                <Option key={category.categoryId} value={category.categoryId.toString()}>
-                  {category.name}
-                </Option>
+              {(categories || []).map(category => (
+                category && category.categoryId ? (
+                  <Option key={category.categoryId} value={safeToString(category.categoryId)}>
+                    {category.name || '未命名分类'}
+                  </Option>
+                ) : null
               ))}
             </Select>
           </Form.Item>
@@ -424,6 +517,13 @@ const ProductList: React.FC = () => {
               添加商品
             </Button>
           </Form.Item>
+          
+          {/* 添加调试按钮 */}
+          <Form.Item>
+            <Button onClick={() => setShowDebug(!showDebug)}>
+              {showDebug ? '隐藏调试' : '显示调试'}
+            </Button>
+          </Form.Item>
         </Form>
         
         <Table<ProductData>
@@ -437,7 +537,32 @@ const ProductList: React.FC = () => {
             showTotal: (total) => `共 ${total} 条记录`
           }}
           onChange={handleTableChange}
+          scroll={{ x: 1300 }}
+          bordered
         />
+        
+        {/* 调试面板 */}
+        {showDebug && debugData && (
+          <div style={{ marginTop: 16, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
+            <h3>调试信息</h3>
+            <div>
+              <h4>原始数据结构:</h4>
+              <pre style={{ maxHeight: 300, overflow: 'auto' }}>
+                {JSON.stringify(debugData, null, 2)}
+              </pre>
+            </div>
+            {debugData.list && debugData.list.length > 0 && (
+              <div>
+                <h4>第一条记录字段:</h4>
+                <pre>{JSON.stringify(Object.keys(debugData.list[0]), null, 2)}</pre>
+                <h4>第一条记录内容:</h4>
+                <pre style={{ maxHeight: 300, overflow: 'auto' }}>
+                  {JSON.stringify(debugData.list[0], null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
       </Card>
       
       {/* 商品表单模态框 */}
@@ -528,10 +653,12 @@ const ProductList: React.FC = () => {
               style={{ width: '50%' }}
             >
               <Select placeholder="请选择商品分类">
-                {categories.map(category => (
-                  <Option key={category.categoryId} value={category.categoryId.toString()}>
-                    {category.name}
-                  </Option>
+                {(categories || []).map(category => (
+                  category && category.categoryId ? (
+                    <Option key={category.categoryId} value={safeToString(category.categoryId)}>
+                      {category.name || '未命名分类'}
+                    </Option>
+                  ) : null
                 ))}
               </Select>
             </Form.Item>
@@ -543,10 +670,12 @@ const ProductList: React.FC = () => {
               style={{ width: '50%' }}
             >
               <Select placeholder="请选择商品品牌">
-                {brands.map(brand => (
-                  <Option key={brand.brandId} value={brand.brandId.toString()}>
-                    {brand.name}
-                  </Option>
+                {(brands || []).map(brand => (
+                  brand && brand.brandId ? (
+                    <Option key={brand.brandId} value={safeToString(brand.brandId)}>
+                      {brand.name || '未命名品牌'}
+                    </Option>
+                  ) : null
                 ))}
               </Select>
             </Form.Item>

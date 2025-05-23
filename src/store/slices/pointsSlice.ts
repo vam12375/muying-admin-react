@@ -4,16 +4,22 @@ import {
   getUserPointsList, 
   getPointsRuleList, 
   getPointsProductList,
-  getPointsProductDetail 
+  getPointsProductDetail,
+  getPointsOperationLogs,
+  getPointsExchangeList,
+  getPointsStats
 } from '@/api/points';
 
 // 定义积分状态类型
 interface PointsState {
   historyList: any[];
+  operationList: any[];
   userPointsList: any[];
   ruleList: any[];
   productList: any[];
+  exchangeList: any[];
   productDetail: any | null;
+  statsData: any | null;
   pagination: {
     current: number;
     pageSize: number;
@@ -26,10 +32,13 @@ interface PointsState {
 // 初始状态
 const initialState: PointsState = {
   historyList: [],
+  operationList: [],
   userPointsList: [],
   ruleList: [],
   productList: [],
+  exchangeList: [],
   productDetail: null,
+  statsData: null,
   pagination: {
     current: 1,
     pageSize: 10,
@@ -48,6 +57,19 @@ export const fetchPointsHistoryList = createAsyncThunk(
       return response;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch points history list');
+    }
+  }
+);
+
+// 异步Action: 获取积分操作日志列表
+export const fetchPointsOperationLogs = createAsyncThunk(
+  'points/fetchPointsOperationLogs',
+  async (params: any, { rejectWithValue }) => {
+    try {
+      const response = await getPointsOperationLogs(params);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch points operation logs');
     }
   }
 );
@@ -104,6 +126,32 @@ export const fetchPointsProductDetail = createAsyncThunk(
   }
 );
 
+// 异步Action: 获取积分兑换记录列表
+export const fetchPointsExchangeList = createAsyncThunk(
+  'points/fetchPointsExchangeList',
+  async (params: any, { rejectWithValue }) => {
+    try {
+      const response = await getPointsExchangeList(params);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch points exchange list');
+    }
+  }
+);
+
+// 异步Action: 获取积分统计数据
+export const fetchPointsStats = createAsyncThunk(
+  'points/fetchPointsStats',
+  async (params: any, { rejectWithValue }) => {
+    try {
+      const response = await getPointsStats(params);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch points stats');
+    }
+  }
+);
+
 // 创建Slice
 const pointsSlice = createSlice({
   name: 'points',
@@ -116,6 +164,10 @@ const pointsSlice = createSlice({
     // 清除积分商品详情
     clearPointsProductDetail: (state) => {
       state.productDetail = null;
+    },
+    // 清除积分统计数据
+    clearPointsStats: (state) => {
+      state.statsData = null;
     }
   },
   extraReducers: (builder) => {
@@ -126,10 +178,25 @@ const pointsSlice = createSlice({
     });
     builder.addCase(fetchPointsHistoryList.fulfilled, (state, action) => {
       state.loading = false;
-      state.historyList = action.payload.data.list || [];
+      state.historyList = action.payload.data.records || [];
       state.pagination.total = action.payload.data.total || 0;
     });
     builder.addCase(fetchPointsHistoryList.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // 处理获取积分操作日志列表
+    builder.addCase(fetchPointsOperationLogs.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchPointsOperationLogs.fulfilled, (state, action) => {
+      state.loading = false;
+      state.operationList = action.payload.data.records || [];
+      state.pagination.total = action.payload.data.total || 0;
+    });
+    builder.addCase(fetchPointsOperationLogs.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
     });
@@ -141,7 +208,7 @@ const pointsSlice = createSlice({
     });
     builder.addCase(fetchUserPointsList.fulfilled, (state, action) => {
       state.loading = false;
-      state.userPointsList = action.payload.data.list || [];
+      state.userPointsList = action.payload.data.records || [];
       state.pagination.total = action.payload.data.total || 0;
     });
     builder.addCase(fetchUserPointsList.rejected, (state, action) => {
@@ -156,7 +223,7 @@ const pointsSlice = createSlice({
     });
     builder.addCase(fetchPointsRuleList.fulfilled, (state, action) => {
       state.loading = false;
-      state.ruleList = action.payload.data.list || [];
+      state.ruleList = action.payload.data.records || [];
     });
     builder.addCase(fetchPointsRuleList.rejected, (state, action) => {
       state.loading = false;
@@ -170,7 +237,7 @@ const pointsSlice = createSlice({
     });
     builder.addCase(fetchPointsProductList.fulfilled, (state, action) => {
       state.loading = false;
-      state.productList = action.payload.data.list || [];
+      state.productList = action.payload.data.records || [];
       state.pagination.total = action.payload.data.total || 0;
     });
     builder.addCase(fetchPointsProductList.rejected, (state, action) => {
@@ -191,11 +258,40 @@ const pointsSlice = createSlice({
       state.loading = false;
       state.error = action.payload as string;
     });
+
+    // 处理获取积分兑换记录列表
+    builder.addCase(fetchPointsExchangeList.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchPointsExchangeList.fulfilled, (state, action) => {
+      state.loading = false;
+      state.exchangeList = action.payload.data.records || [];
+      state.pagination.total = action.payload.data.total || 0;
+    });
+    builder.addCase(fetchPointsExchangeList.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // 处理获取积分统计数据
+    builder.addCase(fetchPointsStats.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchPointsStats.fulfilled, (state, action) => {
+      state.loading = false;
+      state.statsData = action.payload.data;
+    });
+    builder.addCase(fetchPointsStats.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
   }
 });
 
 // 导出Actions
-export const { setPagination, clearPointsProductDetail } = pointsSlice.actions;
+export const { setPagination, clearPointsProductDetail, clearPointsStats } = pointsSlice.actions;
 
 // 导出Reducer
 export default pointsSlice.reducer; 

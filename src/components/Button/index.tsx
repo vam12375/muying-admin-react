@@ -1,161 +1,120 @@
-import { ReactNode } from 'react'
-import { Button as AntButton, ButtonProps as AntButtonProps } from 'antd'
-import { motion } from 'framer-motion'
-import clsx from 'clsx'
+import React from 'react';
+import { motion } from 'framer-motion';
+import type { HTMLMotionProps } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { hoverButtonAnimation } from '@/components/animations/MotionVariants';
 
-interface ButtonProps extends AntButtonProps {
-  animated?: boolean
-  glow?: boolean
-  rounded?: 'default' | 'full'
-  variant?: 'solid' | 'outline' | 'ghost' | 'link'
-  shade?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'default' | 'text'
-  icon?: ReactNode
-  iconPosition?: 'left' | 'right'
-  children?: ReactNode
+export interface ButtonProps {
+  children: React.ReactNode;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'glass';
+  size?: 'sm' | 'md' | 'lg';
+  rounded?: 'none' | 'sm' | 'md' | 'lg' | 'full';
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
+  loading?: boolean;
+  disabled?: boolean;
+  block?: boolean;
+  onClick?: () => void;
+  className?: string;
+  type?: 'button' | 'submit' | 'reset';
+  animation?: boolean;
 }
 
-/**
- * 自定义按钮组件
- * 扩展Ant Design按钮，添加动画效果和更多设计变体
- */
 const Button: React.FC<ButtonProps> = ({
   children,
-  animated = false,
-  glow = false,
-  rounded = 'default',
-  variant = 'solid',
-  shade = 'primary',
-  icon,
-  iconPosition = 'left',
-  className = '',
+  variant = 'primary',
+  size = 'md',
+  rounded = 'md',
+  leftIcon,
+  rightIcon,
+  loading = false,
+  disabled = false,
+  block = false,
+  onClick,
+  className,
+  type = 'button',
+  animation = true,
   ...props
 }) => {
-  // 获取按钮类型
-  const getButtonType = () => {
-    if (variant === 'solid') {
-      switch (shade) {
-        case 'primary': return 'primary'
-        case 'secondary': return 'default'
-        case 'success': return 'default'
-        case 'warning': return 'default'
-        case 'danger': return 'primary' // danger属性另外设置
-        case 'text': return 'text'
-        default: return 'default'
-      }
-    } else if (variant === 'link') {
-      return 'link'
-    }
-    return 'default'
-  }
+  // 变体样式映射
+  const variantStyles = {
+    primary: 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 active:from-primary-700 active:to-primary-800 shadow-sm hover:shadow',
+    secondary: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm hover:shadow',
+    outline: 'bg-transparent border border-primary-500 text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 active:bg-primary-100 dark:active:bg-primary-900/30',
+    ghost: 'bg-transparent text-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 active:bg-primary-100 dark:active:bg-primary-900/30',
+    link: 'bg-transparent text-primary-500 hover:underline p-0 shadow-none',
+    glass: 'bg-white/20 backdrop-blur-md border border-white/30 text-white dark:text-gray-200 hover:bg-white/30 shadow-sm hover:shadow'
+  };
 
-  // 获取按钮是否为危险状态
-  const getDanger = () => {
-    return shade === 'danger'
-  }
-  
-  // 获取自定义样式
-  const getCustomStyles = () => {
-    const base = []
-    
-    // 圆角样式
-    if (rounded === 'full') {
-      base.push('rounded-full')
-    }
-    
-    // 变体样式
-    if (variant === 'outline') {
-      base.push('border border-current hover:bg-opacity-10 bg-transparent')
-    } else if (variant === 'ghost') {
-      base.push('border-0 bg-transparent hover:bg-opacity-10')
-    }
-    
-    // 颜色样式 (非primary和danger，因为这些由antd处理)
-    if (variant !== 'solid' || (shade !== 'primary' && shade !== 'danger' && shade !== 'default')) {
-      switch (shade) {
-        case 'secondary':
-          base.push('text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300')
-          if (variant === 'outline' || variant === 'ghost') {
-            base.push('hover:bg-blue-50 dark:hover:bg-blue-900 dark:hover:bg-opacity-20')
-          }
-          break
-        case 'success':
-          base.push('text-green-500 hover:text-green-600 dark:text-green-400 dark:hover:text-green-300')
-          if (variant === 'outline' || variant === 'ghost') {
-            base.push('hover:bg-green-50 dark:hover:bg-green-900 dark:hover:bg-opacity-20')
-          }
-          break
-        case 'warning':
-          base.push('text-yellow-500 hover:text-yellow-600 dark:text-yellow-400 dark:hover:text-yellow-300')
-          if (variant === 'outline' || variant === 'ghost') {
-            base.push('hover:bg-yellow-50 dark:hover:bg-yellow-900 dark:hover:bg-opacity-20')
-          }
-          break
-      }
-    }
-    
-    // 发光效果
-    if (glow && variant === 'solid') {
-      switch (shade) {
-        case 'primary':
-          base.push('shadow-md shadow-blue-200 dark:shadow-blue-900 dark:shadow-opacity-20')
-          break
-        case 'success':
-          base.push('shadow-md shadow-green-200 dark:shadow-green-900 dark:shadow-opacity-20')
-          break
-        case 'warning':
-          base.push('shadow-md shadow-yellow-200 dark:shadow-yellow-900 dark:shadow-opacity-20')
-          break
-        case 'danger':
-          base.push('shadow-md shadow-red-200 dark:shadow-red-900 dark:shadow-opacity-20')
-          break
-      }
-    }
-    
-    // 动画效果
-    if (animated) {
-      base.push('btn-animated')
-    }
-    
-    return base.join(' ')
-  }
-  
-  // 按钮内容
-  const buttonContent = (
-    <>
-      {icon && iconPosition === 'left' && <span className="mr-1">{icon}</span>}
-      {children}
-      {icon && iconPosition === 'right' && <span className="ml-1">{icon}</span>}
-    </>
-  )
-  
-  // 组合最终className
-  const combinedClassName = clsx(className, getCustomStyles())
+  // 尺寸样式映射
+  const sizeStyles = {
+    sm: 'text-xs px-3 py-1.5 h-8',
+    md: 'text-sm px-4 py-2 h-10',
+    lg: 'text-base px-6 py-3 h-12'
+  };
 
-  // 基础按钮
-  const baseButton = (
-    <AntButton
-      type={getButtonType()}
-      danger={getDanger()}
-      className={combinedClassName}
-      {...props}
-    >
-      {buttonContent}
-    </AntButton>
-  )
-  
-  // 带点击动画的按钮
-  if (animated) {
-    return (
-      <motion.div
-        whileTap={{ scale: 0.98 }}
-        whileHover={{ translateY: -2 }}
-      >
-        {baseButton}
-      </motion.div>
+  // 圆角样式映射
+  const roundedStyles = {
+    none: 'rounded-none',
+    sm: 'rounded-sm',
+    md: 'rounded-md',
+    lg: 'rounded-lg',
+    full: 'rounded-full'
+  };
+
+  // 定义基础按钮props
+  const motionProps: HTMLMotionProps<"button"> = {
+    disabled: disabled || loading,
+    onClick: !disabled && !loading ? onClick : undefined,
+    type,
+    whileTap: !disabled && animation ? { scale: 0.97 } : undefined,
+    whileHover: !disabled && animation ? { scale: 1.02 } : undefined,
+    transition: { duration: 0.2 },
+    className: cn(
+      // 基础样式
+      'inline-flex items-center justify-center font-medium transition-all',
+      // 条件样式
+      variantStyles[variant],
+      sizeStyles[size],
+      roundedStyles[rounded],
+      {
+        'w-full': block,
+        'opacity-60 cursor-not-allowed': disabled,
+        'relative': loading,
+      },
+      className
     )
-  }
-  
-  return baseButton
-}
+  };
 
-export default Button 
+  // 加载动画组件
+  const LoadingSpinner = () => (
+    <svg 
+      className={cn(
+        "animate-spin", 
+        leftIcon ? "-ml-1 mr-2" : "-ml-1 mr-2"
+      )}
+      xmlns="http://www.w3.org/2000/svg" 
+      width="16" 
+      height="16" 
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
+  );
+
+  return (
+    <motion.button {...motionProps}>
+      {loading && <LoadingSpinner />}
+      {!loading && leftIcon && <span className="mr-2">{leftIcon}</span>}
+      {children}
+      {!loading && rightIcon && <span className="ml-2">{rightIcon}</span>}
+    </motion.button>
+  );
+};
+
+export default Button; 

@@ -5,6 +5,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { UploadProps } from 'antd'
 import { brandApi } from '../../api/product'
 import type { BrandData } from '../../api/product'
+import { getBrandImageUrl } from '../../utils/imageUtils'
 
 const { Title } = Typography
 const { TextArea } = Input
@@ -24,18 +25,36 @@ const BrandManage: React.FC = () => {
     total: 0
   })
   const [keyword, setKeyword] = useState('')
+  const [showDebug, setShowDebug] = useState(false)
+  const [debugData, setDebugData] = useState<any>(null)
   
   // 获取品牌列表
   const fetchBrands = async (page = 1, size = 10, searchKeyword = '') => {
     try {
       setLoading(true)
+      console.log('获取品牌列表, 参数:', { page, size, searchKeyword })
       const result = await brandApi.getBrandPage(page, size, searchKeyword)
+      console.log('获取品牌列表成功:', result)
+      
+      // 保存调试数据
+      setDebugData(result)
       
       // 确保result.list存在，否则使用空数组
-      setBrands(result.list || [])
+      const brandList = result.list || result.records || []
+      console.log('处理后的品牌列表数据:', brandList)
+      
+      // 检查是否所有品牌都有brandId
+      if (brandList.length > 0) {
+        const missingIds = brandList.filter(brand => brand.brandId === undefined)
+        if (missingIds.length > 0) {
+          console.warn('发现没有brandId的品牌:', missingIds)
+        }
+      }
+      
+      setBrands(brandList)
       setPagination({
-        current: result.pageNum,
-        pageSize: result.pageSize,
+        current: result.pageNum || result.current,
+        pageSize: result.pageSize || result.size,
         total: result.total
       })
     } catch (error) {
@@ -60,8 +79,10 @@ const BrandManage: React.FC = () => {
   // 处理编辑品牌
   const handleEdit = async (id: number) => {
     try {
+      console.log('开始编辑品牌, ID:', id, typeof id);
       setLoading(true)
       const brand = await brandApi.getBrandDetail(id)
+      console.log('获取到的品牌详情:', brand);
       setEditingId(id)
       form.setFieldsValue({
         name: brand.name,
@@ -178,7 +199,8 @@ const BrandManage: React.FC = () => {
       title: 'ID',
       dataIndex: 'brandId',
       key: 'brandId',
-      width: 80
+      width: 80,
+      render: (id) => <span>{id}</span>
     },
     {
       title: 'Logo',
@@ -187,7 +209,7 @@ const BrandManage: React.FC = () => {
       width: 100,
       render: (logo) => (
         <Image
-          src={logo || 'https://via.placeholder.com/60'}
+          src={getBrandImageUrl(logo)}
           alt="品牌Logo"
           width={60}
           height={60}
@@ -224,11 +246,14 @@ const BrandManage: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       width: 100,
-      render: (status) => (
-        <Tag color={status === 1 ? 'green' : 'red'}>
-          {status === 1 ? '启用' : '禁用'}
-        </Tag>
-      )
+      render: (status, record) => {
+        console.log(`品牌[${record.name}]的状态字段:`, { status, showStatus: record.showStatus });
+        return (
+          <Tag color={status === 1 ? 'green' : 'red'}>
+            {status === 1 ? '启用' : '禁用'}
+          </Tag>
+        );
+      }
     },
     {
       title: '创建时间',
@@ -296,6 +321,8 @@ const BrandManage: React.FC = () => {
             showTotal: (total) => `共 ${total} 条记录`
           }}
           onChange={handleTableChange}
+          bordered
+          scroll={{ x: 1100 }}
         />
       </Card>
       

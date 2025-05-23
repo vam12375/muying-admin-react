@@ -10,7 +10,7 @@ import request from '@/utils/request';
  */
 export const getMessageList = (params: any) => {
   return request({
-    url: '/messages',
+    url: '/admin/message/list',
     method: 'get',
     params
   });
@@ -22,7 +22,7 @@ export const getMessageList = (params: any) => {
  */
 export const getMessageDetail = (id: number | string) => {
   return request({
-    url: `/messages/${id}`,
+    url: `/admin/message/${id}`,
     method: 'get'
   });
 };
@@ -33,9 +33,9 @@ export const getMessageDetail = (id: number | string) => {
  */
 export const createMessage = (data: any) => {
   return request({
-    url: '/messages',
+    url: '/admin/message/system',
     method: 'post',
-    data
+    params: data
   });
 };
 
@@ -46,7 +46,7 @@ export const createMessage = (data: any) => {
  */
 export const updateMessage = (id: number | string, data: any) => {
   return request({
-    url: `/messages/${id}`,
+    url: `/admin/message/${id}`,
     method: 'put',
     data
   });
@@ -58,7 +58,7 @@ export const updateMessage = (id: number | string, data: any) => {
  */
 export const deleteMessage = (id: number | string) => {
   return request({
-    url: `/messages/${id}`,
+    url: `/admin/message/${id}`,
     method: 'delete'
   });
 };
@@ -69,7 +69,7 @@ export const deleteMessage = (id: number | string) => {
  */
 export const sendMessage = (id: number | string) => {
   return request({
-    url: `/messages/${id}/send`,
+    url: `/admin/message/${id}/send`,
     method: 'post'
   });
 };
@@ -79,7 +79,7 @@ export const sendMessage = (id: number | string) => {
  */
 export const getUnreadCount = () => {
   return request({
-    url: '/messages/unread/count',
+    url: '/admin/message/unread/count',
     method: 'get'
   });
 };
@@ -90,9 +90,19 @@ export const getUnreadCount = () => {
  */
 export const markAsRead = (ids: (number | string)[]) => {
   return request({
-    url: '/messages/read',
-    method: 'post',
-    data: { ids }
+    url: '/admin/message/read',
+    method: 'put',
+    params: { id: Array.isArray(ids) ? ids[0] : ids }
+  });
+};
+
+/**
+ * 标记所有消息为已读
+ */
+export const markAllRead = () => {
+  return request({
+    url: '/admin/message/readAll',
+    method: 'put'
   });
 };
 
@@ -101,7 +111,7 @@ export const markAsRead = (ids: (number | string)[]) => {
  */
 export const getMessageStatistics = () => {
   return request({
-    url: '/messages/statistics',
+    url: '/admin/message/statistics',
     method: 'get'
   });
 }; 

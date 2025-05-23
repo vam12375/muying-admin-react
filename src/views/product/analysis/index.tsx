@@ -1,79 +1,69 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Row, Col, Statistic, Typography, Select, DatePicker } from 'antd'
+import { Card, Row, Col, Statistic, Typography, Select, DatePicker, message } from 'antd'
 import { ShoppingOutlined, RiseOutlined, FallOutlined, DollarOutlined } from '@ant-design/icons'
+import { productApi } from '@/api/product'
+import type { ProductAnalysisData } from '@/api/product'
+import dayjs from 'dayjs'
 
 const { Title } = Typography
 const { Option } = Select
 const { RangePicker } = DatePicker
 
-// 模拟数据
-interface AnalysisData {
-  totalProducts: number
-  newProducts: number
-  outOfStock: number
-  totalSales: number
-  topCategories: { name: string, count: number }[]
-  topBrands: { name: string, count: number }[]
-}
-
-const mockData: AnalysisData = {
-  totalProducts: 386,
-  newProducts: 24,
-  outOfStock: 8,
-  totalSales: 126800,
-  topCategories: [
-    { name: '奶粉', count: 86 },
-    { name: '纸尿裤', count: 72 },
-    { name: '洗护', count: 65 },
-    { name: '玩具', count: 58 },
-    { name: '童车', count: 45 }
-  ],
-  topBrands: [
-    { name: '美素佳儿', count: 32 },
-    { name: '帮宝适', count: 28 },
-    { name: '好孩子', count: 25 },
-    { name: '强生', count: 22 },
-    { name: '费雪', count: 18 }
-  ]
-}
-
 const ProductAnalysis: React.FC = () => {
   const [loading, setLoading] = useState(true)
-  const [data, setData] = useState<AnalysisData | null>(null)
+  const [data, setData] = useState<ProductAnalysisData | null>(null)
   const [timeRange, setTimeRange] = useState<string>('week')
+  const [dateRange, setDateRange] = useState<[string, string] | null>(null)
   
-  useEffect(() => {
-    // 模拟API请求
-    const timer = setTimeout(() => {
-      setData(mockData)
+  // 加载商品分析数据
+  const fetchAnalysisData = async () => {
+    try {
+      setLoading(true)
+      const analysisData = await productApi.getProductAnalysis(
+        timeRange, 
+        dateRange ? dateRange[0] : undefined, 
+        dateRange ? dateRange[1] : undefined
+      )
+      setData(analysisData)
+    } catch (error: any) {
+      message.error(error.message || '获取商品分析数据失败')
+    } finally {
       setLoading(false)
-    }, 1000)
-    
-    return () => clearTimeout(timer)
-  }, [])
-  
-  const handleRangeChange = (value: string) => {
-    setTimeRange(value)
-    setLoading(true)
-    
-    // 模拟API请求
-    setTimeout(() => {
-      // 根据不同的时间范围，可以返回不同的数据
-      setData(mockData)
-      setLoading(false)
-    }, 1000)
+    }
   }
   
+  // 初始加载数据
+  useEffect(() => {
+    fetchAnalysisData()
+  }, [])
+  
+  // 处理时间范围变化
+  const handleRangeChange = (value: string) => {
+    setTimeRange(value)
+    setDateRange(null) // 清除自定义日期范围
+    
+    // 重新获取数据
+    setTimeout(() => {
+      fetchAnalysisData()
+    }, 0)
+  }
+  
+  // 处理日期范围变化
   const handleDateRangeChange = (dates: any) => {
     if (dates && dates.length === 2) {
-      setLoading(true)
+      // 将日期格式化为字符串
+      const startDate = dayjs(dates[0]).format('YYYY-MM-DD')
+      const endDate = dayjs(dates[1]).format('YYYY-MM-DD')
       
-      // 模拟API请求
+      setDateRange([startDate, endDate])
+      setTimeRange('custom') // 设置为自定义时间范围
+      
+      // 重新获取数据
       setTimeout(() => {
-        // 根据选择的日期范围，可以返回不同的数据
-        setData(mockData)
-        setLoading(false)
-      }, 1000)
+        fetchAnalysisData()
+      }, 0)
+    } else {
+      setDateRange(null)
     }
   }
   
@@ -87,14 +77,19 @@ const ProductAnalysis: React.FC = () => {
             defaultValue="week"
             style={{ width: 120, marginRight: 16 }}
             onChange={handleRangeChange}
+            value={timeRange}
           >
             <Option value="today">今天</Option>
             <Option value="week">本周</Option>
             <Option value="month">本月</Option>
             <Option value="year">本年</Option>
+            {dateRange && <Option value="custom">自定义</Option>}
           </Select>
           
-          <RangePicker onChange={handleDateRangeChange} />
+          <RangePicker 
+            onChange={handleDateRangeChange}
+            value={dateRange ? [dayjs(dateRange[0]), dayjs(dateRange[1])] : null}
+          />
         </div>
       </div>
       
@@ -117,7 +112,7 @@ const ProductAnalysis: React.FC = () => {
               value={data?.newProducts}
               prefix={<RiseOutlined />}
               valueStyle={{ color: '#1890ff' }}
-              suffix={`/ ${timeRange === 'week' ? '周' : timeRange === 'month' ? '月' : timeRange === 'year' ? '年' : '日'}`}
+              suffix={`/ ${timeRange === 'week' ? '周' : timeRange === 'month' ? '月' : timeRange === 'year' ? '年' : timeRange === 'custom' ? '期间' : '日'}`}
             />
           </Card>
         </Col>
@@ -151,12 +146,16 @@ const ProductAnalysis: React.FC = () => {
             title="热门分类" 
             loading={loading}
           >
-            {data?.topCategories.map((category, index) => (
-              <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span>{category.name}</span>
-                <span>{category.count} 件商品</span>
-              </div>
-            ))}
+            {data?.topCategories && data.topCategories.length > 0 ? (
+              data.topCategories.map((category, index) => (
+                <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span>{category.name}</span>
+                  <span>{category.count} 件商品</span>
+                </div>
+              ))
+            ) : (
+              <div>暂无数据</div>
+            )}
           </Card>
         </Col>
         <Col xs={24} md={12}>
@@ -164,12 +163,16 @@ const ProductAnalysis: React.FC = () => {
             title="热门品牌" 
             loading={loading}
           >
-            {data?.topBrands.map((brand, index) => (
-              <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span>{brand.name}</span>
-                <span>{brand.count} 件商品</span>
-              </div>
-            ))}
+            {data?.topBrands && data.topBrands.length > 0 ? (
+              data.topBrands.map((brand, index) => (
+                <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span>{brand.name}</span>
+                  <span>{brand.count} 件商品</span>
+                </div>
+              ))
+            ) : (
+              <div>暂无数据</div>
+            )}
           </Card>
         </Col>
       </Row>

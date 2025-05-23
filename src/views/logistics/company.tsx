@@ -9,47 +9,42 @@ import {
   Modal, 
   message, 
   Typography,
-  Switch
+  Switch,
+  Tooltip,
+  Tag
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import type { ColumnsType } from 'antd/es/table';
-import { AppDispatch, RootState } from '@/store';
+import type { AppDispatch, RootState } from '@/store';
 import { 
   fetchLogisticsCompanies, 
-  setPagination 
+  setCompanyPagination 
 } from '@/store/slices/logisticsSlice';
 import { 
   addLogisticsCompany, 
   updateLogisticsCompany, 
-  deleteLogisticsCompany 
+  deleteLogisticsCompany,
+  type LogisticsCompany
 } from '@/api/logistics';
 import { formatDateTime } from '@/utils/dateUtils';
 
 const { Title } = Typography;
 
-// 定义物流公司数据类型
-interface LogisticsCompanyData {
-  id: number;
-  code: string;
-  name: string;
-  logo: string;
-  website: string;
-  enabled: boolean;
-  createTime: string;
-  updateTime: string;
-}
-
-const LogisticsCompany: React.FC = () => {
+const LogisticsCompanyManagement: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   
   // 从Redux获取状态
-  const { companies, pagination, loading } = useSelector((state: RootState) => state.logistics);
+  const { companies, pagination, loading } = useSelector((state: RootState) => ({
+    companies: state.logistics.companies,
+    pagination: state.logistics.companyPagination,
+    loading: state.logistics.loading.companies || state.logistics.loading.action
+  }));
   
   // 本地状态
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState('添加物流公司');
-  const [currentCompany, setCurrentCompany] = useState<LogisticsCompanyData | null>(null);
+  const [currentCompany, setCurrentCompany] = useState<LogisticsCompany | null>(null);
   const [form] = Form.useForm();
   
   // 初始加载
@@ -68,12 +63,12 @@ const LogisticsCompany: React.FC = () => {
   
   // 处理页码变化
   const handlePageChange = (page: number, pageSize?: number) => {
-    dispatch(setPagination({ current: page, pageSize }));
+    dispatch(setCompanyPagination({ current: page, pageSize }));
   };
   
   // 处理每页条数变化
   const handleSizeChange = (current: number, size: number) => {
-    dispatch(setPagination({ current: 1, pageSize: size }));
+    dispatch(setCompanyPagination({ current: 1, pageSize: size }));
   };
   
   // 添加物流公司
@@ -81,18 +76,25 @@ const LogisticsCompany: React.FC = () => {
     setModalTitle('添加物流公司');
     setCurrentCompany(null);
     form.resetFields();
+    form.setFieldsValue({
+      status: 1 // 默认启用
+    });
     setModalVisible(true);
   };
   
   // 编辑物流公司
-  const handleEdit = (record: LogisticsCompanyData) => {
+  const handleEdit = (record: LogisticsCompany) => {
     setModalTitle('编辑物流公司');
     setCurrentCompany(record);
     form.setFieldsValue({
       code: record.code,
       name: record.name,
-      website: record.website,
-      enabled: record.enabled
+      contact: record.contact || '',
+      phone: record.phone || '',
+      address: record.address || '',
+      status: record.status,
+      logo: record.logo || '',
+      sortOrder: record.sortOrder
     });
     setModalVisible(true);
   };
@@ -128,7 +130,7 @@ const LogisticsCompany: React.FC = () => {
   };
   
   // 删除物流公司
-  const handleDelete = (record: LogisticsCompanyData) => {
+  const handleDelete = (record: LogisticsCompany) => {
     Modal.confirm({
       title: '确认删除',
       content: `确定要删除物流公司 "${record.name}" 吗？`,
@@ -150,11 +152,11 @@ const LogisticsCompany: React.FC = () => {
   };
   
   // 切换启用状态
-  const toggleEnabled = async (record: LogisticsCompanyData) => {
+  const toggleStatus = async (record: LogisticsCompany) => {
     const hide = message.loading('正在更新...', 0);
     try {
       await updateLogisticsCompany(record.id, {
-        enabled: !record.enabled
+        status: record.status === 1 ? 0 : 1
       });
       hide();
       message.success('状态更新成功');
@@ -166,7 +168,7 @@ const LogisticsCompany: React.FC = () => {
   };
   
   // 表格列定义
-  const columns: ColumnsType<LogisticsCompanyData> = [
+  const columns: ColumnsType<LogisticsCompany> = [
     {
       title: 'ID',
       dataIndex: 'id',
@@ -186,37 +188,41 @@ const LogisticsCompany: React.FC = () => {
       width: 200
     },
     {
-      title: '官网',
-      dataIndex: 'website',
-      key: 'website',
-      width: 200,
-      render: (website) => website ? (
-        <a href={website} target="_blank" rel="noopener noreferrer">{website}</a>
-      ) : '-'
+      title: '联系人',
+      dataIndex: 'contact',
+      key: 'contact',
+      width: 120,
+      render: (contact) => contact || '-'
+    },
+    {
+      title: '联系电话',
+      dataIndex: 'phone',
+      key: 'phone',
+      width: 150,
+      render: (phone) => phone || '-'
     },
     {
       title: '状态',
-      dataIndex: 'enabled',
-      key: 'enabled',
+      dataIndex: 'status',
+      key: 'status',
       width: 100,
-      render: (enabled, record) => (
+      render: (status, record) => (
         <Switch 
-          checked={enabled} 
-          onChange={() => toggleEnabled(record)} 
+          checked={status === 1} 
+          onChange={() => toggleStatus(record)} 
         />
       )
+    },
+    {
+      title: '排序',
+      dataIndex: 'sortOrder',
+      key: 'sortOrder',
+      width: 80
     },
     {
       title: '创建时间',
       dataIndex: 'createTime',
       key: 'createTime',
-      width: 180,
-      render: (time) => formatDateTime(time)
-    },
-    {
-      title: '更新时间',
-      dataIndex: 'updateTime',
-      key: 'updateTime',
       width: 180,
       render: (time) => formatDateTime(time)
     },
@@ -262,7 +268,7 @@ const LogisticsCompany: React.FC = () => {
           </Button>
         </div>
         
-        <Table<LogisticsCompanyData>
+        <Table<LogisticsCompany>
           columns={columns}
           dataSource={companies}
           rowKey="id"
@@ -272,6 +278,7 @@ const LogisticsCompany: React.FC = () => {
             pageSize: pagination.pageSize,
             total: pagination.total,
             showSizeChanger: true,
+            showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,
             onChange: handlePageChange,
             onShowSizeChange: handleSizeChange
@@ -280,13 +287,14 @@ const LogisticsCompany: React.FC = () => {
         />
       </Card>
       
-      {/* 添加/编辑物流公司对话框 */}
       <Modal
         title={modalTitle}
         open={modalVisible}
         onOk={handleSubmit}
         onCancel={() => setModalVisible(false)}
-        width={500}
+        okText="确认"
+        cancelText="取消"
+        width={600}
       >
         <Form
           form={form}
@@ -294,40 +302,81 @@ const LogisticsCompany: React.FC = () => {
         >
           <Form.Item
             name="code"
-            label="公司代码"
+            label={
+              <span>
+                公司代码 
+                <Tooltip title="用于生成物流单号前缀，不可重复">
+                  <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                </Tooltip>
+              </span>
+            }
             rules={[
               { required: true, message: '请输入公司代码' },
-              { max: 20, message: '公司代码不能超过20个字符' }
+              { max: 10, message: '公司代码最多10个字符' }
             ]}
           >
-            <Input placeholder="请输入公司代码，如SF、ZTO等" />
+            <Input placeholder="输入公司代码" />
           </Form.Item>
+          
           <Form.Item
             name="name"
             label="公司名称"
             rules={[
               { required: true, message: '请输入公司名称' },
-              { max: 50, message: '公司名称不能超过50个字符' }
+              { max: 50, message: '公司名称最多50个字符' }
             ]}
           >
-            <Input placeholder="请输入公司名称" />
+            <Input placeholder="输入公司名称" />
           </Form.Item>
+          
           <Form.Item
-            name="website"
-            label="官网"
-            rules={[
-              { type: 'url', message: '请输入有效的网址' }
-            ]}
+            name="contact"
+            label="联系人"
           >
-            <Input placeholder="请输入官网地址" />
+            <Input placeholder="输入联系人姓名" />
           </Form.Item>
+          
           <Form.Item
-            name="enabled"
+            name="phone"
+            label="联系电话"
+          >
+            <Input placeholder="输入联系电话" />
+          </Form.Item>
+          
+          <Form.Item
+            name="address"
+            label="公司地址"
+          >
+            <Input placeholder="输入公司地址" />
+          </Form.Item>
+          
+          <Form.Item
+            name="status"
             label="状态"
-            valuePropName="checked"
-            initialValue={true}
+            rules={[{ required: true, message: '请选择状态' }]}
           >
-            <Switch />
+            <Switch 
+              checkedChildren="启用" 
+              unCheckedChildren="禁用" 
+              checked={form.getFieldValue('status') === 1}
+              onChange={(checked) => form.setFieldsValue({ status: checked ? 1 : 0 })}
+            />
+          </Form.Item>
+          
+          <Form.Item
+            name="logo"
+            label="Logo地址"
+          >
+            <Input placeholder="输入Logo图片地址" />
+          </Form.Item>
+          
+          <Form.Item
+            name="sortOrder"
+            label="排序"
+            rules={[{ required: true, message: '请输入排序值' }]}
+            initialValue={0}
+          >
+            <Input type="number" placeholder="输入排序值，数字越小越靠前" />
           </Form.Item>
         </Form>
       </Modal>
@@ -335,4 +384,4 @@ const LogisticsCompany: React.FC = () => {
   );
 };
 
-export default LogisticsCompany; 
+export default LogisticsCompanyManagement; 

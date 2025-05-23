@@ -1,0 +1,213 @@
+/* Redis管理页面的自定义CSS样式 */
+
+.redis-manage-container {
+  --primary-color: var(--ant-primary-color, #1890ff);
+  --success-color: var(--ant-success-color, #52c41a);
+  --warning-color: var(--ant-warning-color, #faad14);
+  --error-color: var(--ant-error-color, #f5222d);
+  --border-radius: 8px;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+}
+
+/* 卡片悬浮效果 */
+.redis-manage-container .ant-card {
+  transition: all 0.3s ease;
+}
+
+.redis-manage-container .ant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* 统计卡片动画效果 */
+.redis-manage-container .stats-card {
+  transition: all 0.3s ease;
+}
+
+.redis-manage-container .stats-card:hover {
+  transform: scale(1.02);
+}
+
+/* 表格行悬浮效果 */
+.redis-manage-container .ant-table-tbody > tr.ant-table-row:hover {
+  background-color: rgba(24, 144, 255, 0.05);
+}
+
+/* 按钮动画效果 */
+.redis-manage-container button {
+  transition: all 0.2s ease;
+}
+
+.redis-manage-container button:hover {
+  transform: translateY(-1px);
+}
+
+/* 标签动画效果 */
+.redis-manage-container .ant-tag {
+  transition: all 0.2s ease;
+}
+
+.redis-manage-container .ant-tag:hover {
+  transform: scale(1.05);
+}
+
+/* 键值详情弹窗样式 */
+.redis-value-modal .ant-modal-content {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.redis-value-modal .redis-value-card {
+  transition: all 0.3s ease;
+}
+
+.redis-value-modal .redis-value-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* 键值内容预格式化文本样式 */
+.redis-value-modal pre {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  transition: all 0.3s ease;
+}
+
+.redis-value-modal pre:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* 搜索框样式 */
+.redis-manage-container .ant-input-search {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border-radius: var(--border-radius);
+  transition: all 0.3s ease;
+}
+
+.redis-manage-container .ant-input-search:hover,
+.redis-manage-container .ant-input-search:focus-within {
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+/* 表格加载状态动画 */
+.redis-manage-container .ant-spin {
+  transition: all 0.3s ease;
+}
+
+.redis-manage-container .ant-spin-dot-item {
+  background-color: var(--primary-color);
+}
+
+/* 搜索提示区域样式 */
+.redis-manage-container .search-tips {
+  background: linear-gradient(to right, rgba(230, 244, 255, 0.8), rgba(230, 244, 255, 0.4));
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--primary-color);
+  transition: all 0.3s ease;
+}
+
+.dark .redis-manage-container .search-tips {
+  background: linear-gradient(to right, rgba(0, 21, 41, 0.8), rgba(0, 21, 41, 0.4));
+}
+
+.redis-manage-container .search-tips:hover {
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+}
+
+/* 键空间统计表格样式 */
+.redis-manage-container .keyspace-table {
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.redis-manage-container .keyspace-table:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.09);
+}
+
+/* 滚动条样式 */
+.redis-manage-container *::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.redis-manage-container *::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.redis-manage-container *::-webkit-scrollbar-track {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 深色模式适配 */
+.dark .redis-manage-container *::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.dark .redis-manage-container *::-webkit-scrollbar-track {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+  .redis-manage-container .ant-card {
+    margin-bottom: 16px;
+  }
+  
+  .redis-manage-container .stats-card {
+    margin-bottom: 12px;
+  }
+}
+
+/* 键类型标签颜色 */
+.redis-manage-container .key-type-string {
+  color: #1890ff;
+  background-color: rgba(24, 144, 255, 0.1);
+  border-color: rgba(24, 144, 255, 0.2);
+}
+
+.redis-manage-container .key-type-list {
+  color: #52c41a;
+  background-color: rgba(82, 196, 26, 0.1);
+  border-color: rgba(82, 196, 26, 0.2);
+}
+
+.redis-manage-container .key-type-hash {
+  color: #faad14;
+  background-color: rgba(250, 173, 20, 0.1);
+  border-color: rgba(250, 173, 20, 0.2);
+}
+
+.redis-manage-container .key-type-set {
+  color: #f5222d;
+  background-color: rgba(245, 34, 45, 0.1);
+  border-color: rgba(245, 34, 45, 0.2);
+}
+
+.redis-manage-container .key-type-zset {
+  color: #722ed1;
+  background-color: rgba(114, 46, 209, 0.1);
+  border-color: rgba(114, 46, 209, 0.2);
+}
+
+/* 页面切换动画 */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 300ms, transform 300ms;
+} 

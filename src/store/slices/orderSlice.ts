@@ -1,16 +1,17 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { getOrderList, getOrderDetail, getOrderStatistics } from '@/api/order';
+import { getOrderList, getOrderDetail, getOrderStatistics, shipOrder as apiShipOrder } from '@/api/order';
 
 // 定义订单状态类型
 interface OrderState {
   orderList: any[];
   orderDetail: any | null;
   statistics: {
-    totalOrders: number;
-    pendingPayment: number;
-    pendingShipment: number;
+    total: number;
+    pending_payment: number;
+    pending_shipment: number;
     shipped: number;
     completed: number;
+    cancelled: number;
   };
   pagination: {
     current: number;
@@ -26,11 +27,12 @@ const initialState: OrderState = {
   orderList: [],
   orderDetail: null,
   statistics: {
-    totalOrders: 0,
-    pendingPayment: 0,
-    pendingShipment: 0,
+    total: 0,
+    pending_payment: 0,
+    pending_shipment: 0,
     shipped: 0,
-    completed: 0
+    completed: 0,
+    cancelled: 0
   },
   pagination: {
     current: 1,
@@ -76,6 +78,34 @@ export const fetchOrderStatistics = createAsyncThunk(
       return response;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch order statistics');
+    }
+  }
+);
+
+// 异步Action: 订单发货
+export const shipOrder = createAsyncThunk(
+  'order/shipOrder',
+  async ({ id, data }: { id: number | string; data: any }, { rejectWithValue, dispatch }) => {
+    try {
+      const { companyId, trackingNo, receiverName, receiverPhone, receiverAddress } = data;
+      
+      const response = await apiShipOrder(
+        id, 
+        companyId, 
+        trackingNo, 
+        receiverName, 
+        receiverPhone, 
+        receiverAddress
+      );
+      
+      // 发货成功后，重新获取订单详情
+      if (response.code === 200) {
+        dispatch(fetchOrderDetail(id));
+      }
+      
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to ship order');
     }
   }
 );
@@ -131,9 +161,24 @@ const orderSlice = createSlice({
     });
     builder.addCase(fetchOrderStatistics.fulfilled, (state, action) => {
       state.loading = false;
-      state.statistics = action.payload.data || state.statistics;
+      if (action.payload.code === 200 && action.payload.data) {
+        state.statistics = action.payload.data;
+      }
     });
     builder.addCase(fetchOrderStatistics.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // 处理订单发货
+    builder.addCase(shipOrder.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(shipOrder.fulfilled, (state) => {
+      state.loading = false;
+    });
+    builder.addCase(shipOrder.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
     });

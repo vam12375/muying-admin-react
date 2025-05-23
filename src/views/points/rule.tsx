@@ -11,9 +11,12 @@ import {
   Typography,
   InputNumber,
   Select,
-  Switch
+  Switch,
+  Tooltip,
+  Tag,
+  Checkbox
 } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import type { ColumnsType } from 'antd/es/table';
 import { AppDispatch, RootState } from '@/store';
@@ -85,8 +88,9 @@ const PointsRule: React.FC = () => {
       description: record.description,
       type: record.type,
       points: record.points,
-      ...record.condition,
-      enabled: record.enabled
+      enabled: record.enabled,
+      // 设置条件字段
+      ...(record.condition || {})
     });
     setModalVisible(true);
   };
@@ -111,22 +115,39 @@ const PointsRule: React.FC = () => {
       switch (values.type) {
         case 'sign_in':
           submitData.condition = {
-            consecutive: values.consecutive || false
+            consecutive: values.consecutive || false,
+            days: values.days || 1
           };
           break;
         case 'order_complete':
           submitData.condition = {
-            minAmount: values.minAmount || 0
+            minAmount: values.minAmount || 0,
+            firstOrder: values.firstOrder || false
           };
           break;
         case 'product_review':
           submitData.condition = {
-            withImage: values.withImage || false
+            withImage: values.withImage || false,
+            minLength: values.minLength || 0,
+            productCategory: values.productCategory || null
           };
           break;
         case 'profile_complete':
           submitData.condition = {
-            fields: values.fields || []
+            fields: values.fields || [],
+            allRequired: values.allRequired || false
+          };
+          break;
+        case 'invite_user':
+          submitData.condition = {
+            registerOnly: values.registerOnly || false,
+            firstOrderRequired: values.firstOrderRequired || false
+          };
+          break;
+        case 'daily_share':
+          submitData.condition = {
+            platforms: values.platforms || [],
+            minShares: values.minShares || 1
           };
           break;
         default:
@@ -161,9 +182,10 @@ const PointsRule: React.FC = () => {
   const handleDelete = async (id: number) => {
     Modal.confirm({
       title: '确认删除',
-      content: '确定要删除此规则吗？',
+      content: '确定要删除此规则吗？删除后将无法恢复。',
       okText: '确认',
       cancelText: '取消',
+      okButtonProps: { danger: true },
       onOk: async () => {
         const hide = message.loading('正在删除...', 0);
         try {
@@ -181,9 +203,10 @@ const PointsRule: React.FC = () => {
   
   // 切换启用状态
   const toggleEnabled = async (record: PointsRuleData) => {
-    const hide = message.loading('正在更新...', 0);
+    const hide = message.loading('正在更新状态...', 0);
     try {
       await updatePointsRule(record.id, {
+        ...record,
         enabled: !record.enabled
       });
       hide();
@@ -208,6 +231,10 @@ const PointsRule: React.FC = () => {
         return '完善资料';
       case 'invite_user':
         return '邀请用户';
+      case 'daily_share':
+        return '每日分享';
+      case 'level_upgrade':
+        return '会员升级';
       default:
         return type;
     }
@@ -216,18 +243,41 @@ const PointsRule: React.FC = () => {
   // 获取规则条件描述
   const getRuleConditionText = (record: PointsRuleData) => {
     const { type, condition } = record;
+    if (!condition) return '无条件';
     
     switch (type) {
       case 'sign_in':
-        return condition.consecutive ? '连续签到' : '每日签到';
+        if (condition.consecutive) {
+          return `连续签到${condition.days || 1}天`;
+        }
+        return '每日签到';
       case 'order_complete':
-        return `订单金额 ≥ ${condition.minAmount || 0}元`;
+        let text = `订单金额 ≥ ${condition.minAmount || 0}元`;
+        if (condition.firstOrder) {
+          text += '，首单';
+        }
+        return text;
       case 'product_review':
-        return condition.withImage ? '带图评价' : '文字评价';
+        let reviewText = condition.withImage ? '带图评价' : '文字评价';
+        if (condition.minLength) {
+          reviewText += `，最少${condition.minLength}字`;
+        }
+        if (condition.productCategory) {
+          reviewText += `，类别：${condition.productCategory}`;
+        }
+        return reviewText;
       case 'profile_complete':
-        return `完善字段: ${condition.fields?.join(', ') || '全部'}`;
+        if (condition.allRequired) {
+          return '完善所有资料';
+        }
+        return `完善字段: ${(condition.fields || []).join(', ') || '任意'}`;
       case 'invite_user':
-        return '邀请新用户注册';
+        if (condition.firstOrderRequired) {
+          return '邀请新用户并完成首单';
+        }
+        return condition.registerOnly ? '邀请新用户注册' : '邀请新用户';
+      case 'daily_share':
+        return `每日分享${condition.minShares || 1}次，平台：${(condition.platforms || []).join(', ') || '任意'}`;
       default:
         return JSON.stringify(condition);
     }
@@ -248,12 +298,6 @@ const PointsRule: React.FC = () => {
       width: 150
     },
     {
-      title: '描述',
-      dataIndex: 'description',
-      key: 'description',
-      width: 200
-    },
-    {
       title: '规则类型',
       dataIndex: 'type',
       key: 'type',
@@ -267,9 +311,10 @@ const PointsRule: React.FC = () => {
       width: 100
     },
     {
-      title: '规则条件',
+      title: '条件',
+      dataIndex: 'condition',
       key: 'condition',
-      width: 150,
+      width: 200,
       render: (_, record) => getRuleConditionText(record)
     },
     {
@@ -277,11 +322,10 @@ const PointsRule: React.FC = () => {
       dataIndex: 'enabled',
       key: 'enabled',
       width: 100,
-      render: (enabled, record) => (
-        <Switch 
-          checked={enabled} 
-          onChange={() => toggleEnabled(record)} 
-        />
+      render: (enabled) => (
+        <Tag color={enabled ? 'success' : 'default'}>
+          {enabled ? '启用' : '禁用'}
+        </Tag>
       )
     },
     {
@@ -292,25 +336,24 @@ const PointsRule: React.FC = () => {
       render: (time) => formatDateTime(time)
     },
     {
-      title: '更新时间',
-      dataIndex: 'updateTime',
-      key: 'updateTime',
-      width: 180,
-      render: (time) => formatDateTime(time)
-    },
-    {
       title: '操作',
       key: 'action',
       fixed: 'right',
-      width: 150,
+      width: 180,
       render: (_, record) => (
-        <Space size="middle">
+        <Space>
           <Button 
             type="link" 
             icon={<EditOutlined />} 
             onClick={() => handleEdit(record)}
           >
             编辑
+          </Button>
+          <Button 
+            type="link" 
+            onClick={() => toggleEnabled(record)}
+          >
+            {record.enabled ? '禁用' : '启用'}
           </Button>
           <Button 
             type="link" 
@@ -325,67 +368,172 @@ const PointsRule: React.FC = () => {
     }
   ];
   
-  // 根据规则类型渲染不同的表单项
+  // 根据规则类型渲染不同的条件表单项
   const renderConditionFormItems = () => {
-    const ruleType = form.getFieldValue('type');
+    const type = form.getFieldValue('type');
     
-    switch (ruleType) {
+    switch (type) {
       case 'sign_in':
         return (
-          <Form.Item
-            name="consecutive"
-            label="连续签到"
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
+          <>
+            <Form.Item
+              name="consecutive"
+              valuePropName="checked"
+              label="连续签到"
+              tooltip="选择是否需要连续签到才能获得积分"
+            >
+              <Switch />
+            </Form.Item>
+            
+            <Form.Item
+              name="days"
+              label="连续天数"
+              tooltip="连续签到的天数，启用连续签到时有效"
+              initialValue={1}
+            >
+              <InputNumber min={1} max={365} />
+            </Form.Item>
+          </>
         );
+      
       case 'order_complete':
         return (
-          <Form.Item
-            name="minAmount"
-            label="最低订单金额"
-            rules={[{ required: true, message: '请输入最低订单金额' }]}
-          >
-            <InputNumber 
-              style={{ width: '100%' }} 
-              min={0} 
-              precision={2} 
-              placeholder="最低订单金额" 
-            />
-          </Form.Item>
+          <>
+            <Form.Item
+              name="minAmount"
+              label="订单最低金额"
+              tooltip="达到该金额才能获得积分"
+              initialValue={0}
+            >
+              <InputNumber min={0} step={10} addonAfter="元" />
+            </Form.Item>
+            
+            <Form.Item
+              name="firstOrder"
+              valuePropName="checked"
+              label="首单专享"
+              tooltip="是否仅对用户的第一笔订单有效"
+            >
+              <Switch />
+            </Form.Item>
+          </>
         );
+      
       case 'product_review':
         return (
-          <Form.Item
-            name="withImage"
-            label="带图评价"
-            valuePropName="checked"
-          >
-            <Switch />
-          </Form.Item>
+          <>
+            <Form.Item
+              name="withImage"
+              valuePropName="checked"
+              label="带图评价"
+              tooltip="是否需要上传图片才能获得积分"
+            >
+              <Switch />
+            </Form.Item>
+            
+            <Form.Item
+              name="minLength"
+              label="评价最少字数"
+              tooltip="评价内容需要达到的最少字数"
+              initialValue={0}
+            >
+              <InputNumber min={0} max={1000} />
+            </Form.Item>
+            
+            <Form.Item
+              name="productCategory"
+              label="商品类别"
+              tooltip="限制特定类别的商品评价才可获得积分"
+            >
+              <Select allowClear placeholder="所有类别">
+                <Option value="baby_clothes">婴儿服装</Option>
+                <Option value="baby_food">婴儿食品</Option>
+                <Option value="toys">玩具</Option>
+                <Option value="diapers">尿布</Option>
+              </Select>
+            </Form.Item>
+          </>
         );
+      
       case 'profile_complete':
         return (
-          <Form.Item
-            name="fields"
-            label="需完善字段"
-          >
-            <Select
-              mode="multiple"
-              placeholder="请选择需要完善的字段"
-              style={{ width: '100%' }}
+          <>
+            <Form.Item
+              name="allRequired"
+              valuePropName="checked"
+              label="完善所有资料"
+              tooltip="是否需要完善全部资料才能获得积分"
             >
-              <Option value="avatar">头像</Option>
-              <Option value="nickname">昵称</Option>
-              <Option value="birthday">生日</Option>
-              <Option value="gender">性别</Option>
-              <Option value="address">地址</Option>
-              <Option value="phone">手机号</Option>
-              <Option value="email">邮箱</Option>
-            </Select>
-          </Form.Item>
+              <Switch />
+            </Form.Item>
+            
+            <Form.Item
+              name="fields"
+              label="完善字段"
+              tooltip="选择需要完善的字段，当不需要完善所有资料时有效"
+            >
+              <Select mode="multiple" placeholder="请选择字段">
+                <Option value="avatar">头像</Option>
+                <Option value="nickname">昵称</Option>
+                <Option value="phone">手机号</Option>
+                <Option value="email">邮箱</Option>
+                <Option value="address">收货地址</Option>
+                <Option value="birthday">生日</Option>
+              </Select>
+            </Form.Item>
+          </>
         );
+        
+      case 'invite_user':
+        return (
+          <>
+            <Form.Item
+              name="registerOnly"
+              valuePropName="checked"
+              label="仅注册即可"
+              tooltip="邀请的用户仅需注册即可获得积分"
+            >
+              <Switch />
+            </Form.Item>
+            
+            <Form.Item
+              name="firstOrderRequired"
+              valuePropName="checked"
+              label="需完成首单"
+              tooltip="邀请的用户需要完成首单才能获得积分"
+            >
+              <Switch />
+            </Form.Item>
+          </>
+        );
+        
+      case 'daily_share':
+        return (
+          <>
+            <Form.Item
+              name="minShares"
+              label="最少分享次数"
+              tooltip="每日需要分享的最少次数"
+              initialValue={1}
+            >
+              <InputNumber min={1} max={10} />
+            </Form.Item>
+            
+            <Form.Item
+              name="platforms"
+              label="分享平台"
+              tooltip="选择可以获得积分的分享平台"
+            >
+              <Select mode="multiple" placeholder="请选择分享平台">
+                <Option value="wechat">微信</Option>
+                <Option value="weibo">微博</Option>
+                <Option value="qq">QQ</Option>
+                <Option value="alipay">支付宝</Option>
+              </Select>
+            </Form.Item>
+          </>
+        );
+        
       default:
         return null;
     }
@@ -395,58 +543,47 @@ const PointsRule: React.FC = () => {
     <div className="points-rule-container">
       <Title level={2}>积分规则管理</Title>
       
+      <Card className="action-container" style={{ marginBottom: 16 }}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          添加规则
+        </Button>
+      </Card>
+      
       <Card>
-        <div style={{ marginBottom: 16 }}>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
-            onClick={handleAdd}
-          >
-            添加规则
-          </Button>
-        </div>
-        
         <Table<PointsRuleData>
           columns={columns}
           dataSource={ruleList}
           rowKey="id"
           loading={loading}
-          pagination={false}
+          pagination={{
+            showSizeChanger: true,
+            showTotal: (total) => `共 ${total} 条记录`
+          }}
           scroll={{ x: 1200 }}
         />
       </Card>
       
-      {/* 添加/编辑规则对话框 */}
+      {/* 新增/编辑规则弹窗 */}
       <Modal
         title={modalTitle}
         open={modalVisible}
-        onOk={handleSubmit}
         onCancel={() => setModalVisible(false)}
-        width={600}
+        onOk={handleSubmit}
+        width={700}
+        maskClosable={false}
       >
-        <Form
-          form={form}
+        <Form 
+          form={form} 
           layout="vertical"
         >
           <Form.Item
             name="name"
             label="规则名称"
-            rules={[
-              { required: true, message: '请输入规则名称' },
-              { max: 50, message: '规则名称不能超过50个字符' }
-            ]}
+            rules={[{ required: true, message: '请输入规则名称' }]}
           >
-            <Input placeholder="请输入规则名称" />
+            <Input placeholder="请输入规则名称" maxLength={50} />
           </Form.Item>
-          <Form.Item
-            name="description"
-            label="规则描述"
-            rules={[
-              { max: 200, message: '规则描述不能超过200个字符' }
-            ]}
-          >
-            <TextArea rows={3} placeholder="请输入规则描述" />
-          </Form.Item>
+          
           <Form.Item
             name="type"
             label="规则类型"
@@ -458,36 +595,45 @@ const PointsRule: React.FC = () => {
               <Option value="product_review">商品评价</Option>
               <Option value="profile_complete">完善资料</Option>
               <Option value="invite_user">邀请用户</Option>
+              <Option value="daily_share">每日分享</Option>
+              <Option value="level_upgrade">会员升级</Option>
             </Select>
           </Form.Item>
+          
           <Form.Item
             name="points"
             label="积分值"
-            rules={[
-              { required: true, message: '请输入积分值' },
-              { type: 'number', min: 1, message: '积分值必须大于0' }
-            ]}
+            rules={[{ required: true, message: '请输入积分值' }]}
+            tooltip="用户完成该规则可获得的积分数量"
           >
-            <InputNumber 
-              style={{ width: '100%' }} 
-              min={1} 
-              placeholder="请输入积分值" 
-            />
+            <InputNumber min={1} max={10000} addonAfter="分" style={{ width: '100%' }} />
           </Form.Item>
           
-          {/* 根据规则类型渲染不同的表单项 */}
-          <Form.Item noStyle dependencies={['type']}>
-            {() => renderConditionFormItems()}
+          <Form.Item
+            name="description"
+            label="规则描述"
+          >
+            <TextArea rows={3} placeholder="请输入规则描述" maxLength={200} />
           </Form.Item>
           
           <Form.Item
             name="enabled"
-            label="状态"
             valuePropName="checked"
-            initialValue={true}
+            label="是否启用"
           >
             <Switch />
           </Form.Item>
+          
+          <div className="condition-form">
+            <h3>
+              规则条件
+              <Tooltip title="根据不同的规则类型设置不同的条件">
+                <InfoCircleOutlined style={{ marginLeft: 8 }} />
+              </Tooltip>
+            </h3>
+            
+            {renderConditionFormItems()}
+          </div>
         </Form>
       </Modal>
     </div>

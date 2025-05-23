@@ -16,29 +16,19 @@ import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { ColumnsType } from 'antd/es/table';
-import { AppDispatch, RootState } from '@/store';
+import type { AppDispatch, RootState } from '@/store';
 import { 
   fetchLogisticsList, 
   fetchLogisticsCompanies, 
-  setPagination 
+  setPagination,
+  updateLogisticsStatusAction
 } from '@/store/slices/logisticsSlice';
-import { updateLogistics } from '@/api/logistics';
+import type { Logistics } from '@/api/logistics';
+import { LogisticsStatus } from '@/api/logistics';
 import { formatDateTime } from '@/utils/dateUtils';
 
 const { Title } = Typography;
 const { Option } = Select;
-
-// 定义物流数据类型
-interface LogisticsData {
-  id: number;
-  orderNo: string;
-  trackingNo: string;
-  shippingCompany: string;
-  shippingCompanyName: string;
-  status: string;
-  createTime: string;
-  updateTime: string;
-}
 
 const LogisticsList: React.FC = () => {
   const navigate = useNavigate();
@@ -46,11 +36,16 @@ const LogisticsList: React.FC = () => {
   const [form] = Form.useForm();
   
   // 从Redux获取状态
-  const { logisticsList, companies, pagination, loading } = useSelector((state: RootState) => state.logistics);
+  const { logisticsList, companies, pagination, loading } = useSelector((state: RootState) => ({
+    logisticsList: state.logistics.logisticsList,
+    companies: state.logistics.companies,
+    pagination: state.logistics.pagination,
+    loading: state.logistics.loading.list || state.logistics.loading.action
+  }));
   
   // 本地状态
   const [updateDialogVisible, setUpdateDialogVisible] = useState(false);
-  const [currentLogistics, setCurrentLogistics] = useState<LogisticsData | null>(null);
+  const [currentLogistics, setCurrentLogistics] = useState<Logistics | null>(null);
   const [updateForm] = Form.useForm();
   
   // 初始加载
@@ -94,12 +89,12 @@ const LogisticsList: React.FC = () => {
   };
   
   // 查看物流详情
-  const handleDetail = (record: LogisticsData) => {
+  const handleDetail = (record: Logistics) => {
     navigate(`/logistics/detail/${record.id}`);
   };
   
   // 处理更新物流状态
-  const handleUpdate = (record: LogisticsData) => {
+  const handleUpdate = (record: Logistics) => {
     setCurrentLogistics(record);
     updateForm.resetFields();
     updateForm.setFieldsValue({
@@ -114,17 +109,14 @@ const LogisticsList: React.FC = () => {
       const values = await updateForm.validateFields();
       if (!currentLogistics) return;
       
-      const hide = message.loading('正在更新...', 0);
-      try {
-        await updateLogistics(currentLogistics.id, values);
-        hide();
-        message.success('更新成功');
-        setUpdateDialogVisible(false);
-        fetchLogisticsData();
-      } catch (error) {
-        hide();
-        message.error('更新失败');
-      }
+      await dispatch(updateLogisticsStatusAction({
+        id: currentLogistics.id,
+        status: values.status,
+        remark: values.remark
+      })).unwrap();
+      
+      setUpdateDialogVisible(false);
+      fetchLogisticsData();
     } catch (error) {
       // 表单验证失败
     }
@@ -133,29 +125,27 @@ const LogisticsList: React.FC = () => {
   // 获取物流状态标签
   const getStatusTag = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Tag color="warning">待处理</Tag>;
-      case 'shipping':
-        return <Tag color="processing">运输中</Tag>;
-      case 'delivered':
-        return <Tag color="success">已送达</Tag>;
-      case 'exception':
-        return <Tag color="error">异常</Tag>;
-      case 'returned':
-        return <Tag color="orange">已退回</Tag>;
+      case LogisticsStatus.CREATED:
+        return <Tag color="orange">已创建</Tag>;
+      case LogisticsStatus.SHIPPING:
+        return <Tag color="blue">运输中</Tag>;
+      case LogisticsStatus.DELIVERED:
+        return <Tag color="green">已送达</Tag>;
+      case LogisticsStatus.EXCEPTION:
+        return <Tag color="red">异常</Tag>;
       default:
         return <Tag>{status}</Tag>;
     }
   };
   
   // 获取物流公司名称
-  const getCompanyName = (code: string) => {
-    const company = companies.find(item => item.code === code);
-    return company ? company.name : code;
+  const getCompanyName = (companyId: number) => {
+    const company = companies.find(item => item.id === companyId);
+    return company ? company.name : '-';
   };
   
   // 表格列定义
-  const columns: ColumnsType<LogisticsData> = [
+  const columns: ColumnsType<Logistics> = [
     {
       title: 'ID',
       dataIndex: 'id',
@@ -163,10 +153,10 @@ const LogisticsList: React.FC = () => {
       width: 80
     },
     {
-      title: '订单编号',
-      dataIndex: 'orderNo',
-      key: 'orderNo',
-      width: 180
+      title: '订单ID',
+      dataIndex: 'orderId',
+      key: 'orderId',
+      width: 100
     },
     {
       title: '物流单号',
@@ -176,10 +166,10 @@ const LogisticsList: React.FC = () => {
     },
     {
       title: '物流公司',
-      dataIndex: 'shippingCompany',
-      key: 'shippingCompany',
+      dataIndex: 'companyId',
+      key: 'companyId',
       width: 150,
-      render: (code, record) => record.shippingCompanyName || getCompanyName(code)
+      render: (companyId, record) => record.company ? record.company.name : getCompanyName(companyId)
     },
     {
       title: '物流状态',
@@ -187,6 +177,12 @@ const LogisticsList: React.FC = () => {
       key: 'status',
       width: 120,
       render: (status) => getStatusTag(status)
+    },
+    {
+      title: '收件人',
+      dataIndex: 'receiverName',
+      key: 'receiverName',
+      width: 120
     },
     {
       title: '创建时间',
@@ -215,7 +211,7 @@ const LogisticsList: React.FC = () => {
             style={{ color: '#52c41a' }}
             onClick={() => handleUpdate(record)}
           >
-            更新
+            更新状态
           </Button>
         </Space>
       )
@@ -232,28 +228,36 @@ const LogisticsList: React.FC = () => {
           layout="inline" 
           onFinish={handleSearch}
         >
-          <Form.Item name="orderNo" label="订单编号">
-            <Input placeholder="订单编号" allowClear />
+          <Form.Item name="orderId" label="订单ID">
+            <Input placeholder="订单ID" allowClear />
           </Form.Item>
           <Form.Item name="trackingNo" label="物流单号">
             <Input placeholder="物流单号" allowClear />
           </Form.Item>
           <Form.Item name="status" label="物流状态">
             <Select placeholder="物流状态" style={{ width: 150 }} allowClear>
-              <Option value="">全部</Option>
-              <Option value="pending">待处理</Option>
-              <Option value="shipping">运输中</Option>
-              <Option value="delivered">已送达</Option>
-              <Option value="exception">异常</Option>
-              <Option value="returned">已退回</Option>
+              <Option value={LogisticsStatus.CREATED}>已创建</Option>
+              <Option value={LogisticsStatus.SHIPPING}>运输中</Option>
+              <Option value={LogisticsStatus.DELIVERED}>已送达</Option>
+              <Option value={LogisticsStatus.EXCEPTION}>异常</Option>
             </Select>
+          </Form.Item>
+          <Form.Item name="keyword" label="关键词">
+            <Input placeholder="收件人/发件人/地址" allowClear />
           </Form.Item>
           <Form.Item>
             <Space>
-              <Button type="primary" icon={<SearchOutlined />} htmlType="submit">
-                查询
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                icon={<SearchOutlined />}
+              >
+                搜索
               </Button>
-              <Button icon={<ReloadOutlined />} onClick={resetQuery}>
+              <Button 
+                onClick={resetQuery}
+                icon={<ReloadOutlined />}
+              >
                 重置
               </Button>
             </Space>
@@ -261,62 +265,55 @@ const LogisticsList: React.FC = () => {
         </Form>
       </Card>
       
-      {/* 物流列表表格 */}
       <Card>
-        <Table<LogisticsData>
+        <Table
           columns={columns}
           dataSource={logisticsList}
           rowKey="id"
-          loading={loading}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
             showSizeChanger: true,
+            showQuickJumper: true,
             showTotal: (total) => `共 ${total} 条记录`,
             onChange: handlePageChange,
             onShowSizeChange: handleSizeChange
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 1300 }}
+          loading={loading}
         />
       </Card>
       
-      {/* 更新物流状态对话框 */}
       <Modal
         title="更新物流状态"
         open={updateDialogVisible}
         onOk={confirmUpdate}
         onCancel={() => setUpdateDialogVisible(false)}
-        width={500}
+        okText="确认"
+        cancelText="取消"
       >
         <Form
           form={updateForm}
           layout="vertical"
         >
-          <Form.Item label="订单编号">
-            <span>{currentLogistics?.orderNo}</span>
-          </Form.Item>
-          <Form.Item label="物流单号">
-            <span>{currentLogistics?.trackingNo}</span>
-          </Form.Item>
           <Form.Item
             name="status"
             label="物流状态"
             rules={[{ required: true, message: '请选择物流状态' }]}
           >
-            <Select placeholder="请选择物流状态">
-              <Option value="pending">待处理</Option>
-              <Option value="shipping">运输中</Option>
-              <Option value="delivered">已送达</Option>
-              <Option value="exception">异常</Option>
-              <Option value="returned">已退回</Option>
+            <Select placeholder="物流状态">
+              <Option value={LogisticsStatus.CREATED}>已创建</Option>
+              <Option value={LogisticsStatus.SHIPPING}>运输中</Option>
+              <Option value={LogisticsStatus.DELIVERED}>已送达</Option>
+              <Option value={LogisticsStatus.EXCEPTION}>异常</Option>
             </Select>
           </Form.Item>
           <Form.Item
             name="remark"
             label="备注"
           >
-            <Input.TextArea rows={3} placeholder="请输入备注信息" />
+            <Input.TextArea rows={4} placeholder="备注信息" />
           </Form.Item>
         </Form>
       </Modal>

@@ -13,15 +13,23 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
+      // 特定处理admin/orders路径，需要放在前面以确保优先匹配
+      '^/admin/orders(/.*)?$': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => `/api${path}`
+      },
+      // 处理没有/api前缀的admin路径
+      '^/admin(/.*)?$': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => `/api${path}`
+      },
+      // 处理已有/api前缀的请求
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
         rewrite: (path) => path
-      },
-      '/admin': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        rewrite: (path) => `/api${path}`
       },
       '/products': {
         target: 'http://localhost:5173',

@@ -11,7 +11,8 @@ import {
   GoldOutlined,
   SettingOutlined,
   BellOutlined,
-  AppstoreOutlined
+  AppstoreOutlined,
+  CustomerServiceOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import type { ItemType } from 'antd/es/breadcrumb/Breadcrumb';
@@ -76,6 +77,21 @@ export const getMenuItems = (): MenuItem[] => {
         {
           key: 'order/list',
           label: '订单列表',
+        },
+      ],
+    },
+    {
+      key: 'afterSale',
+      icon: <CustomerServiceOutlined />,
+      label: '售后管理',
+      children: [
+        {
+          key: 'afterSale/list',
+          label: '退款申请列表',
+        },
+        {
+          key: 'afterSale/statistics',
+          label: '退款统计',
         },
       ],
     },
