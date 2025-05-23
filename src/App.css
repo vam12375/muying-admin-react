@@ -1,0 +1,147 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Main App Styles */
+.app-container {
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-700 rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-600;
+}
+
+/* 表格增强样式 */
+.custom-table .ant-table {
+  @apply rounded-lg overflow-hidden;
+}
+
+.custom-table .ant-table-thead > tr > th {
+  @apply font-medium text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700;
+}
+
+.custom-table .ant-table-tbody > tr > td {
+  @apply text-gray-700 dark:text-gray-300 border-gray-100 dark:border-gray-700;
+}
+
+.custom-table .ant-table-tbody > tr:hover > td {
+  @apply bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20;
+}
+
+.custom-table .ant-pagination-item-active {
+  @apply border-blue-500 dark:border-blue-400;
+}
+
+.custom-table .ant-pagination-item-active a {
+  @apply text-blue-500 dark:text-blue-400;
+}
+
+/* 表单增强样式 */
+.ant-form-item-required::before {
+  @apply text-red-500 dark:text-red-400;
+}
+
+.ant-form-item-explain-error {
+  @apply text-red-500 dark:text-red-400;
+}
+
+/* 卡片阴影效果 */
+.shadow-soft {
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+}
+
+.dark .shadow-soft {
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* 通用动画类 */
+.fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease forwards;
+}
+
+.slide-down {
+  animation: slideDown 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 主题切换时的过渡效果 */
+body, .app-container, .ant-layout, .ant-layout-sider, .ant-layout-header, 
+.ant-layout-content, .ant-card, .ant-table, .ant-form-item, 
+.ant-input, .ant-select, .ant-btn {
+  transition: background-color 0.3s ease, 
+              color 0.3s ease, 
+              border-color 0.3s ease, 
+              box-shadow 0.3s ease;
+}

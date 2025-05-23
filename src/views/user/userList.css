@@ -1,0 +1,392 @@
+/* 现代化用户列表页面样式 */
+:root {
+  --primary-color: #3498db;
+  --primary-hover: #2980b9;
+  --primary-light: #ebf5fb;
+  --danger-color: #e74c3c;
+  --danger-hover: #c0392b;
+  --success-color: #2ecc71;
+  --success-hover: #27ae60;
+  --warning-color: #f39c12;
+  --warning-hover: #d35400;
+  --text-color: #2c3e50;
+  --text-light: #7f8c8d;
+  --border-color: #e0e0e0;
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --transition-speed: 0.3s;
+}
+
+/* 用户列表容器 - 现代布局 */
+.user-list-container {
+  padding: 0 24px 32px;
+  max-width: 100%;
+}
+
+.user-list-container h2 {
+  font-weight: 500;
+  margin-bottom: 24px;
+  color: var(--text-color);
+  font-size: 26px;
+}
+
+/* 用户卡片样式 - 增强视觉效果 */
+.user-card {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  border: none;
+  overflow: hidden;
+}
+
+/* 搜索栏现代设计 */
+.search-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+  align-items: center;
+  padding: 16px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+/* 输入框样式增强 */
+.search-bar .ant-input {
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  transition: all var(--transition-speed);
+}
+
+.search-bar .ant-input:focus,
+.search-bar .ant-input:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+/* 下拉选择器样式 */
+.search-bar .ant-select .ant-select-selector {
+  border-radius: 8px;
+  height: 38px;
+  padding-top: 3px;
+  transition: all var(--transition-speed);
+}
+
+.search-bar .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+  border-color: var(--primary-color);
+}
+
+/* 搜索按钮样式 */
+.search-bar .ant-btn-primary {
+  border-radius: 8px;
+  height: 38px;
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
+  transition: all var(--transition-speed);
+}
+
+.search-bar .ant-btn-primary:hover,
+.search-bar .ant-btn-primary:focus {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+/* 添加用户按钮特殊样式 */
+.search-bar .ant-btn-primary:last-child {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  border: none;
+  font-weight: 500;
+}
+
+/* 表格容器 - 增强可视性 */
+.table-container {
+  overflow-x: auto;
+  width: 100%;
+  padding: 0 8px 16px;
+}
+
+/* 现代化表格样式 */
+.user-table {
+  width: 100%;
+}
+
+/* 表头样式 */
+.user-table .ant-table-thead > tr > th {
+  background-color: #f8fafc;
+  font-weight: 500;
+  color: var(--text-color);
+  padding: 16px;
+  border-bottom: 2px solid #ebeef5;
+}
+
+/* 表格行样式 */
+.user-table .ant-table-tbody > tr > td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f2f5;
+  transition: all var(--transition-speed);
+}
+
+/* 交替行颜色 */
+.user-table .ant-table-tbody > tr:nth-child(even) {
+  background-color: #f9fafc;
+}
+
+/* 表格行悬停效果 */
+.user-table .ant-table-tbody > tr:hover > td {
+  background-color: #f0f7ff !important;
+}
+
+/* 文本溢出处理 - 保持原有功能但更好看 */
+.text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+/* 表格内标签优化 */
+.user-table .ant-tag {
+  border-radius: 4px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border: none;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+/* 表格角色和状态标签 */
+.user-table .ant-tag-purple {
+  background-color: #9b59b6;
+  color: white;
+}
+
+.user-table .ant-tag-blue {
+  background-color: #3498db;
+  color: white;
+}
+
+.user-table .ant-tag-green {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.user-table .ant-tag-red {
+  background-color: #e74c3c;
+  color: white;
+}
+
+/* 现代化操作按钮样式 */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 操作按钮增强样式 */
+.action-buttons button {
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  font-size: 13px;
+  transition: all var(--transition-speed);
+}
+
+/* 编辑按钮 */
+.action-buttons button[type="primary"]:not([danger]) {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.action-buttons button[type="primary"]:not([danger]):hover {
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 禁用按钮 */
+.action-buttons button[danger="true"] {
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.action-buttons button[danger="true"]:hover {
+  background-color: var(--danger-hover);
+  border-color: var(--danger-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.2);
+}
+
+/* 启用按钮 */
+.action-buttons button[danger="false"] {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.action-buttons button[danger="false"]:hover {
+  background-color: var(--success-hover);
+  border-color: var(--success-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(46, 204, 113, 0.2);
+}
+
+/* 删除按钮 */
+.action-buttons button:last-child {
+  background-color: white;
+  color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.action-buttons button:last-child:hover {
+  background-color: var(--danger-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.2);
+}
+
+/* 分页器现代设计 */
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 16px;
+}
+
+.user-table .ant-pagination-item {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.user-table .ant-pagination-item-active {
+  border-color: var(--primary-color);
+  background-color: var(--primary-light);
+}
+
+.user-table .ant-pagination-item-active a {
+  color: var(--primary-color);
+}
+
+.user-table .ant-pagination-item-link {
+  border-radius: 8px;
+}
+
+/* 用户表单弹窗优化 */
+.user-modal .ant-modal-content {
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.user-modal .ant-modal-header {
+  border-bottom: 1px solid #f0f2f5;
+  padding: 20px 24px;
+}
+
+.user-modal .ant-modal-title {
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.user-modal .ant-modal-body {
+  padding: 24px;
+}
+
+.user-modal .ant-form-item-label > label {
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.user-modal .ant-form-item {
+  margin-bottom: 20px;
+}
+
+.user-modal .ant-input,
+.user-modal .ant-select .ant-select-selector {
+  border-radius: 8px;
+}
+
+.user-modal .ant-modal-footer {
+  border-top: 1px solid #f0f2f5;
+  padding: 16px 24px;
+}
+
+.user-modal .ant-btn {
+  border-radius: 8px;
+  height: 38px;
+  padding: 0 20px;
+  font-weight: 500;
+}
+
+/* 自定义美化滚动条 */
+.table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
+}
+
+/* 响应式调整 - 保持优雅的移动端体验 */
+@media (max-width: 768px) {
+  .user-list-container {
+    padding: 0 12px 16px;
+  }
+
+  .user-list-container h2 {
+    font-size: 22px;
+    margin-bottom: 16px;
+  }
+
+  .search-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .search-bar > * {
+    width: 100%;
+  }
+
+  .search-bar .ant-input,
+  .search-bar .ant-select {
+    width: 100%;
+  }
+
+  .action-buttons {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .action-buttons button {
+    padding: 0 8px;
+    font-size: 12px;
+  }
+  
+  .user-table .ant-table-thead > tr > th,
+  .user-table .ant-table-tbody > tr > td {
+    padding: 12px;
+  }
+}
+
+/* 确保表格在小屏幕设备上也能正常工作 */
+.user-table .ant-table-cell {
+  word-break: break-word;
+} 

@@ -1,0 +1,374 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* 基础主题色 */
+  --color-primary: #3182ff;
+  --color-secondary: #0ea5e9;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  
+  /* 强调色 */
+  --color-accent-pink: #FF8FAB;
+  --color-accent-blue: #91C8E4;
+  --color-accent-green: #A6CF98;
+  --color-accent-yellow: #FFEBA1;
+  
+  /* 动画持续时间 */
+  --transition-slow: 0.5s;
+  --transition-medium: 0.3s;
+  --transition-fast: 0.15s;
+  
+  /* 阴影变量 */
+  --shadow-soft: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+  --shadow-soft-lg: 0 10px 30px 0 rgba(0, 0, 0, 0.05);
+  --shadow-soft-xl: 0 20px 40px 0 rgba(0, 0, 0, 0.05);
+  --shadow-soft-2xl: 0 25px 50px 0 rgba(0, 0, 0, 0.05);
+  --shadow-colored: 0 8px 16px -4px rgba(49, 130, 255, 0.2);
+  --shadow-colored-lg: 0 12px 24px -6px rgba(49, 130, 255, 0.25);
+  
+  /* 圆角变量 */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  
+  /* 字体配置 */
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 基础标签样式 */
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+  transition: background-color var(--transition-medium) ease, 
+              color var(--transition-medium) ease;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 链接样式 */
+a {
+  @apply text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300;
+  text-decoration: none;
+  transition: color var(--transition-fast) ease;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-700;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+/* Ant Design 组件覆盖 */
+.dark .ant-message-notice-content {
+  @apply bg-gray-800 text-gray-200;
+}
+
+.dark .ant-select-dropdown {
+  @apply bg-gray-800 border-gray-700;
+}
+
+.dark .ant-picker-panel {
+  @apply bg-gray-800 border-gray-700;
+}
+
+.ant-table {
+  @apply shadow-none;
+}
+
+/* 可访问性焦点样式 */
+*:focus-visible {
+  @apply outline-primary-500 outline-offset-2;
+}
+
+/* 全局动画类 */
+.fade-in {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease forwards;
+}
+
+.slide-down {
+  animation: slideDown 0.5s ease forwards;
+}
+
+.scale-in {
+  animation: scaleIn 0.3s ease forwards;
+}
+
+.bounce-in {
+  animation: bounceIn 0.6s ease forwards;
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.pulse-soft {
+  animation: pulseSoft 4s ease-in-out infinite;
+}
+
+/* 全局动画关键帧 */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes bounceIn {
+  0% { opacity: 0; transform: scale(0.8); }
+  70% { opacity: 0.7; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 工具类 */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.glass-effect {
+  @apply bg-white bg-opacity-10 backdrop-blur-md border border-white border-opacity-20;
+}
+
+.dark .glass-effect {
+  @apply bg-gray-900 bg-opacity-30 border-gray-700 border-opacity-30;
+}
+
+/* 新增UI组件样式 */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  @apply shadow-soft-lg transform -translate-y-1;
+}
+
+.btn-animated {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-animated:after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%);
+  transform-origin: 50% 50%;
+}
+
+.btn-animated:focus:not(:active)::after {
+  animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0);
+    opacity: 0.5;
+  }
+  20% {
+    transform: scale(25, 25);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(40, 40);
+    opacity: 0;
+  }
+}
+
+/* 自适应容器 */
+.container-fluid {
+  width: 100%;
+  padding-right: 1rem;
+  padding-left: 1rem;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+@media (min-width: 640px) {
+  .container-fluid {
+    padding-right: 2rem;
+    padding-left: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-fluid {
+    padding-right: 4rem;
+    padding-left: 4rem;
+  }
+}
+
+/* 新增响应式工具类 */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 新增卡片样式 */
+.card-gradient {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #60a5fa 100%);
+  color: white;
+}
+
+.card-gradient-secondary {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, #7dd3fc 100%);
+  color: white;
+}
+
+.card-gradient-success {
+  background: linear-gradient(135deg, var(--color-success) 0%, #86efac 100%);
+  color: white;
+}
+
+.card-gradient-warning {
+  background: linear-gradient(135deg, var(--color-warning) 0%, #fcd34d 100%);
+  color: white;
+}
+
+.card-gradient-danger {
+  background: linear-gradient(135deg, var(--color-danger) 0%, #fca5a5 100%);
+  color: white;
+}
+
+/* 新增标签样式 */
+.tag-status {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+.tag-status-success {
+  @apply bg-success-100 text-success-800 dark:bg-success-900 dark:bg-opacity-30 dark:text-success-300;
+}
+
+.tag-status-processing {
+  @apply bg-primary-100 text-primary-800 dark:bg-primary-900 dark:bg-opacity-30 dark:text-primary-300;
+}
+
+.tag-status-warning {
+  @apply bg-warning-100 text-warning-800 dark:bg-warning-900 dark:bg-opacity-30 dark:text-warning-300;
+}
+
+.tag-status-error {
+  @apply bg-danger-100 text-danger-800 dark:bg-danger-900 dark:bg-opacity-30 dark:text-danger-300;
+}
+
+/* 新增徽章样式 */
+.badge {
+  @apply absolute -top-1 -right-1 flex items-center justify-center;
+}
+
+.badge-dot {
+  @apply w-2 h-2 rounded-full;
+}
+
+.badge-count {
+  @apply min-w-[18px] h-[18px] rounded-full text-[10px] flex items-center justify-center px-1;
+}
+
+/* 新增表格样式 */
+.table-modern {
+  @apply rounded-lg overflow-hidden shadow-soft;
+}
+
+.table-modern thead tr th {
+  @apply bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium;
+}
+
+.table-modern tbody tr:hover td {
+  @apply bg-primary-50 dark:bg-primary-900 dark:bg-opacity-20;
+}
+
+/* 新增表单样式 */
+.form-modern .ant-form-item-label > label {
+  @apply font-medium;
+}
+
+.form-modern .ant-input,
+.form-modern .ant-select-selector,
+.form-modern .ant-picker {
+  @apply transition-all duration-300 border-gray-200 dark:border-gray-700;
+}
+
+.form-modern .ant-input:hover,
+.form-modern .ant-select-selector:hover,
+.form-modern .ant-picker:hover {
+  @apply border-primary-400 dark:border-primary-500;
+}
+
+.form-modern .ant-input:focus,
+.form-modern .ant-select-selector:focus,
+.form-modern .ant-picker-focused {
+  @apply border-primary-500 dark:border-primary-400 shadow-none;
+}
