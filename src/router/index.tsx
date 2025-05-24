@@ -31,6 +31,21 @@ const AfterSaleList = lazy(() => import('@/views/afterSale/list'))
 const AfterSaleDetail = lazy(() => import('@/views/afterSale/detail'))
 const AfterSaleStatistics = lazy(() => import('@/views/afterSale/statistics'))
 
+// 数据分析模块
+const Analytics = lazy(() => import('@/views/analytics'))
+const AnalyticsDashboard = lazy(() => import('@/views/analytics/Dashboard'))
+const MultiDimensionAnalysis = lazy(() => import('@/views/analytics/MultiDimensionAnalysis'))
+const CustomReports = lazy(() => import('@/views/analytics/CustomReports'))
+const ReportExport = lazy(() => import('@/views/analytics/ReportExport'))
+const AnalyticsSettings = lazy(() => import('@/views/analytics/AnalyticsSettings'))
+
+// 内容管理模块
+const ContentManagement = lazy(() => import('@/views/content'))
+const ContentCalendar = lazy(() => import('@/views/content/Calendar'))
+const SeoTools = lazy(() => import('@/views/content/SeoTools'))
+const MediaLibrary = lazy(() => import('@/views/content/MediaLibrary'))
+const TemplateManage = lazy(() => import('@/views/content/Templates'))
+
 // 加载动画组件
 const LoadingAnimation = () => (
   <div className="page-loading flex justify-center items-center min-h-[200px]">
@@ -130,6 +145,60 @@ const routeConfig: RouteObject[] = [
       {
         path: 'components',
         element: LazyLoad(ComponentsShowcase)
+      },
+      {
+        path: 'analytics',
+        children: [
+          {
+            path: '',
+            element: LazyLoad(Analytics)
+          },
+          {
+            path: 'dashboard',
+            element: LazyLoad(AnalyticsDashboard)
+          },
+          {
+            path: 'multi-dimension',
+            element: LazyLoad(MultiDimensionAnalysis)
+          },
+          {
+            path: 'custom-reports',
+            element: LazyLoad(CustomReports)
+          },
+          {
+            path: 'export',
+            element: LazyLoad(ReportExport)
+          },
+          {
+            path: 'settings',
+            element: LazyLoad(AnalyticsSettings)
+          }
+        ]
+      },
+      {
+        path: 'content',
+        children: [
+          {
+            path: '',
+            element: LazyLoad(ContentManagement)
+          },
+          {
+            path: 'calendar',
+            element: LazyLoad(ContentCalendar)
+          },
+          {
+            path: 'seo',
+            element: LazyLoad(SeoTools)
+          },
+          {
+            path: 'media',
+            element: LazyLoad(MediaLibrary)
+          },
+          {
+            path: 'templates',
+            element: LazyLoad(TemplateManage)
+          }
+        ]
       },
       {
         path: 'user',

@@ -12,7 +12,16 @@ import {
   SettingOutlined,
   BellOutlined,
   AppstoreOutlined,
-  CustomerServiceOutlined
+  CustomerServiceOutlined,
+  LineChartOutlined,
+  BarChartOutlined,
+  PieChartOutlined,
+  FileExcelOutlined,
+  FileTextOutlined,
+  CalendarOutlined,
+  SearchOutlined,
+  PictureOutlined,
+  FormOutlined
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import type { ItemType } from 'antd/es/breadcrumb/Breadcrumb';
@@ -34,6 +43,56 @@ export const getMenuItems = (): MenuItem[] => {
       key: 'components',
       icon: <AppstoreOutlined />,
       label: '组件展示',
+    },
+    {
+      key: 'analytics',
+      icon: <LineChartOutlined />,
+      label: '数据分析',
+      children: [
+        {
+          key: 'analytics',
+          label: '分析仪表盘',
+        },
+        {
+          key: 'analytics/multi-dimension',
+          label: '多维分析',
+        },
+        {
+          key: 'analytics/custom-reports',
+          label: '自定义报表',
+        },
+        {
+          key: 'analytics/export',
+          label: '报表导出',
+        },
+        {
+          key: 'analytics/settings',
+          label: '分析设置',
+        },
+      ],
+    },
+    {
+      key: 'content',
+      icon: <FileTextOutlined />,
+      label: '内容管理',
+      children: [
+        {
+          key: 'content',
+          label: '内容日历',
+        },
+        {
+          key: 'content/seo',
+          label: 'SEO工具',
+        },
+        {
+          key: 'content/media',
+          label: '媒体库',
+        },
+        {
+          key: 'content/templates',
+          label: '模板管理',
+        },
+      ],
     },
     {
       key: 'user',
