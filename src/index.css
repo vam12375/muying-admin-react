@@ -77,6 +77,37 @@
     @apply bg-primary-500/20 text-primary-800 dark:text-primary-200;
   }
 
+  /* 标题样式 - 增强暗色模式可读性 */
+  h1, h2, h3, h4, h5, h6 {
+    @apply dark:text-white dark:font-medium;
+    font-weight: 600;
+  }
+
+  /* 段落和文本默认样式 */
+  p, span, div {
+    @apply dark:text-gray-200;
+  }
+
+  /* 链接样式 - 确保在暗色模式下可见 */
+  a {
+    @apply text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300;
+    text-decoration: none;
+  }
+
+  /* 表单元素样式 */
+  label {
+    @apply dark:text-gray-200 mb-1 block;
+  }
+
+  input, textarea, select {
+    @apply dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700 dark:placeholder-gray-500;
+  }
+
+  /* 预格式化文本和代码 */
+  pre, code {
+    @apply dark:bg-gray-800 dark:text-gray-100 p-1 rounded;
+  }
+
   /* 重置Ant Design组件默认样式 */
   .ant-progress-bg {
     @apply transition-all duration-700;
@@ -102,6 +133,7 @@
   
   .ant-table-tbody > tr > td {
     @apply border-gray-200 dark:border-gray-700 !important;
+    @apply text-gray-700 dark:text-gray-200 !important;
   }
   
   .ant-table-tbody > tr:hover > td {
@@ -119,6 +151,7 @@
   
   .ant-statistic-content {
     @apply font-bold text-xl !important;
+    @apply dark:text-white !important;
   }
   
   /* 菜单组件增强样式 */
@@ -199,6 +232,87 @@
 .ant-modal-confirm-content {
   font-family: 'MuYingFont', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
   letter-spacing: 0.015em;
+}
+
+/* 暗色模式下组件文本颜色覆盖 */
+.dark .ant-form-item-label > label,
+.dark .ant-form-item-tooltip,
+.dark .ant-form-item-optional,
+.dark .ant-form-text,
+.dark .ant-form-item-extra {
+  color: var(--text-label, #e2e8f0) !important;
+}
+
+.dark .ant-input::placeholder,
+.dark .ant-select-selection-placeholder,
+.dark .ant-picker-input > input::placeholder {
+  color: var(--text-placeholder, #94a3b8) !important;
+}
+
+.dark .ant-input,
+.dark .ant-input-affix-wrapper,
+.dark .ant-select-selector,
+.dark .ant-select-selection-item,
+.dark .ant-picker-input > input,
+.dark .ant-input-number-input {
+  color: var(--text-input, #f1f5f9) !important;
+}
+
+.dark .ant-typography {
+  color: var(--text-primary, #f1f5f9) !important;
+}
+
+.dark .ant-typography-secondary {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-card-head-title {
+  color: var(--text-heading, #ffffff) !important;
+}
+
+.dark .ant-table-thead > tr > th {
+  color: var(--text-table-header, #ffffff) !important;
+}
+
+.dark .ant-table-tbody > tr > td {
+  color: var(--text-table-data, #e2e8f0) !important;
+}
+
+.dark .ant-pagination-item-link,
+.dark .ant-pagination-item a {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-pagination-item-active a {
+  color: #ffffff !important;
+}
+
+.dark .ant-tabs-tab {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-tabs-tab-active {
+  color: var(--primary-400, #76a9fa) !important;
+}
+
+.dark .ant-modal-title,
+.dark .ant-drawer-title,
+.dark .ant-modal-confirm-title {
+  color: var(--text-heading, #ffffff) !important;
+}
+
+.dark .ant-modal-content,
+.dark .ant-modal-confirm-content,
+.dark .ant-drawer-body {
+  color: var(--text-primary, #f1f5f9) !important;
+}
+
+.dark .ant-btn {
+  color: var(--text-primary, #f1f5f9) !important;
+}
+
+.dark .ant-btn-primary {
+  color: white !important;
 }
 
 /* 确保所有文本内容使用自定义字体 */
@@ -566,4 +680,346 @@ p, h1, h2, h3, h4, h5, h6, span, a, button, input, textarea, select, label {
     rgba(255, 255, 255, 0) 100%
   );
   background-size: 200% 100%;
+}
+
+/* 表格暗色模式增强 */
+.dark .table-dark .ant-table {
+  color: var(--text-table-data, #e2e8f0) !important;
+  background-color: transparent !important;
+}
+
+.dark .table-dark .ant-table-thead > tr > th {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+  color: var(--text-table-header, #ffffff) !important;
+  font-weight: 500;
+}
+
+.dark .table-dark .ant-table-tbody > tr > td {
+  background-color: rgba(30, 41, 59, 0.3) !important;
+  color: var(--text-table-data, #e2e8f0) !important;
+  border-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+.dark .table-dark .ant-table-tbody > tr:hover > td {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+
+/* 表格排序和过滤图标 */
+.dark .ant-table-column-sorter-up.active, 
+.dark .ant-table-column-sorter-down.active {
+  color: var(--primary-400, #76a9fa) !important;
+}
+
+.dark .ant-table-filter-trigger {
+  color: var(--text-tertiary, #94a3b8) !important;
+}
+
+.dark .ant-table-filter-trigger:hover {
+  color: var(--text-secondary, #e2e8f0) !important;
+  background-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+.dark .ant-table-filter-trigger.active {
+  color: var(--primary-400, #76a9fa) !important;
+}
+
+/* 表格分页 */
+.dark .ant-pagination {
+  color: var(--text-table-footer, #cbd5e1) !important;
+}
+
+.dark .ant-pagination-total-text {
+  color: var(--text-table-footer, #cbd5e1) !important;
+}
+
+.dark .ant-pagination-item {
+  background-color: rgba(30, 41, 59, 0.3) !important;
+  border-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+.dark .ant-pagination-item a {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-pagination-item-active {
+  background-color: var(--primary-600, #2563eb) !important;
+  border-color: var(--primary-600, #2563eb) !important;
+}
+
+.dark .ant-pagination-item-active a {
+  color: #ffffff !important;
+}
+
+.dark .ant-pagination-prev button,
+.dark .ant-pagination-next button {
+  background-color: rgba(30, 41, 59, 0.3) !important;
+  color: var(--text-secondary, #e2e8f0) !important;
+  border-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+.dark .ant-pagination-disabled button {
+  color: var(--text-disabled, #64748b) !important;
+  background-color: rgba(30, 41, 59, 0.2) !important;
+  border-color: rgba(51, 65, 85, 0.3) !important;
+}
+
+.dark .ant-pagination-options .ant-select-selector {
+  background-color: rgba(30, 41, 59, 0.3) !important;
+  border-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+.dark .ant-pagination-options .ant-select-selection-item {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+/* 空状态 */
+.dark .ant-empty-description {
+  color: var(--text-tertiary, #94a3b8) !important;
+}
+
+/* 加载状态 */
+.dark .ant-spin-text {
+  color: var(--primary-400, #76a9fa) !important;
+}
+
+.dark .ant-spin-dot-item {
+  background-color: var(--primary-400, #76a9fa) !important;
+}
+
+/* 模态框暗色模式增强 */
+.dark .ant-modal-content {
+  background-color: var(--bg-modal, #1e293b) !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.dark .ant-modal-content .ant-modal-header {
+  background-color: var(--bg-modal, #1e293b) !important;
+  border-bottom-color: var(--border-base, #334155) !important;
+}
+
+.dark .ant-modal-content .ant-modal-body {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-modal-content .ant-modal-footer {
+  border-top-color: var(--border-base, #334155) !important;
+}
+
+.dark .ant-modal-close {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-modal-close:hover {
+  color: var(--text-primary, #f1f5f9) !important;
+}
+
+/* 表单暗色模式增强 */
+.dark .ant-form-item-label > label {
+  color: var(--text-label, #e2e8f0) !important;
+}
+
+.dark .ant-form-item-explain-error {
+  color: var(--text-error, #fca5a5) !important;
+}
+
+.dark .ant-form-item-has-error .ant-input,
+.dark .ant-form-item-has-error .ant-input-affix-wrapper,
+.dark .ant-form-item-has-error .ant-input-number,
+.dark .ant-form-item-has-error .ant-select-selector {
+  border-color: var(--danger-500, #ef4444) !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
+}
+
+.dark .ant-select-dropdown {
+  background-color: var(--bg-popover, #1e293b) !important;
+  border: 1px solid var(--border-base, #334155) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .ant-select-item {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+.dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+  color: var(--primary-400, #76a9fa) !important;
+}
+
+/* 日期选择器暗色模式增强 */
+.dark .ant-picker-dropdown {
+  background-color: var(--bg-popover, #1e293b) !important;
+  border: 1px solid var(--border-base, #334155) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .ant-picker-panel {
+  background-color: var(--bg-popover, #1e293b) !important;
+  border-bottom-color: var(--border-base, #334155) !important;
+}
+
+.dark .ant-picker-header {
+  color: var(--text-primary, #f1f5f9) !important;
+  border-bottom-color: var(--border-base, #334155) !important;
+}
+
+.dark .ant-picker-header button {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-picker-content th {
+  color: var(--text-tertiary, #94a3b8) !important;
+}
+
+.dark .ant-picker-cell {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-picker-cell-in-view {
+  color: var(--text-primary, #f1f5f9) !important;
+}
+
+.dark .ant-picker-cell:hover .ant-picker-cell-inner {
+  background-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+.dark .ant-picker-cell-selected .ant-picker-cell-inner {
+  background-color: var(--primary-600, #2563eb) !important;
+  color: white !important;
+}
+
+/* 弹出层暗色模式增强 */
+.dark .ant-popover-inner {
+  background-color: var(--bg-popover, #1e293b) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark .ant-popover-title {
+  color: var(--text-primary, #f1f5f9) !important;
+  border-bottom-color: var(--border-base, #334155) !important;
+}
+
+.dark .ant-popover-inner-content {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-popconfirm-title {
+  color: var(--text-primary, #f1f5f9) !important;
+}
+
+.dark .ant-popconfirm-description {
+  color: var(--text-secondary, #e2e8f0) !important;
+}
+
+.dark .ant-popover-arrow-content::before {
+  background-color: var(--bg-popover, #1e293b) !important;
+}
+
+/* 暗色模式文本辅助类 */
+.dark-text-high-contrast {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+.dark-text-medium-contrast {
+  color: #f1f5f9 !important;
+}
+
+.dark-text-subtle {
+  color: #cbd5e1 !important;
+}
+
+.dark-text-link {
+  color: #60a5fa !important;
+  text-decoration: none !important;
+}
+
+.dark-text-link:hover {
+  color: #93c5fd !important;
+  text-decoration: underline !important;
+}
+
+.dark-text-error {
+  color: #f87171 !important;
+}
+
+.dark-text-warning {
+  color: #fbbf24 !important;
+}
+
+.dark-text-success {
+  color: #4ade80 !important;
+}
+
+.dark-text-info {
+  color: #38bdf8 !important;
+}
+
+/* 特殊背景下的文本适应 */
+.dark-bg-surface {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+}
+
+.dark-bg-surface .ant-typography,
+.dark-bg-surface p,
+.dark-bg-surface span,
+.dark-bg-surface div {
+  color: #f1f5f9 !important;
+}
+
+.dark-bg-surface h1,
+.dark-bg-surface h2,
+.dark-bg-surface h3,
+.dark-bg-surface h4,
+.dark-bg-surface h5,
+.dark-bg-surface h6 {
+  color: #ffffff !important;
+}
+
+/* 带强调色背景下的文本适应 */
+.dark-bg-primary {
+  background-color: rgba(37, 99, 235, 0.9) !important;
+}
+
+.dark-bg-primary * {
+  color: #ffffff !important;
+}
+
+/* 在暗色模式下显示图片时提供背景，避免暗色图片与背景融合 */
+.dark .dark-image-frame {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+}
+
+/* 强制为深色文本提供适当的背景 */
+.dark .force-readable-text {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  color: #f1f5f9 !important;
+}
+
+/* 预设的深色渐变背景，适合放置文字 */
+.dark-gradient-bg {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95)) !important;
+  color: #f1f5f9 !important;
+}
+
+/* 确保文本总是在任何背景上可见的辅助类 */
+.text-shadow-light {
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.text-shadow-dark {
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 自动显示提示帮助文本 */
+.dark .help-text {
+  color: var(--text-tertiary, #cbd5e1) !important;
+  font-size: 0.875rem !important;
 }

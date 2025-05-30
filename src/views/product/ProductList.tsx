@@ -319,14 +319,20 @@ const ProductList: React.FC = () => {
           : 'https://via.placeholder.com/60?text=No+Image';
           
         return (
-          <Image
-            src={imageUrl}
-            alt="商品图片"
-            width={60}
-            height={60}
-            style={{ objectFit: 'cover' }}
-            fallback="https://via.placeholder.com/60?text=No+Image"
-          />
+          <div className="dark:p-1 dark:bg-gray-700/30 dark:rounded-md">
+            <Image
+              src={imageUrl}
+              alt="商品图片"
+              width={60}
+              height={60}
+              style={{ objectFit: 'cover' }}
+              fallback="https://via.placeholder.com/60?text=No+Image"
+              className="rounded-md dark:border dark:border-gray-600"
+              preview={{
+                mask: <div className="dark:text-white">预览</div>
+              }}
+            />
+          </div>
         );
       }
     },
@@ -543,20 +549,39 @@ const ProductList: React.FC = () => {
         
         {/* 调试面板 */}
         {showDebug && debugData && (
-          <div style={{ marginTop: 16, padding: 16, background: '#f5f5f5', borderRadius: 4 }}>
-            <h3>调试信息</h3>
+          <div style={{ 
+            marginTop: 16, 
+            padding: 16, 
+            background: 'var(--bg-code, #f5f7fa)',
+            color: 'var(--text-code, #1e293b)', 
+            borderRadius: 4,
+            border: '1px solid var(--border-base, #e2e8f0)'
+          }}
+          className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+          >
+            <h3 className="text-lg font-medium mb-3 dark:text-white">调试信息</h3>
             <div>
-              <h4>原始数据结构:</h4>
-              <pre style={{ maxHeight: 300, overflow: 'auto' }}>
+              <h4 className="text-base font-medium mb-2 dark:text-gray-200">原始数据结构:</h4>
+              <pre 
+                style={{ maxHeight: 300, overflow: 'auto' }}
+                className="p-3 rounded bg-opacity-50 bg-gray-100 dark:bg-gray-900 text-sm font-mono dark:text-gray-300"
+              >
                 {JSON.stringify(debugData, null, 2)}
               </pre>
             </div>
             {debugData.list && debugData.list.length > 0 && (
-              <div>
-                <h4>第一条记录字段:</h4>
-                <pre>{JSON.stringify(Object.keys(debugData.list[0]), null, 2)}</pre>
-                <h4>第一条记录内容:</h4>
-                <pre style={{ maxHeight: 300, overflow: 'auto' }}>
+              <div className="mt-4">
+                <h4 className="text-base font-medium mb-2 dark:text-gray-200">第一条记录字段:</h4>
+                <pre 
+                  className="p-3 rounded bg-opacity-50 bg-gray-100 dark:bg-gray-900 text-sm font-mono dark:text-gray-300"
+                >
+                  {JSON.stringify(Object.keys(debugData.list[0]), null, 2)}
+                </pre>
+                <h4 className="text-base font-medium mt-3 mb-2 dark:text-gray-200">第一条记录内容:</h4>
+                <pre 
+                  style={{ maxHeight: 300, overflow: 'auto' }}
+                  className="p-3 rounded bg-opacity-50 bg-gray-100 dark:bg-gray-900 text-sm font-mono dark:text-gray-300"
+                >
                   {JSON.stringify(debugData.list[0], null, 2)}
                 </pre>
               </div>

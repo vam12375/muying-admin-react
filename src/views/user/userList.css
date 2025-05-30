@@ -14,6 +14,19 @@
   --border-color: #e0e0e0;
   --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   --transition-speed: 0.3s;
+  
+  /* 添加暗色模式下的主题变量 */
+  --dark-bg-card: #1e293b;
+  --dark-bg-search: #2d3748;
+  --dark-text-primary: #f1f5f9;
+  --dark-text-secondary: #e2e8f0;
+  --dark-border-color: #334155;
+  --dark-hover-bg: #2d3748;
+  --dark-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  --dark-table-header-bg: #293548;
+  --dark-table-row-even: #1e293b;
+  --dark-table-row-odd: #1a2436;
+  --dark-table-row-hover: #334155;
 }
 
 /* 用户列表容器 - 现代布局 */
@@ -29,6 +42,11 @@
   font-size: 26px;
 }
 
+/* 暗色主题标题 */
+.dark .user-list-container h2 {
+  color: var(--dark-text-primary);
+}
+
 /* 用户卡片样式 - 增强视觉效果 */
 .user-card {
   background-color: #fff;
@@ -36,6 +54,13 @@
   box-shadow: var(--card-shadow);
   border: none;
   overflow: hidden;
+}
+
+/* 暗色主题卡片样式 */
+.dark .user-card {
+  background-color: var(--dark-bg-card);
+  box-shadow: var(--dark-card-shadow);
+  border: 1px solid var(--dark-border-color);
 }
 
 /* 搜索栏现代设计 */
@@ -51,6 +76,13 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
+/* 暗色主题搜索栏 */
+.dark .search-bar {
+  background-color: var(--dark-bg-search);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--dark-border-color);
+}
+
 /* 输入框样式增强 */
 .search-bar .ant-input {
   border-radius: 8px;
@@ -59,10 +91,25 @@
   transition: all var(--transition-speed);
 }
 
+/* 恢复输入框焦点和悬停样式 */
 .search-bar .ant-input:focus,
 .search-bar .ant-input:hover {
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+}
+
+/* 暗色主题输入框 */
+.dark .search-bar .ant-input {
+  background-color: var(--dark-bg-card);
+  border-color: var(--dark-border-color);
+  color: var(--dark-text-primary);
+}
+
+/* 暗色主题输入框焦点和悬停样式 */
+.dark .search-bar .ant-input:focus,
+.dark .search-bar .ant-input:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
 }
 
 /* 下拉选择器样式 */
@@ -75,6 +122,21 @@
 
 .search-bar .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
   border-color: var(--primary-color);
+}
+
+/* 暗色主题下拉选择器 */
+.dark .search-bar .ant-select .ant-select-selector {
+  background-color: var(--dark-bg-card);
+  border-color: var(--dark-border-color);
+  color: var(--dark-text-primary);
+}
+
+.dark .search-bar .ant-select-selection-item {
+  color: var(--dark-text-primary);
+}
+
+.dark .search-bar .ant-select-arrow {
+  color: var(--dark-text-secondary);
 }
 
 /* 搜索按钮样式 */
@@ -92,6 +154,16 @@
   background: var(--primary-hover);
   border-color: var(--primary-hover);
   transform: translateY(-1px);
+}
+
+/* 暗色主题按钮文本 */
+.dark .ant-btn {
+  color: var(--dark-text-primary);
+}
+
+.dark .ant-btn-default {
+  background-color: var(--dark-bg-card);
+  border-color: var(--dark-border-color);
 }
 
 /* 添加用户按钮特殊样式 */
@@ -122,6 +194,13 @@
   border-bottom: 2px solid #ebeef5;
 }
 
+/* 暗色主题表头 */
+.dark .user-table .ant-table-thead > tr > th {
+  background-color: var(--dark-table-header-bg);
+  color: var(--dark-text-primary);
+  border-bottom: 2px solid var(--dark-border-color);
+}
+
 /* 表格行样式 */
 .user-table .ant-table-tbody > tr > td {
   padding: 14px 16px;
@@ -129,9 +208,24 @@
   transition: all var(--transition-speed);
 }
 
+/* 暗色主题表格行 */
+.dark .user-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--dark-border-color);
+  color: var(--dark-text-primary);
+}
+
 /* 交替行颜色 */
 .user-table .ant-table-tbody > tr:nth-child(even) {
   background-color: #f9fafc;
+}
+
+/* 暗色主题交替行 */
+.dark .user-table .ant-table-tbody > tr:nth-child(even) {
+  background-color: var(--dark-table-row-even);
+}
+
+.dark .user-table .ant-table-tbody > tr:nth-child(odd) {
+  background-color: var(--dark-table-row-odd);
 }
 
 /* 表格行悬停效果 */
@@ -139,7 +233,12 @@
   background-color: #f0f7ff !important;
 }
 
-/* 文本溢出处理 - 保持原有功能但更好看 */
+/* 暗色主题行悬停 */
+.dark .user-table .ant-table-tbody > tr:hover > td {
+  background-color: var(--dark-table-row-hover) !important;
+}
+
+/* 文本溢出处理 */
 .text-ellipsis {
   white-space: nowrap;
   overflow: hidden;
@@ -147,6 +246,11 @@
   max-width: 100%;
   color: var(--text-color);
   font-size: 14px;
+}
+
+/* 暗色主题文本 */
+.dark .text-ellipsis {
+  color: var(--dark-text-primary);
 }
 
 /* 表格内标签优化 */
@@ -245,11 +349,18 @@
   border-color: var(--danger-color);
 }
 
-.action-buttons button:last-child:hover {
-  background-color: var(--danger-color);
-  color: white;
+/* 暗色主题删除按钮 */
+.dark .action-buttons button:last-child {
+  background-color: var(--dark-bg-card);
+  color: #ff6b6b; /* 更亮的红色以提高可见性 */
+  border-color: #ff6b6b;
+}
+
+.dark .action-buttons button:last-child:hover {
+  background-color: #ff6b6b;
+  color: var(--dark-text-primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(231, 76, 60, 0.2);
+  box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3);
 }
 
 /* 分页器现代设计 */
@@ -276,6 +387,31 @@
 
 .user-table .ant-pagination-item-link {
   border-radius: 8px;
+}
+
+/* 暗色主题分页器 */
+.dark .pagination {
+  color: var(--dark-text-secondary);
+}
+
+.dark .user-table .ant-pagination-item {
+  background-color: var(--dark-bg-card);
+  border-color: var(--dark-border-color);
+}
+
+.dark .user-table .ant-pagination-item a {
+  color: var(--dark-text-primary);
+}
+
+.dark .user-table .ant-pagination-item-active {
+  border-color: var(--primary-color);
+  background-color: rgba(49, 130, 255, 0.2);
+}
+
+.dark .user-table .ant-pagination-item-link {
+  background-color: var(--dark-bg-card);
+  color: var(--dark-text-primary);
+  border-color: var(--dark-border-color);
 }
 
 /* 用户表单弹窗优化 */
@@ -389,4 +525,97 @@
 /* 确保表格在小屏幕设备上也能正常工作 */
 .user-table .ant-table-cell {
   word-break: break-word;
+}
+
+/* 表格提示文本颜色 */
+.dark .ant-table-content .ant-table-cell {
+  color: var(--dark-text-primary);
+}
+
+/* 增强表格的空状态文本在暗色主题下的可见性 */
+.dark .ant-table-placeholder .ant-table-cell {
+  background-color: var(--dark-bg-card);
+}
+
+.dark .ant-empty-description {
+  color: var(--dark-text-secondary);
+}
+
+/* 强化表格筛选和排序图标在暗色主题下的可见性 */
+.dark .ant-table-column-sorter {
+  color: var(--dark-text-secondary);
+}
+
+.dark .ant-table-filter-trigger {
+  color: var(--dark-text-secondary);
+}
+
+/* 保持表格中按钮的可见性和一致性 */
+.dark .ant-btn {
+  border-color: var(--dark-border-color);
+}
+
+/* 暗色主题下的tooltip增强 */
+.dark .ant-tooltip-inner {
+  background-color: #475569;
+}
+
+/* 暗色主题模态框 */
+.dark .user-modal .ant-modal-content {
+  background-color: var(--dark-bg-card);
+  box-shadow: var(--dark-card-shadow);
+}
+
+.dark .user-modal .ant-modal-header {
+  background-color: var(--dark-bg-card);
+  border-bottom: 1px solid var(--dark-border-color);
+}
+
+.dark .user-modal .ant-modal-title {
+  color: var(--dark-text-primary);
+}
+
+.dark .user-modal .ant-form-item-label > label {
+  color: var(--dark-text-secondary);
+}
+
+.dark .user-modal .ant-input,
+.dark .user-modal .ant-select .ant-select-selector {
+  background-color: var(--dark-bg-search);
+  border-color: var(--dark-border-color);
+  color: var(--dark-text-primary);
+}
+
+/* 暗色主题下拉菜单项 */
+.dark .ant-select-dropdown {
+  background-color: var(--dark-bg-card);
+  box-shadow: var(--dark-card-shadow);
+  border: 1px solid var(--dark-border-color);
+}
+
+.dark .ant-select-item {
+  color: var(--dark-text-primary);
+}
+
+.dark .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
+  background-color: var(--dark-hover-bg);
+}
+
+.dark .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+  background-color: rgba(49, 130, 255, 0.2);
+  color: var(--dark-text-primary);
+}
+
+.dark .user-modal .ant-modal-footer {
+  border-top: 1px solid var(--dark-border-color);
+}
+
+/* 暗色主题警告和错误信息 */
+.dark .ant-form-item-explain-error {
+  color: #ff6b6b;
+}
+
+.dark .ant-form-item-has-error .ant-input,
+.dark .ant-form-item-has-error .ant-select .ant-select-selector {
+  border-color: #ff6b6b;
 } 

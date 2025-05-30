@@ -1,4 +1,4 @@
-import type { ThemeConfig } from 'antd'
+// import type { ThemeConfig } from 'antd'
 
 // 定义主题类型
 export type ThemeMode = 'light' | 'dark'
@@ -121,12 +121,33 @@ export const darkTheme = {
   'bg-popover': '#1e293b',
   'bg-input': '#1e293b',
   
-  // 文本色
-  'text-primary': '#f1f5f9',
-  'text-secondary': '#cbd5e1',
-  'text-tertiary': '#94a3b8',
-  'text-disabled': '#64748b',
-  'text-inverse': '#1e293b',
+  // 文本色 - 增强对比度和细分场景
+  'text-primary': '#f1f5f9',             // 更亮以提高可读性
+  'text-secondary': '#e2e8f0',           // 增强对比度，原色值:#cbd5e1
+  'text-tertiary': '#cbd5e1',            // 增强对比度，原色值:#94a3b8
+  'text-disabled': '#94a3b8',            // 保持原色值但确保可读性
+  'text-inverse': '#1e293b',             // 用于反色背景上的文本
+  
+  // 新增文本颜色变量，针对特定场景
+  'text-heading': '#ffffff',             // 标题文本，纯白色提高显著性
+  'text-link': '#93c5fd',                // 链接文本颜色
+  'text-link-hover': '#bfdbfe',          // 链接悬停颜色
+  'text-error': '#fca5a5',               // 错误文本
+  'text-warning': '#fdba74',             // 警告文本
+  'text-success': '#86efac',             // 成功文本
+  'text-code': '#c4b5fd',                // 代码文本
+  'text-highlight': '#fef08a',           // 高亮文本
+  'text-description': '#cbd5e1',         // 描述文本
+  
+  // 表单相关文本
+  'text-label': '#e2e8f0',               // 表单标签
+  'text-placeholder': '#94a3b8',         // 占位符文本
+  'text-input': '#f1f5f9',               // 输入框文本
+  
+  // 表格相关文本
+  'text-table-header': '#ffffff',        // 表格头部文本
+  'text-table-data': '#e2e8f0',          // 表格数据文本
+  'text-table-footer': '#cbd5e1',        // 表格页脚文本
   
   // 边框色
   'border-base': '#334155',

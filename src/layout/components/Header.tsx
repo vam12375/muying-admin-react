@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { Dropdown, Badge, Button, Tooltip, Avatar, Input } from 'antd'
+import React, { useState, useEffect } from 'react'
+import { Dropdown, Button, Tooltip, Avatar, Input } from 'antd'
 import type { MenuProps } from 'antd'
 import {
   MenuFoldOutlined,
@@ -16,6 +16,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import MotionWrapper from '@/components/animations/MotionWrapper'
 import MessageCenter from '@/components/MessageCenter'
+import { useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
+import { logout } from '@/store/slices/userSlice'
+import type { RootState } from '@/store'
 
 type MenuItem = Required<MenuProps>['items'][number];
 
@@ -28,9 +32,31 @@ const Header: React.FC<HeaderProps> = ({ collapsed, toggle }) => {
   const navigate = useNavigate()
   const { isDark, toggleTheme } = useTheme()
   const [searchVisible, setSearchVisible] = useState(false)
+  const dispatch = useDispatch()
+  
+  // 从Redux获取用户信息，包括头像
+  const userInfo = useSelector((state: RootState) => state.user.userInfo)
+  
+  // 添加状态来存储处理过的头像URL
+  const [avatarSrc, setAvatarSrc] = useState<string | undefined>(undefined)
+  
+  // 当Redux中的头像URL变化时更新本地状态
+  useEffect(() => {
+    if (userInfo?.avatar) {
+      // 使用已经带有时间戳的URL或为不带时间戳的URL添加时间戳
+      if (userInfo.avatar.includes('t=')) {
+        setAvatarSrc(userInfo.avatar);
+      } else {
+        setAvatarSrc(userInfo.avatar + (userInfo.avatar.includes('?') ? '&' : '?') + 't=' + new Date().getTime());
+      }
+    } else {
+      setAvatarSrc(undefined);
+    }
+  }, [userInfo?.avatar]);
 
   const handleLogout = () => {
     // 处理登出逻辑
+    dispatch(logout())
     navigate('/login')
   }
 
@@ -170,9 +196,10 @@ const Header: React.FC<HeaderProps> = ({ collapsed, toggle }) => {
               <Avatar 
                 className="bg-gradient-to-r from-primary-500 to-primary-600 shadow-sm"
                 icon={<UserOutlined />}
+                src={avatarSrc}
               />
               <span className="ml-2 text-gray-800 dark:text-gray-200 hidden sm:inline font-medium">
-                管理员
+                {userInfo?.nickname || userInfo?.admin_name || '管理员'}
               </span>
             </div>
           </Dropdown>

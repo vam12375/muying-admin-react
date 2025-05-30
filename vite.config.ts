@@ -10,6 +10,15 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     }
   },
+  // 优化依赖配置，确保正确处理CommonJS模块
+  optimizeDeps: {
+    include: ['@ant-design/charts']
+  },
+  build: {
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
+  },
   server: {
     port: 3000,
     proxy: {

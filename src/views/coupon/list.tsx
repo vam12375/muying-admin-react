@@ -329,7 +329,7 @@ const CouponList: React.FC = () => {
             <Col span={6}>
               <Statistic
                 title="优惠券总数"
-                value={stats?.totalCount || 0}
+                value={stats?.totalCoupons || 0}
                 suffix="张"
               />
             </Col>
@@ -343,16 +343,15 @@ const CouponList: React.FC = () => {
             <Col span={6}>
               <Statistic
                 title="已使用优惠券"
-                value={stats?.usedCount || 0}
+                value={stats?.usedCoupons || 0}
                 suffix="张"
               />
             </Col>
             <Col span={6}>
               <Statistic
-                title="优惠总金额"
-                value={stats?.totalDiscount || 0}
-                precision={2}
-                prefix="¥"
+                title="已过期优惠券"
+                value={stats?.expiredCoupons || 0}
+                suffix="张"
               />
             </Col>
           </Row>

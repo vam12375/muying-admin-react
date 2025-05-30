@@ -22,7 +22,8 @@ import {
   CarOutlined,
   MessageOutlined,
   MoneyCollectOutlined,
-  CustomerServiceOutlined
+  CustomerServiceOutlined,
+  CommentOutlined
 } from '@ant-design/icons'
 import { cn } from '@/lib/utils'
 import MotionWrapper from '@/components/animations/MotionWrapper'
@@ -90,6 +91,21 @@ const Sidebar: React.FC<SidebarProps> = ({ collapsed }) => {
           key: '/product/analysis',
           label: '商品分析',
         },
+      ],
+    },
+    {
+      key: '/comment',
+      icon: <CommentOutlined />,
+      label: '评价管理',
+      children: [
+        {
+          key: '/comment/list',
+          label: '评价列表',
+        },
+        {
+          key: '/comment/statistics',
+          label: '评价统计',
+        }
       ],
     },
     {

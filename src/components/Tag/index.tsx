@@ -3,6 +3,7 @@ import { Tag as AntTag } from 'antd'
 import type { TagProps } from 'antd/es/tag'
 import clsx from 'clsx'
 import { motion } from 'framer-motion'
+import { useTheme } from '@/theme/useTheme'
 
 interface CustomTagProps extends TagProps {
   variant?: 'filled' | 'outlined' | 'light'
@@ -25,6 +26,8 @@ const Tag: React.FC<CustomTagProps> = ({
   className = '',
   ...props
 }) => {
+  const { isDark } = useTheme();
+  
   // 根据尺寸获取对应的样式类
   const getSizeClass = () => {
     switch(size) {
@@ -51,13 +54,30 @@ const Tag: React.FC<CustomTagProps> = ({
   
   // 根据变体获取样式类
   const getVariantClass = () => {
+    // 暗色模式下的增强样式
+    let darkModeClass = '';
+    
+    if (isDark) {
+      switch(variant) {
+        case 'outlined':
+          darkModeClass = `dark:border-${color}-400 dark:text-${color}-300`;
+          break;
+        case 'light':
+          darkModeClass = `dark:bg-${color}-900/20 dark:text-${color}-300`;
+          break;
+        default:
+          darkModeClass = `dark:bg-${color}-600 dark:font-medium`;
+          break;
+      }
+    }
+    
     switch(variant) {
       case 'outlined':
-        return `bg-transparent border border-${color}-500 text-${color}-500 dark:border-${color}-400 dark:text-${color}-400`;
+        return `bg-transparent border border-${color}-500 text-${color}-500 ${darkModeClass}`;
       case 'light':
-        return `bg-${color}-50 text-${color}-700 dark:bg-${color}-900 dark:bg-opacity-20 dark:text-${color}-400`;
+        return `bg-${color}-50 text-${color}-700 ${darkModeClass}`;
       default:
-        return `bg-${color}-500 text-white dark:bg-${color}-600`;
+        return `bg-${color}-500 text-white ${darkModeClass}`;
     }
   };
   
@@ -68,6 +88,8 @@ const Tag: React.FC<CustomTagProps> = ({
     getVariantClass(),
     'inline-flex items-center justify-center',
     'font-medium transition-all duration-200',
+    // 增加暗色模式下的额外效果
+    isDark && 'dark:shadow-sm dark:shadow-black/10',
     className
   );
 

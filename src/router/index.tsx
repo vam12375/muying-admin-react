@@ -26,10 +26,17 @@ const LogisticsDetail = lazy(() => import('@/views/logistics/detail'))
 const LogisticsCompany = lazy(() => import('@/views/logistics/company'))
 const ComponentsShowcase = lazy(() => import('@/views/components'))
 const RedisManage = lazy(() => import('@/views/system/redis'))
+// 管理员个人中心和设置页面
+const AdminProfile = lazy(() => import('@/views/admin/profile'))
+const AdminSettings = lazy(() => import('@/views/admin/settings'))
 // 售后管理组件
 const AfterSaleList = lazy(() => import('@/views/afterSale/list'))
 const AfterSaleDetail = lazy(() => import('@/views/afterSale/detail'))
 const AfterSaleStatistics = lazy(() => import('@/views/afterSale/statistics'))
+// 评价管理组件
+const CommentList = lazy(() => import('@/views/comment/list'))
+const CommentStatistics = lazy(() => import('@/views/comment/statistics'))
+const CommentDetail = lazy(() => import('@/views/comment/index').then(module => ({ default: module.CommentDetail })))
 
 // 数据分析模块
 const Analytics = lazy(() => import('@/views/analytics'))
@@ -39,12 +46,6 @@ const CustomReports = lazy(() => import('@/views/analytics/CustomReports'))
 const ReportExport = lazy(() => import('@/views/analytics/ReportExport'))
 const AnalyticsSettings = lazy(() => import('@/views/analytics/AnalyticsSettings'))
 
-// 内容管理模块
-const ContentManagement = lazy(() => import('@/views/content'))
-const ContentCalendar = lazy(() => import('@/views/content/Calendar'))
-const SeoTools = lazy(() => import('@/views/content/SeoTools'))
-const MediaLibrary = lazy(() => import('@/views/content/MediaLibrary'))
-const TemplateManage = lazy(() => import('@/views/content/Templates'))
 
 // 加载动画组件
 const LoadingAnimation = () => (
@@ -172,31 +173,6 @@ const routeConfig: RouteObject[] = [
           {
             path: 'settings',
             element: LazyLoad(AnalyticsSettings)
-          }
-        ]
-      },
-      {
-        path: 'content',
-        children: [
-          {
-            path: '',
-            element: LazyLoad(ContentManagement)
-          },
-          {
-            path: 'calendar',
-            element: LazyLoad(ContentCalendar)
-          },
-          {
-            path: 'seo',
-            element: LazyLoad(SeoTools)
-          },
-          {
-            path: 'media',
-            element: LazyLoad(MediaLibrary)
-          },
-          {
-            path: 'templates',
-            element: LazyLoad(TemplateManage)
           }
         ]
       },
@@ -358,6 +334,36 @@ const routeConfig: RouteObject[] = [
           {
             path: 'config',
             element: LazyLoad(lazy(() => import('@/views/system/config')))
+          }
+        ]
+      },
+      // 管理员个人中心和设置路由
+      {
+        path: 'profile',
+        element: LazyLoad(AdminProfile)
+      },
+      {
+        path: 'settings',
+        element: LazyLoad(AdminSettings)
+      },
+      {
+        path: 'comment',
+        children: [
+          {
+            path: '',
+            element: <Navigate to="/comment/list" replace />
+          },
+          {
+            path: 'list',
+            element: LazyLoad(CommentList)
+          },
+          {
+            path: 'statistics',
+            element: LazyLoad(CommentStatistics)
+          },
+          {
+            path: 'detail/:id',
+            element: LazyLoad(CommentDetail)
           }
         ]
       }

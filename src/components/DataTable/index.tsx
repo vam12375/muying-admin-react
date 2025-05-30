@@ -1,5 +1,6 @@
-import { ReactNode } from 'react'
-import { Table, TableProps, Input, Button, Tooltip } from 'antd'
+import { type ReactNode } from 'react'
+import { Table, Button, Tooltip, Input } from 'antd'
+import type { TableProps } from 'antd'
 import { SearchOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons'
 import Card from '../Card'
 import { motion } from 'framer-motion'
@@ -37,7 +38,7 @@ interface DataTableProps<RecordType> extends Omit<TableProps<RecordType>, 'title
  * 数据表格组件
  * 包装Ant Design表格，添加搜索、刷新、创建按钮等功能
  */
-function DataTable<RecordType extends object = any>({
+function DataTable<RecordType extends object = Record<string, unknown>>({
   title,
   columns = [],
   dataSource = [],
@@ -61,7 +62,7 @@ function DataTable<RecordType extends object = any>({
       <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         {/* 左侧标题 */}
         {title && (
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 m-0">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white m-0">
             {title}
           </h2>
         )}
@@ -74,8 +75,8 @@ function DataTable<RecordType extends object = any>({
               value={search.searchValue}
               onChange={e => search.onChange && search.onChange(e.target.value)}
               onPressEnter={e => search.onSearch((e.target as HTMLInputElement).value)}
-              prefix={<SearchOutlined className="text-gray-400" />}
-              className="w-full sm:w-64"
+              prefix={<SearchOutlined className="text-gray-400 dark:text-gray-500" />}
+              className="w-full sm:w-64 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
               allowClear
             />
           )}
@@ -89,6 +90,7 @@ function DataTable<RecordType extends object = any>({
                     icon={<ReloadOutlined />}
                     onClick={toolbar.reload.onClick}
                     loading={toolbar.reload.loading}
+                    className="dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
                   />
                 </Tooltip>
               )}
@@ -139,6 +141,12 @@ function DataTable<RecordType extends object = any>({
             'custom-table',
             isDark && 'table-dark'
           )}
+          locale={{
+            filterConfirm: '确定',
+            filterReset: '重置',
+            emptyText: '暂无数据',
+            selectionAll: <span className="dark:text-gray-200">全选</span>,
+          }}
           {...restProps}
         />
       </motion.div>
@@ -149,7 +157,7 @@ function DataTable<RecordType extends object = any>({
   if (card) {
     return (
       <Card 
-        className={cardProps?.className}
+        className={clsx("overflow-visible", cardProps?.className)}
         shadow={cardProps?.shadow || 'sm'}
         bordered
       >

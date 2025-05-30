@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/TailwindCSS-3.4.17-06B6D4?logo=tailwind-css" alt="TailwindCSS" />
   <img src="https://img.shields.io/badge/Redux%20Toolkit-2.8.2-764ABC?logo=redux" alt="Redux Toolkit" />
   <img src="https://img.shields.io/badge/Vite-6.3.5-646CFF?logo=vite" alt="Vite" />
+  <img src="./docs/demo.gif"
 </p>
 
 <p align="center">基于React和TypeScript构建的现代化母婴商城后台管理系统，集成Ant Design和TailwindCSS，提供全面的商品、订单、用户及数据分析管理功能。</p>
