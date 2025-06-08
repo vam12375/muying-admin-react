@@ -102,43 +102,40 @@ const { Search } = Input;
 
 // 使用React.memo优化渲染性能的键类型标签组件
 const KeyTypeTag = memo(({ type }: { type: string }) => {
-  let color = 'default';
+  let className = 'type-tag';
   let icon = null;
   
   switch(type.toLowerCase()) {
     case 'string':
-      color = 'primary';
-      icon = <FileTextOutlined />;
+      className += ' type-tag-string';
+      icon = <FileTextOutlined className="type-tag-icon" />;
       break;
     case 'list':
-      color = 'success';
-      icon = <UnorderedListOutlined />;
+      className += ' type-tag-list';
+      icon = <UnorderedListOutlined className="type-tag-icon" />;
       break;
     case 'hash':
-      color = 'warning';
-      icon = <TableOutlined />;
+      className += ' type-tag-hash';
+      icon = <TableOutlined className="type-tag-icon" />;
       break;
     case 'set':
-      color = 'danger';
-      icon = <AppstoreOutlined />;
+      className += ' type-tag-set';
+      icon = <AppstoreOutlined className="type-tag-icon" />;
       break;
     case 'zset':
-      color = 'info';
-      icon = <OrderedListOutlined />;
+      className += ' type-tag-zset';
+      icon = <OrderedListOutlined className="type-tag-icon" />;
       break;
     default:
-      color = 'default';
-      icon = <QuestionCircleOutlined />;
+      className += ' type-tag-default';
+      icon = <QuestionCircleOutlined className="type-tag-icon" />;
   }
   
   return (
-    <Tag 
-      color={color} 
-      icon={icon}
-      className="flex items-center px-2 py-1"
-    >
-      {type}
-    </Tag>
+    <div className={className}>
+      {icon}
+      <span>{type}</span>
+    </div>
   );
 });
 

@@ -1,10 +1,11 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { getOrderList, getOrderDetail, getOrderStatistics, shipOrder as apiShipOrder } from '@/api/order';
+import { getOrderList, getOrderDetail, getOrderStatistics, getRecentOrders, shipOrder as apiShipOrder } from '@/api/order';
 
 // 定义订单状态类型
 interface OrderState {
   orderList: any[];
   orderDetail: any | null;
+  recentOrders: any[];
   statistics: {
     total: number;
     pending_payment: number;
@@ -26,6 +27,7 @@ interface OrderState {
 const initialState: OrderState = {
   orderList: [],
   orderDetail: null,
+  recentOrders: [],
   statistics: {
     total: 0,
     pending_payment: 0,
@@ -78,6 +80,19 @@ export const fetchOrderStatistics = createAsyncThunk(
       return response;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch order statistics');
+    }
+  }
+);
+
+// 异步Action: 获取最近订单
+export const fetchRecentOrders = createAsyncThunk(
+  'order/fetchRecentOrders',
+  async (limit: number = 5, { rejectWithValue }) => {
+    try {
+      const response = await getRecentOrders(limit);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch recent orders');
     }
   }
 );
@@ -168,6 +183,29 @@ const orderSlice = createSlice({
     builder.addCase(fetchOrderStatistics.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
+    });
+
+    // 处理获取最近订单
+    builder.addCase(fetchRecentOrders.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchRecentOrders.fulfilled, (state, action) => {
+      state.loading = false;
+      if (action.payload && action.payload.data && action.payload.code === 200) {
+        console.log('Orders API response:', action.payload);
+        if (action.payload.data.list) {
+          state.recentOrders = action.payload.data.list;
+        } else {
+          state.recentOrders = action.payload.data;
+        }
+      } else {
+        state.error = action.payload.message || '获取数据格式错误';
+      }
+    });
+    builder.addCase(fetchRecentOrders.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string || '获取最近订单失败';
     });
 
     // 处理订单发货

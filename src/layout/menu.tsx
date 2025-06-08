@@ -41,6 +41,10 @@ export const getMenuItems = (): MenuItem[] => {
           key: 'user/list',
           label: '用户列表',
         },
+        {
+          key: 'user/transactions',
+          label: '交易记录',
+        },
       ],
     },
     {

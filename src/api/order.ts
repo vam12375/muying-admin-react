@@ -17,6 +17,23 @@ export const getOrderList = (params: any) => {
 };
 
 /**
+ * 获取最近订单
+ * @param limit 获取的订单数量，默认为5条
+ */
+export const getRecentOrders = (limit: number = 5) => {
+  return request({
+    url: '/api/admin/orders',
+    method: 'get',
+    params: { 
+      pageSize: limit,
+      pageNum: 1,
+      sortField: 'createTime',
+      sortOrder: 'desc'
+    }
+  });
+};
+
+/**
  * 获取订单详情
  * @param id 订单ID
  */

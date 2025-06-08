@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Row, Col, Statistic, Progress, Tooltip, Table, DatePicker } from 'antd'
+import { Row, Col, Statistic, Progress, Tooltip, Table, DatePicker, Spin, message } from 'antd'
 import { 
   ArrowUpOutlined, 
   ArrowDownOutlined, 
@@ -16,6 +16,9 @@ import Card from '@/components/Card'
 import Button from '@/components/Button'
 import MotionWrapper from '@/components/animations/MotionWrapper'
 import { formatPrice, formatNumber } from '@/lib/utils'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchRecentOrders } from '@/store/slices/orderSlice'
+import { RootState } from '@/store'
 import { 
   slideUpAnimation,
   staggerContainerAnimation,
@@ -28,7 +31,10 @@ import {
  * 展示系统关键数据和统计信息
  */
 const Dashboard: React.FC = () => {
-  const [statsLoading, setStatsLoading] = useState(true)
+  const dispatch = useDispatch();
+  const { recentOrders, loading, error } = useSelector((state: RootState) => state.order);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [localOrders, setLocalOrders] = useState<any[]>([]); // 用于存储本地备份订单数据
   
   // 模拟加载数据
   useEffect(() => {
@@ -38,6 +44,138 @@ const Dashboard: React.FC = () => {
     
     return () => clearTimeout(timer)
   }, [])
+
+  // 备用订单数据（当API调用失败时使用）
+  const fallbackOrderData = [
+    {
+      key: '1',
+      orderNo: 'ORD-20230001',
+      customerName: '张小姐',
+      productName: '婴儿奶粉套装',
+      totalAmount: 568,
+      statusText: '已付款',
+    },
+    {
+      key: '2',
+      orderNo: 'ORD-20230002',
+      customerName: '王先生',
+      productName: '婴儿推车',
+      totalAmount: 1299,
+      statusText: '已发货',
+    },
+    {
+      key: '3',
+      orderNo: 'ORD-20230003',
+      customerName: '李女士',
+      productName: '尿不湿纸尿裤',
+      totalAmount: 298,
+      statusText: '已完成',
+    },
+    {
+      key: '4',
+      orderNo: 'ORD-20230004',
+      customerName: '赵先生',
+      productName: '婴儿玩具套装',
+      totalAmount: 458,
+      statusText: '已付款',
+    },
+    {
+      key: '5',
+      orderNo: 'ORD-20230005',
+      customerName: '孙女士',
+      productName: '儿童餐椅',
+      totalAmount: 899,
+      statusText: '已取消',
+    },
+  ];
+
+  // 获取最近订单数据并处理错误
+  useEffect(() => {
+    dispatch(fetchRecentOrders(5) as any);
+  }, [dispatch]);
+
+  // 处理API错误，使用备用数据
+  useEffect(() => {
+    if (error) {
+      console.error('获取最近订单失败:', error);
+      message.error('获取最近订单数据失败，显示默认数据');
+      setLocalOrders(fallbackOrderData);
+    } else if (recentOrders && recentOrders.length > 0) {
+      // 将API返回的数据映射到表格需要的结构
+      const mappedOrders = recentOrders.map(order => {
+        // 打印一条原始订单对象，帮助调试数据结构
+        console.log('Original order data:', order);
+        
+        // 获取用户昵称
+        let userNickname = '未知用户';
+        if (order.user) {
+          userNickname = order.user.nickname || order.user.userName || order.user.name || `用户${order.user.id}`;
+        } else if (order.customer) {
+          userNickname = order.customer.nickname || order.customer.userName || order.customer.name || `用户${order.customer.id}`;
+        } else if (order.buyerName) {
+          userNickname = order.buyerName;
+        } else if (order.userId) {
+          userNickname = `用户${order.userId}`;
+        }
+        
+        // 根据实际返回的数据结构进行映射
+        return {
+          orderNo: order.orderNo || order.id || order.orderId || '',
+          customerName: userNickname,
+          productName: order.productName || order.itemName || order.productTitle || '多个商品',
+          totalAmount: order.totalAmount || order.amount || order.orderAmount || 0,
+          statusText: mapOrderStatus(order.statusText || order.status || order.statusCode) || '处理中'
+        };
+      });
+      setLocalOrders(mappedOrders);
+    } else if (!loading) {
+      // 如果没有错误但数据为空，也使用备用数据
+      setLocalOrders(fallbackOrderData);
+    }
+  }, [error, recentOrders, loading]);
+
+  // 订单状态码映射函数
+  const mapOrderStatus = (statusCode?: number | string): string => {
+    if (!statusCode) return '处理中';
+    
+    // 如果是数字状态码，按数字映射
+    if (typeof statusCode === 'number' || !isNaN(Number(statusCode))) {
+      switch(Number(statusCode)) {
+        case 1: return '待付款';
+        case 2: return '已付款';
+        case 3: return '已发货';
+        case 4: return '已完成';
+        case 5: return '已取消';
+        case 6: return '已退款';
+        default: return '处理中';
+      }
+    }
+    
+    // 如果是英文状态，映射到中文
+    switch(statusCode.toLowerCase()) {
+      case 'pending': 
+      case 'unpaid': 
+      case 'waiting for payment': return '待付款';
+      
+      case 'paid':
+      case 'payment completed': return '已付款';
+      
+      case 'shipped':
+      case 'delivering': return '已发货';
+      
+      case 'completed':
+      case 'finished':
+      case 'done': return '已完成';
+      
+      case 'cancelled':
+      case 'canceled': return '已取消';
+      
+      case 'refunded':
+      case 'refund completed': return '已退款';
+      
+      default: return statusCode; // 如果没有匹配项，保留原始状态
+    }
+  }
 
   // 销售数据
   const salesData = [
@@ -75,7 +213,7 @@ const Dashboard: React.FC = () => {
     { type: '其他', value: 5 },
   ]
 
-  // 近期订单数据
+  // 近期订单数据（从Redux获取）
   const orderColumns = [
     {
       title: '订单号',
@@ -83,9 +221,14 @@ const Dashboard: React.FC = () => {
       key: 'id',
     },
     {
-      title: '客户',
+      title: '用户信息',
       dataIndex: 'customer',
       key: 'customer',
+      render: (customer: string) => (
+        <span>
+          {customer}
+        </span>
+      )
     },
     {
       title: '商品',
@@ -103,8 +246,14 @@ const Dashboard: React.FC = () => {
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
+        // 调试状态值
+        console.log('Rendering status:', status);
+        
         let color = ''
         switch (status) {
+          case '待付款':
+            color = 'bg-warning-100 text-warning-700 dark:bg-warning-900/20 dark:text-warning-300'
+            break
           case '已付款':
             color = 'bg-success-100 text-success-700 dark:bg-success-900/20 dark:text-success-300'
             break
@@ -117,59 +266,19 @@ const Dashboard: React.FC = () => {
           case '已取消':
             color = 'bg-danger-100 text-danger-700 dark:bg-danger-900/20 dark:text-danger-300'
             break
+          case '已退款':
+            color = 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300'
+            break
           default:
             color = 'bg-warning-100 text-warning-700 dark:bg-warning-900/20 dark:text-warning-300'
         }
         
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>
-            {status}
+            {status || '处理中'}
           </span>
         )
       },
-    },
-  ]
-
-  const orderData = [
-    {
-      key: '1',
-      id: 'ORD-20230001',
-      customer: '张小姐',
-      product: '婴儿奶粉套装',
-      amount: 568,
-      status: '已付款',
-    },
-    {
-      key: '2',
-      id: 'ORD-20230002',
-      customer: '王先生',
-      product: '婴儿推车',
-      amount: 1299,
-      status: '已发货',
-    },
-    {
-      key: '3',
-      id: 'ORD-20230003',
-      customer: '李女士',
-      product: '尿不湿纸尿裤',
-      amount: 298,
-      status: '已完成',
-    },
-    {
-      key: '4',
-      id: 'ORD-20230004',
-      customer: '赵先生',
-      product: '婴儿玩具套装',
-      amount: 458,
-      status: '已付款',
-    },
-    {
-      key: '5',
-      id: 'ORD-20230005',
-      customer: '孙女士',
-      product: '儿童餐椅',
-      amount: 899,
-      status: '已取消',
     },
   ]
 
@@ -453,12 +562,25 @@ const Dashboard: React.FC = () => {
                   </Button>
                 }
               >
-                <Table 
-                  columns={orderColumns}
-                  dataSource={orderData}
-                  pagination={false}
-                  className="custom-table"
-                />
+                {loading ? (
+                  <div className="flex justify-center items-center py-10">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <Table 
+                    columns={orderColumns}
+                    dataSource={localOrders.map((order, index) => ({
+                      key: index.toString(),
+                      id: order.orderNo,
+                      customer: order.customerName,
+                      product: order.productName,
+                      amount: order.totalAmount,
+                      status: order.statusText
+                    }))}
+                    pagination={false}
+                    className="custom-table"
+                  />
+                )}
               </Card>
             </Col>
 

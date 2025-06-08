@@ -15,6 +15,7 @@ const Login = lazy(() => import('@/views/login'))
 const Dashboard = lazy(() => import('@/views/dashboard'))
 const NotFound = lazy(() => import('@/views/error/404'))
 const UserList = lazy(() => import('@/views/user/list'))
+const TransactionList = lazy(() => import('@/views/user/transactions'))
 const ProductList = lazy(() => import('@/views/product/ProductList'))
 const CategoryManage = lazy(() => import('@/views/product/CategoryManage'))
 const BrandManage = lazy(() => import('@/views/product/BrandManage'))
@@ -182,6 +183,10 @@ const routeConfig: RouteObject[] = [
           {
             path: 'list',
             element: LazyLoad(UserList)
+          },
+          {
+            path: 'transactions',
+            element: LazyLoad(TransactionList)
           }
         ]
       },

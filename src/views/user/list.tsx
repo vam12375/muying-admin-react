@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Card, Button, Input, Space, Tag, Modal, message, Typography, Form, Select, Tooltip } from 'antd'
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons'
+import { Table, Card, Button, Input, Space, Tag, Modal, message, Typography, Form, Select, Tooltip, InputNumber } from 'antd'
+import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, LockOutlined, UnlockOutlined, WalletOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { getUserPage, deleteUser, toggleUserStatus, addUser, updateUser, getUserById } from '@/api/user'
+import { getUserAccountByUserId, rechargeUserAccount } from '@/api/userAccount'
 import './userList.css' // 我们将添加这个CSS文件
 
 const { Title } = Typography
@@ -18,6 +19,7 @@ interface UserData {
   status: number
   role: string
   createTime: string
+  balance?: number // 添加余额字段
 }
 
 // 定义分页数据接口
@@ -43,14 +45,45 @@ const UserList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined)
   const [roleFilter, setRoleFilter] = useState<string | undefined>(undefined)
   
+  // 充值相关状态
+  const [rechargeModalVisible, setRechargeModalVisible] = useState(false)
+  const [rechargeForm] = Form.useForm()
+  const [rechargingUserId, setRechargingUserId] = useState<number | null>(null)
+  const [rechargingUserName, setRechargingUserName] = useState('')
+  
   // 加载用户数据
   const fetchUsers = async (page = pagination.current, pageSize = pagination.pageSize, keyword?: string, status?: string, role?: string) => {
     setLoading(true)
     
     try {
       const res = await getUserPage(page, pageSize, keyword, status, role)
-      if (res.success) {
-        setUsers(res.data.records)
+      if (res.data && res.data.records) {
+        // 获取用户列表
+        const userList = res.data.records
+        
+        // 获取每个用户的账户余额
+        const usersWithBalance = await Promise.all(
+          userList.map(async (user: UserData) => {
+            try {
+              const accountRes = await getUserAccountByUserId(user.userId)
+              if (accountRes.data) {
+                return {
+                  ...user,
+                  balance: accountRes.data.balance || 0
+                }
+              }
+              return user
+            } catch (error) {
+              console.error(`获取用户${user.userId}余额失败:`, error)
+              return {
+                ...user,
+                balance: 0
+              }
+            }
+          })
+        )
+        
+        setUsers(usersWithBalance)
         setPagination({
           ...pagination,
           current: page,
@@ -235,6 +268,52 @@ const UserList: React.FC = () => {
     </Tooltip>
   );
   
+  // 打开充值对话框
+  const handleRecharge = (userId: number, username: string) => {
+    setRechargingUserId(userId)
+    setRechargingUserName(username)
+    rechargeForm.resetFields()
+    setRechargeModalVisible(true)
+  }
+  
+  // 执行充值操作
+  const handleRechargeSubmit = () => {
+    rechargeForm.validateFields().then(async (values) => {
+      if (!rechargingUserId) return
+      
+      try {
+        setLoading(true)
+        const rechargeData = {
+          userId: rechargingUserId,
+          amount: values.amount,
+          paymentMethod: 'admin',
+          description: '管理员充值',
+          remark: values.remark
+        }
+        
+        const res = await rechargeUserAccount(rechargeData)
+        if (res.data) {
+          message.success('充值成功')
+          setRechargeModalVisible(false)
+          
+          // 更新本地数据，避免重新请求
+          setUsers(users.map(user => 
+            user.userId === rechargingUserId 
+              ? { ...user, balance: (user.balance || 0) + values.amount } 
+              : user
+          ))
+        } else {
+          message.error(res.message || '充值失败')
+        }
+      } catch (error) {
+        console.error('充值出错:', error)
+        message.error('充值出错')
+      } finally {
+        setLoading(false)
+      }
+    })
+  }
+  
   // 表格列定义
   const columns: ColumnsType<UserData> = [
     {
@@ -272,6 +351,13 @@ const UserList: React.FC = () => {
       render: renderWithTooltip
     },
     {
+      title: '账户余额',
+      dataIndex: 'balance',
+      key: 'balance',
+      width: 100,
+      render: (balance) => `¥${balance?.toFixed(2) || '0.00'}`
+    },
+    {
       title: '角色',
       dataIndex: 'role',
       key: 'role',
@@ -304,7 +390,7 @@ const UserList: React.FC = () => {
       title: '操作',
       key: 'action',
       fixed: 'right',
-      width: 180,
+      width: 240,
       render: (_, record) => (
         <div className="action-buttons">
           <Button 
@@ -323,6 +409,15 @@ const UserList: React.FC = () => {
             onClick={() => handleStatusToggle(record.userId, record.status)}
           >
             {record.status === 1 ? '禁用' : '启用'}
+          </Button>
+          <Button 
+            type="primary"
+            size="small"
+            style={{ background: '#52c41a' }}
+            icon={<WalletOutlined />}
+            onClick={() => handleRecharge(record.userId, record.username)}
+          >
+            充值
           </Button>
           <Button 
             danger
@@ -395,7 +490,7 @@ const UserList: React.FC = () => {
               className: 'pagination'
             }}
             onChange={handleTableChange}
-            scroll={{ x: 1100 }}
+            scroll={{ x: 1200 }}
             className="user-table"
           />
         </div>
@@ -487,6 +582,49 @@ const UserList: React.FC = () => {
               <Option value={1}>正常</Option>
               <Option value={0}>禁用</Option>
             </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+      
+      {/* 充值对话框 */}
+      <Modal
+        title={`为用户 ${rechargingUserName} 充值`}
+        open={rechargeModalVisible}
+        onOk={handleRechargeSubmit}
+        onCancel={() => setRechargeModalVisible(false)}
+        confirmLoading={loading}
+        maskClosable={false}
+      >
+        <Form
+          form={rechargeForm}
+          layout="vertical"
+        >
+          <Form.Item
+            name="amount"
+            label="充值金额"
+            rules={[
+              { required: true, message: '请输入充值金额' },
+              { type: 'number', min: 0.01, message: '充值金额必须大于0' }
+            ]}
+          >
+            <InputNumber
+              style={{ width: '100%' }}
+              placeholder="请输入充值金额"
+              precision={2}
+              min={0.01}
+              step={10}
+              prefix="¥"
+            />
+          </Form.Item>
+          
+          <Form.Item
+            name="remark"
+            label="备注"
+          >
+            <Input.TextArea
+              placeholder="请输入充值备注信息"
+              rows={3}
+            />
           </Form.Item>
         </Form>
       </Modal>

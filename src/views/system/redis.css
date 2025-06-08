@@ -210,4 +210,93 @@
   opacity: 0;
   transform: translateY(-20px);
   transition: opacity 300ms, transform 300ms;
+}
+
+/* 键类型标签增强样式 - 亮色主题优化 */
+.type-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid;
+}
+
+.type-tag-icon {
+  margin-right: 4px;
+}
+
+/* 针对亮色主题的类型标签 */
+.type-tag-string {
+  color: #1055b0;
+  background-color: rgba(24, 144, 255, 0.1);
+  border-color: rgba(24, 144, 255, 0.5);
+}
+
+.type-tag-list {
+  color: #135200;
+  background-color: rgba(82, 196, 26, 0.1);
+  border-color: rgba(82, 196, 26, 0.5);
+}
+
+.type-tag-hash {
+  color: #874d00;
+  background-color: rgba(250, 173, 20, 0.1);
+  border-color: rgba(250, 173, 20, 0.5);
+}
+
+.type-tag-set {
+  color: #a8071a;
+  background-color: rgba(245, 34, 45, 0.1);
+  border-color: rgba(245, 34, 45, 0.5);
+}
+
+.type-tag-zset {
+  color: #50198f;
+  background-color: rgba(114, 46, 209, 0.1);
+  border-color: rgba(114, 46, 209, 0.5);
+}
+
+.type-tag-default {
+  color: #333333;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* 针对暗色主题的类型标签 */
+.dark .type-tag-string {
+  color: #40a9ff;
+  background-color: rgba(24, 144, 255, 0.2);
+  border-color: rgba(24, 144, 255, 0.5);
+}
+
+.dark .type-tag-list {
+  color: #73d13d;
+  background-color: rgba(82, 196, 26, 0.2);
+  border-color: rgba(82, 196, 26, 0.5);
+}
+
+.dark .type-tag-hash {
+  color: #ffc53d;
+  background-color: rgba(250, 173, 20, 0.2);
+  border-color: rgba(250, 173, 20, 0.5);
+}
+
+.dark .type-tag-set {
+  color: #ff4d4f;
+  background-color: rgba(245, 34, 45, 0.2);
+  border-color: rgba(245, 34, 45, 0.5);
+}
+
+.dark .type-tag-zset {
+  color: #b37feb;
+  background-color: rgba(114, 46, 209, 0.2);
+  border-color: rgba(114, 46, 209, 0.5);
+}
+
+.dark .type-tag-default {
+  color: #d9d9d9;
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
 } 
