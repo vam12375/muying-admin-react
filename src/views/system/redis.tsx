@@ -781,15 +781,13 @@ const RedisManage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <StatsCard
             title="Redis版本"
-            value={1}
-            suffix={info.version}
+            value={info.version}
             icon={<CloudServerOutlined />}
             color="primary"
           />
           <StatsCard
             title="运行时间"
-            value={1}
-            suffix={formatDuration(Number(info.uptime))}
+            value={formatDuration(Number(info.uptime))}
             icon={<ClockCircleOutlined />}
             color="success"
           />
@@ -806,15 +804,13 @@ const RedisManage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <StatsCard
             title="内存使用"
-            value={1}
-            suffix={info.usedMemoryHuman}
+            value={info.usedMemoryHuman}
             icon={<DatabaseOutlined />}
             color="danger"
           />
           <StatsCard
             title="内存峰值"
-            value={1}
-            suffix={info.usedMemoryPeakHuman}
+            value={info.usedMemoryPeakHuman}
             icon={<DatabaseOutlined />}
             color="warning"
           />
@@ -843,15 +839,13 @@ const RedisManage: React.FC = () => {
           />
           <StatsCard
             title="运行模式"
-            value={1}
-            suffix={info.mode}
+            value={info.mode}
             icon={<CloudServerOutlined />}
             color="primary"
           />
           <StatsCard
             title="操作系统"
-            value={1}
-            suffix={info.os}
+            value={info.os}
             icon={<CloudServerOutlined />}
             color="default"
           />

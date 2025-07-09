@@ -9,10 +9,11 @@ import {
   LoadingOutlined, BankOutlined
 } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  getRefundDetail, reviewRefund, processRefund, 
-  completeRefund, failRefund 
+import {
+  getRefundDetail, reviewRefund, processRefund,
+  completeRefund, failRefund
 } from '@/api/afterSale';
+import { translateRefundReason } from '@/utils/refundUtils';
 import dayjs from 'dayjs';
 
 const { Step } = Steps;
@@ -391,7 +392,7 @@ const RefundDetail: React.FC = () => {
                   {dayjs(refund.createTime).format('YYYY-MM-DD HH:mm:ss')}
                 </Descriptions.Item>
                 <Descriptions.Item label="申请原因" span={2}>
-                  {refund.refundReason}
+                  {translateRefundReason(refund.refundReason)}
                 </Descriptions.Item>
                 <Descriptions.Item label="详细说明" span={2}>
                   {refund.refundReasonDetail || '无'}

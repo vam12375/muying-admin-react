@@ -274,12 +274,20 @@ const routeConfig: RouteObject[] = [
             element: LazyLoad(lazy(() => import('@/views/coupon/form')))
           },
           {
+            path: 'detail/:id',
+            element: LazyLoad(lazy(() => import('@/views/coupon/detail')))
+          },
+          {
             path: 'batch',
             element: LazyLoad(lazy(() => import('@/views/coupon/batch')))
           },
           {
             path: 'rule',
             element: LazyLoad(lazy(() => import('@/views/coupon/rule')))
+          },
+          {
+            path: 'test',
+            element: LazyLoad(lazy(() => import('@/views/coupon/test')))
           }
         ]
       },

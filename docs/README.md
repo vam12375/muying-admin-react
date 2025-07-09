@@ -1,103 +1,82 @@
 # 母婴商城管理后台文档
 
-欢迎查阅母婴商城管理后台(muying-admin-react)的项目文档。本文档涵盖了项目架构、组件设计、开发指南和最佳实践等内容，旨在帮助开发人员更好地理解和维护此项目。
+欢迎来到母婴商城管理后台的文档中心！这里包含了项目的完整技术文档。
 
-## 项目概述
+## 📖 文档导航
 
-muying-admin-react是母婴商城系统的管理后台，基于React和TypeScript构建，为商家和管理员提供全面的运营管理功能，包括商品管理、订单处理、用户管理、数据统计等核心功能。
+### 🏗️ 架构设计
+- [项目架构](./architecture.md) - 整体技术架构和设计理念
+- [目录结构](./structure.md) - 项目目录结构详解
+- [技术栈](./tech-stack.md) - 技术选型和版本说明
 
-## 技术栈
+### 🛠️ 开发指南
+- [开发环境](./development/environment.md) - 开发环境搭建
+- [编码规范](./development/coding-standards.md) - 代码风格和规范
+- [组件开发](./development/components.md) - 组件开发指南
+- [状态管理](./development/state-management.md) - Redux 状态管理
+- [路由配置](./development/routing.md) - 路由配置说明
 
-- **核心框架**：React 19.1.0
-- **语言**：TypeScript 5.8.3
-- **状态管理**：Redux Toolkit 2.8.2
-- **UI组件库**：Ant Design 5.25.1
-- **CSS框架**：TailwindCSS 3.4.17
-- **构建工具**：Vite 6.3.5
-- **HTTP客户端**：Axios 1.9.0
-- **路由**：React Router 7.6.0
-- **图表库**：Ant Design Charts / ECharts 5.6.0
+### 🎯 功能模块
+- [用户管理](./features/user-management.md) - 用户和权限管理
+- [商品管理](./features/product-management.md) - 商品和分类管理
+- [订单管理](./features/order-management.md) - 订单处理流程
+- [营销管理](./features/marketing.md) - 优惠券和积分系统
+- [数据分析](./features/analytics.md) - 数据统计和分析
+- [系统管理](./features/system.md) - 系统配置和监控
 
-## 文档目录
+### 🔌 API 文档
+- [API 概览](./api/overview.md) - API 设计规范
+- [认证授权](./api/authentication.md) - 登录和权限验证
+- [用户接口](./api/user.md) - 用户相关接口
+- [商品接口](./api/product.md) - 商品相关接口
+- [订单接口](./api/order.md) - 订单相关接口
 
-### 架构文档
+### 🚀 部署运维
+- [部署指南](./deployment/guide.md) - 生产环境部署
+- [环境配置](./deployment/environment.md) - 环境变量配置
+- [监控日志](./deployment/monitoring.md) - 监控和日志管理
+- [性能优化](./deployment/optimization.md) - 性能优化建议
 
-- [项目架构概述](architecture/overview.md)
-- [目录结构说明](architecture/directory-structure.md)
-- [状态管理设计](architecture/state-management.md)
-- [路由架构](architecture/routing.md)
-- [API集成](architecture/api-integration.md)
-- [类型系统](architecture/typescript.md)
+### 🎨 设计规范
+- [UI 设计](./design/ui-guidelines.md) - UI 设计规范
+- [主题配置](./design/theming.md) - 主题和样式配置
+- [图标使用](./design/icons.md) - 图标库使用指南
 
-### 组件文档
+### 🧪 测试
+- [测试策略](./testing/strategy.md) - 测试策略和规范
+- [单元测试](./testing/unit-tests.md) - 单元测试编写
+- [集成测试](./testing/integration-tests.md) - 集成测试指南
 
-- [组件设计原则](components/design-principles.md)
-- [布局组件](components/layout/README.md)
-- [UI基础组件](components/ui/README.md)
-- [业务组件](components/business/README.md)
-- [表格和表单](components/data-entry/README.md)
-- [图表组件](components/charts/README.md)
+### 📋 其他
+- [常见问题](./faq.md) - 常见问题解答
+- [更新日志](./changelog.md) - 版本更新记录
+- [贡献指南](./contributing.md) - 如何参与项目贡献
 
-### 开发指南
+## 🔍 快速查找
 
-- [开发环境搭建](development/setup.md)
-- [开发工作流](development/workflow.md)
-- [调试指南](development/debugging.md)
-- [单元测试](development/testing.md)
-- [性能优化](development/performance.md)
-- [类型定义最佳实践](development/typescript-best-practices.md)
+### 新手入门
+1. [开发环境搭建](./development/environment.md)
+2. [项目架构了解](./architecture.md)
+3. [编码规范学习](./development/coding-standards.md)
 
-### 主题与样式
+### 功能开发
+1. [组件开发指南](./development/components.md)
+2. [状态管理使用](./development/state-management.md)
+3. [API 接口调用](./api/overview.md)
 
-- [设计系统](styles/design-system.md)
-- [主题定制](styles/theming.md)
-- [TailwindCSS使用指南](styles/tailwind-guide.md)
-- [响应式设计](styles/responsive-design.md)
-- [动画实现](styles/animations.md)
+### 问题排查
+1. [常见问题](./faq.md)
+2. [调试技巧](./development/debugging.md)
+3. [性能优化](./deployment/optimization.md)
 
-### 功能模块
+## 📝 文档维护
 
-- [仪表盘](features/dashboard.md)
-- [商品管理](features/products.md)
-- [订单管理](features/orders.md)
-- [用户管理](features/users.md)
-- [营销管理](features/marketing.md)
-- [统计分析](features/analytics.md)
-- [系统设置](features/settings.md)
+本文档由开发团队共同维护，如发现文档错误或需要补充内容，请：
 
-## 状态管理
+1. 提交 Issue 说明问题
+2. 直接提交 PR 修改文档
+3. 联系项目维护者
 
-- [Redux Toolkit架构](state/redux-toolkit.md)
-- [状态模块设计](state/slice-design.md)
-- [异步处理](state/async-operations.md)
-- [状态持久化](state/persistence.md)
+---
 
-## 安全与权限
-
-- [认证流程](security/authentication.md)
-- [权限管理](security/authorization.md)
-- [角色体系](security/roles.md)
-- [安全最佳实践](security/best-practices.md)
-
-## 贡献指南
-
-我们欢迎并感谢任何形式的贡献。请查看[贡献指南](CONTRIBUTING.md)了解如何参与项目开发。
-
-## 项目维护
-
-- **版本控制**：Git
-- **分支策略**：详见[开发工作流](development/workflow.md)
-- **版本历史**：详见[版本日志](CHANGELOG.md)
-
-## 常见问题
-
-常见问题和解决方案请查看[FAQ](FAQ.md)文档。
-
-## 相关资源
-
-- [后端API文档](../../docs/API.md)
-- [设计资源](resources/design-assets.md)
-- [学习资源](resources/learning-resources.md)
-- [React官方文档](https://react.dev/)
-- [Redux Toolkit文档](https://redux-toolkit.js.org/)
-- [Ant Design文档](https://ant.design/) 
+*最后更新时间：2025-07-09*

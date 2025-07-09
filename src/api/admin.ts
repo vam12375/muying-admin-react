@@ -96,4 +96,41 @@ export function getAdminLogs(params: QueryParams): AxiosPromise {
     method: 'get',
     params
   });
-} 
+}
+
+/**
+ * 获取管理员登录记录
+ * @param params 查询参数
+ * @returns 登录记录数据的Promise
+ */
+export function getLoginRecords(params: QueryParams): AxiosPromise {
+  return request({
+    url: '/admin/login-records',
+    method: 'get',
+    params
+  });
+}
+
+/**
+ * 获取管理员操作记录
+ * @param params 查询参数
+ * @returns 操作记录数据的Promise
+ */
+export function getOperationRecords(params: QueryParams): AxiosPromise {
+  return request({
+    url: '/admin/operation-records',
+    method: 'get',
+    params
+  });
+}
+
+/**
+ * 获取管理员统计信息
+ * @returns 统计信息的Promise
+ */
+export function getAdminStatistics(): AxiosPromise {
+  return request({
+    url: '/admin/statistics',
+    method: 'get'
+  });
+}

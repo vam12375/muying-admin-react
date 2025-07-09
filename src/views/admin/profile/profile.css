@@ -1,0 +1,195 @@
+/* 个人中心页面样式 */
+
+/* 标签页样式优化 */
+.admin-profile-tabs .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 8px 8px 0 0;
+  margin-right: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-profile-tabs .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab:hover {
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.admin-profile-tabs .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
+}
+
+.admin-profile-tabs .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: white !important;
+}
+
+.admin-profile-tabs .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active .anticon {
+  color: white !important;
+}
+
+/* 暗色主题适配 */
+.dark .admin-profile-tabs .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+.dark .admin-profile-tabs .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab:hover {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  color: #f3f4f6;
+}
+
+.dark .admin-profile-tabs .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+}
+
+/* 标签页内容区域 */
+.admin-profile-tabs .ant-tabs-content-holder {
+  padding: 0;
+}
+
+.admin-profile-tabs .ant-tabs-tabpane {
+  padding: 0;
+}
+
+/* 统计卡片动画 */
+.admin-statistics-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-statistics-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* 表格样式优化 */
+.ant-table-thead > tr > th {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+  font-weight: 600 !important;
+  color: #374151 !important;
+}
+
+.dark .ant-table-thead > tr > th {
+  background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
+  border-bottom: 2px solid #4b5563 !important;
+  color: #f3f4f6 !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: rgba(59, 130, 246, 0.05) !important;
+}
+
+.dark .ant-table-tbody > tr:hover > td {
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* 进度条样式 */
+.ant-progress-line .ant-progress-bg {
+  transition: all 0.3s ease;
+}
+
+/* 标签样式 */
+.ant-tag {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 2px 8px;
+}
+
+/* 时间轴样式 */
+.ant-timeline-item-head {
+  border-width: 3px;
+}
+
+.ant-timeline-item-content {
+  margin-left: 20px;
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .admin-profile-tabs .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
+    margin-right: 4px;
+    padding: 8px 12px;
+  }
+  
+  .admin-profile-tabs .ant-tabs-tab-btn {
+    font-size: 12px;
+  }
+  
+  .admin-profile-tabs .anticon {
+    font-size: 14px;
+  }
+}
+
+/* 加载状态优化 */
+.ant-spin-container {
+  transition: opacity 0.3s;
+}
+
+.ant-spin-blur {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 卡片阴影效果 */
+.shadow-sm {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* 动画效果 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* 滚动条样式 */
+.ant-table-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.ant-table-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.ant-table-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.ant-table-body::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.dark .ant-table-body::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .ant-table-body::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+.dark .ant-table-body::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

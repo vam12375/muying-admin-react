@@ -1,24 +1,31 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Avatar, Typography, Tag, Button, Descriptions, Timeline, Spin, Row, Col, Divider, Progress } from 'antd'
-import { 
-  UserOutlined, 
-  MailOutlined, 
-  PhoneOutlined, 
-  CalendarOutlined, 
-  EditOutlined, 
-  EnvironmentOutlined, 
+import { Card, Avatar, Typography, Tag, Button, Descriptions, Timeline, Spin, Row, Col, Divider, Progress, Tabs } from 'antd'
+import {
+  UserOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  CalendarOutlined,
+  EditOutlined,
+  EnvironmentOutlined,
   TeamOutlined,
   SafetyOutlined,
   ClockCircleOutlined,
   DatabaseOutlined,
   DashboardOutlined,
-  LockOutlined
+  LockOutlined,
+  LoginOutlined,
+  HistoryOutlined,
+  BarChartOutlined
 } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
 import { getAdminInfo, getAdminLogs } from '@/api/admin'
 import { getUser } from '@/utils/auth'
 import { adaptAdminData, adaptAdminLogs } from '@/utils/dataAdapters'
 import { motion } from 'framer-motion'
+import AdminStatistics from '@/components/admin/AdminStatistics'
+import LoginRecords from '@/components/admin/LoginRecords'
+import OperationRecords from '@/components/admin/OperationRecords'
+import './profile.css'
 
 const { Title, Text } = Typography;
 
@@ -432,155 +439,54 @@ const AdminProfile: React.FC = () => {
               </AnimatedCard>
             </Col>
 
-            {/* 系统使用情况 */}
-            <Col xs={24} md={12}>
-              <AnimatedCard delay={0.3} className="h-full">
-                <Card 
-                  title={<div className="flex items-center gap-2"><DashboardOutlined /> 系统使用情况</div>}
-                  bordered={false} 
-                  className="shadow-md dark:shadow-gray-800/10 h-full"
+            {/* 详细信息标签页 */}
+            <Col xs={24}>
+              <AnimatedCard delay={0.3}>
+                <Card
+                  bordered={false}
+                  className="shadow-md dark:shadow-gray-800/10"
                 >
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <Text>系统活跃度</Text>
-                        <Text strong>{logs.length ? '活跃' : '低活跃'}</Text>
-                      </div>
-                      <Progress 
-                        percent={logs.length ? Math.min(logs.length * 10, 100) : 20} 
-                        strokeColor={{
-                          '0%': '#108ee9',
-                          '100%': '#87d068',
-                        }}
-                      />
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <Text>账号完整度</Text>
-                        <Text strong>{adminInfo?.email && adminInfo?.phone ? '完整' : '需完善'}</Text>
-                      </div>
-                      <Progress 
-                        percent={
-                          (adminInfo?.email ? 40 : 0) + 
-                          (adminInfo?.phone ? 30 : 0) + 
-                          (adminInfo?.avatar ? 30 : 0)
-                        }
-                        strokeColor={{
-                          '0%': '#ffa940',
-                          '100%': '#73d13d',
-                        }}
-                      />
-                    </div>
-                    
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <Text>账号安全性</Text>
-                        <Text strong>
-                          {adminInfo?.email && adminInfo?.phone ? '高' : 
-                           (adminInfo?.email || adminInfo?.phone ? '中' : '低')}
-                        </Text>
-                      </div>
-                      <Progress 
-                        percent={
-                          (adminInfo?.email ? 40 : 0) + 
-                          (adminInfo?.phone ? 40 : 0) + 
-                          (20) // 基础分
-                        }
-                        strokeColor={{
-                          '0%': '#ff4d4f',
-                          '100%': '#52c41a',
-                        }}
-                        status={
-                          (adminInfo?.email && adminInfo?.phone) ? 'success' : 
-                          (adminInfo?.email || adminInfo?.phone ? 'normal' : 'exception')
-                        }
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* 安全提示 */}
-                  <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800/30 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-800 rounded-full mt-0.5">
-                        <LockOutlined className="text-blue-500 dark:text-blue-300" />
-                      </div>
-                      <div>
-                        <Text strong className="text-blue-700 dark:text-blue-300">安全提示</Text>
-                        <div className="mt-1 text-sm text-blue-600 dark:text-blue-400">
-                          定期更改密码并验证您的电子邮箱和手机号可以提高账号安全性。
-                          <Button 
-                            size="small" 
-                            type="link" 
-                            className="p-0 ml-1 text-blue-600 dark:text-blue-400"
-                            onClick={() => {}}
-                          >
-                            了解更多
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <Tabs
+                    defaultActiveKey="statistics"
+                    type="card"
+                    className="admin-profile-tabs"
+                    items={[
+                      {
+                        key: 'statistics',
+                        label: (
+                          <span className="flex items-center gap-2">
+                            <BarChartOutlined />
+                            统计概览
+                          </span>
+                        ),
+                        children: <AdminStatistics />
+                      },
+                      {
+                        key: 'loginRecords',
+                        label: (
+                          <span className="flex items-center gap-2">
+                            <LoginOutlined />
+                            登录记录
+                          </span>
+                        ),
+                        children: <LoginRecords />
+                      },
+                      {
+                        key: 'operationRecords',
+                        label: (
+                          <span className="flex items-center gap-2">
+                            <HistoryOutlined />
+                            操作记录
+                          </span>
+                        ),
+                        children: <OperationRecords />
+                      }
+                    ]}
+                  />
                 </Card>
               </AnimatedCard>
             </Col>
 
-            {/* 最近操作记录 */}
-            <Col xs={24} md={12}>
-              <AnimatedCard delay={0.4} className="h-full">
-                <Card 
-                  title={<div className="flex items-center gap-2"><ClockCircleOutlined /> 最近操作记录</div>}
-                  bordered={false} 
-                  className="shadow-md dark:shadow-gray-800/10 h-full"
-                  extra={<Link to="/logs"><Button type="link" size="small">查看更多</Button></Link>}
-                >
-                  {logs.length > 0 ? (
-                    <Timeline className="overflow-auto max-h-80 pr-2">
-                      {logs.map((log, index) => (
-                        <Timeline.Item 
-                          key={index} 
-                          color={
-                            log.operation?.includes('登录') ? 'blue' :
-                            log.operation?.includes('新增') ? 'green' :
-                            log.operation?.includes('删除') ? 'red' :
-                            'gray'
-                          }
-                        >
-                          <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ 
-                              delay: index * 0.1, 
-                              type: "spring", 
-                              stiffness: 100 
-                            }}
-                          >
-                            <p className="mb-1">
-                              <Text strong>{log.operation || '系统操作'}</Text>
-                              <Tag color="cyan" className="ml-2">{log.module || '系统'}</Tag>
-                            </p>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                              IP: {log.ip || '未知'} | 时间: {formatDate(log.createTime)}
-                            </p>
-                            {log.detail && (
-                              <p className="text-sm mt-1 text-gray-600 dark:text-gray-300">
-                                {log.detail}
-                              </p>
-                            )}
-                          </motion.div>
-                        </Timeline.Item>
-                      ))}
-                    </Timeline>
-                  ) : (
-                    <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-                      <ClockCircleOutlined className="text-4xl mb-3 opacity-40" />
-                      <p>暂无操作记录</p>
-                      <Text type="secondary" className="text-sm">系统未检测到任何操作日志</Text>
-                    </div>
-                  )}
-                </Card>
-              </AnimatedCard>
-            </Col>
           </Row>
         </Col>
       </Row>

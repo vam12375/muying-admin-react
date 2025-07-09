@@ -1,26 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  Form, 
-  Input, 
-  Button, 
-  Radio, 
-  InputNumber, 
-  Switch, 
-  DatePicker, 
-  Select, 
-  message, 
-  Space, 
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Card,
+  Form,
+  Input,
+  Button,
+  Radio,
+  InputNumber,
+  Switch,
+  DatePicker,
+  Select,
+  message,
+  Space,
   Typography,
   Divider,
   Spin,
   Row,
-  Col,
-  App
+  Col
 } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import { 
   getCouponDetail, 
   createCoupon, 
@@ -49,7 +48,7 @@ interface CouponFormData {
   totalQuantity: number;
   userLimit: number;
   isStackable: number;
-  validDate?: [moment.Moment, moment.Moment];
+  validDate?: [dayjs.Dayjs, dayjs.Dayjs];
   startTime?: string;
   endTime?: string;
   categoryIds: string[];
@@ -94,7 +93,7 @@ const CouponForm: React.FC = () => {
   const { couponDetail } = useSelector((state: RootState) => state.coupon);
 
   // 表单初始值
-  const initialValues: CouponFormData = {
+  const initialValues = useCallback((): CouponFormData => ({
     name: '',
     type: 'FIXED',
     value: 0,
@@ -107,7 +106,7 @@ const CouponForm: React.FC = () => {
     brandIds: [],
     productIds: [],
     status: 'ACTIVE'
-  };
+  }), []);
 
   // 加载分类、品牌、规则和批次数据
   useEffect(() => {
@@ -118,9 +117,12 @@ const CouponForm: React.FC = () => {
   useEffect(() => {
     if (id) {
       setIsEdit(true);
+      console.log('编辑模式，优惠券ID:', id);
       fetchCouponData(id);
+    } else {
+      console.log('创建模式');
     }
-    
+
     // 组件卸载时清除优惠券详情
     return () => {
       dispatch(clearCouponDetail());
@@ -138,44 +140,58 @@ const CouponForm: React.FC = () => {
   // 监听Redux中的优惠券详情变化
   useEffect(() => {
     if (couponDetail && isEdit) {
+      console.log('设置表单数据:', couponDetail);
+
       // 处理日期范围
       let validDateRange = undefined;
       if (couponDetail.startTime && couponDetail.endTime) {
         validDateRange = [
-          moment(couponDetail.startTime),
-          moment(couponDetail.endTime)
+          dayjs(couponDetail.startTime),
+          dayjs(couponDetail.endTime)
         ];
       }
-      
+
       // 处理分类和品牌ID
-      const categoryIds = couponDetail.categoryIds ? 
-        (typeof couponDetail.categoryIds === 'string' ? 
-          couponDetail.categoryIds.split(',').map(id => parseInt(id)) : 
-          couponDetail.categoryIds) : 
+      const categoryIds = couponDetail.categoryIds ?
+        (typeof couponDetail.categoryIds === 'string' ?
+          couponDetail.categoryIds.split(',').filter(id => id).map(id => parseInt(id)) :
+          couponDetail.categoryIds) :
         [];
-      
-      const brandIds = couponDetail.brandIds ? 
-        (typeof couponDetail.brandIds === 'string' ? 
-          couponDetail.brandIds.split(',').map(id => parseInt(id)) : 
-          couponDetail.brandIds) : 
+
+      const brandIds = couponDetail.brandIds ?
+        (typeof couponDetail.brandIds === 'string' ?
+          couponDetail.brandIds.split(',').filter(id => id).map(id => parseInt(id)) :
+          couponDetail.brandIds) :
         [];
-        
-      const productIds = couponDetail.productIds ? 
-        (typeof couponDetail.productIds === 'string' ? 
-          couponDetail.productIds.split(',').map(id => parseInt(id)) : 
-          couponDetail.productIds) : 
+
+      const productIds = couponDetail.productIds ?
+        (typeof couponDetail.productIds === 'string' ?
+          couponDetail.productIds.split(',').filter(id => id).map(id => parseInt(id)) :
+          couponDetail.productIds) :
         [];
-      
+
       // 设置表单值
-      form.setFieldsValue({
-        ...couponDetail,
+      const formData = {
+        name: couponDetail.name || '',
+        type: couponDetail.type || 'FIXED',
+        value: couponDetail.value || 0,
+        maxDiscount: couponDetail.maxDiscount || 0,
+        minSpend: couponDetail.minSpend || 0,
+        totalQuantity: couponDetail.totalQuantity || 0,
+        userLimit: couponDetail.userLimit || 1,
+        isStackable: couponDetail.isStackable ? 1 : 0,
         validDate: validDateRange,
         categoryIds,
         brandIds,
-        productIds
-      });
-      
-      setCouponType(couponDetail.type);
+        productIds,
+        status: couponDetail.status || 'ACTIVE',
+        batchId: couponDetail.batchId,
+        ruleId: couponDetail.ruleId
+      };
+
+      console.log('表单数据:', formData);
+      form.setFieldsValue(formData);
+      setCouponType(couponDetail.type || 'FIXED');
     }
   }, [couponDetail, isEdit, form]);
 
@@ -183,9 +199,11 @@ const CouponForm: React.FC = () => {
   const fetchCouponData = async (couponId: string) => {
     setLoading(true);
     try {
-      dispatch(fetchCouponDetail(parseInt(couponId)));
+      console.log('获取优惠券详情，ID:', couponId);
+      await dispatch(fetchCouponDetail(parseInt(couponId)));
     } catch (error) {
       console.error('获取优惠券详情失败', error);
+      message.error('获取优惠券详情失败');
     } finally {
       setLoading(false);
     }
@@ -271,51 +289,51 @@ const CouponForm: React.FC = () => {
   };
 
   // 提交表单
-  const handleSubmit = async (values: CouponFormData, context: any) => {
+  const handleSubmit = async (values: CouponFormData) => {
     setLoading(true);
     try {
       const couponData = { ...values };
-      
-      // 处理有效期
+
+      // 处理有效期 - 使用后端期望的格式
       if (couponData.validDate && couponData.validDate.length === 2) {
         couponData.startTime = couponData.validDate[0].format('YYYY-MM-DD HH:mm:ss');
         couponData.endTime = couponData.validDate[1].format('YYYY-MM-DD HH:mm:ss');
       }
       delete couponData.validDate;
-      
+
       // 处理分类、品牌和商品ID
-      if (couponData.categoryIds && couponData.categoryIds.length > 0) {
-        couponData.categoryIds = couponData.categoryIds.join(',');
+      if (couponData.categoryIds && Array.isArray(couponData.categoryIds) && couponData.categoryIds.length > 0) {
+        (couponData as any).categoryIds = couponData.categoryIds.join(',');
       } else {
-        couponData.categoryIds = '';
+        (couponData as any).categoryIds = '';
       }
-      
-      if (couponData.brandIds && couponData.brandIds.length > 0) {
-        couponData.brandIds = couponData.brandIds.join(',');
+
+      if (couponData.brandIds && Array.isArray(couponData.brandIds) && couponData.brandIds.length > 0) {
+        (couponData as any).brandIds = couponData.brandIds.join(',');
       } else {
-        couponData.brandIds = '';
+        (couponData as any).brandIds = '';
       }
-      
-      if (couponData.productIds && couponData.productIds.length > 0) {
-        couponData.productIds = couponData.productIds.join(',');
+
+      if (couponData.productIds && Array.isArray(couponData.productIds) && couponData.productIds.length > 0) {
+        (couponData as any).productIds = couponData.productIds.join(',');
       } else {
-        couponData.productIds = '';
+        (couponData as any).productIds = '';
       }
-      
+
       // 提交表单
       if (isEdit && id) {
         await updateCoupon(id, couponData);
-        context.message.success('更新成功');
+        message.success('更新成功');
       } else {
         await createCoupon(couponData);
-        context.message.success('创建成功');
+        message.success('创建成功');
       }
-      
+
       // 返回列表页
       navigate('/coupon/list');
-      
+
     } catch (error) {
-      context.message.error(isEdit ? '更新失败' : '创建失败');
+      message.error(isEdit ? '更新失败' : '创建失败');
       console.error('提交表单失败', error);
     } finally {
       setLoading(false);
@@ -328,43 +346,41 @@ const CouponForm: React.FC = () => {
   };
 
   // 表单验证不通过处理
-  const onFinishFailed = (errorInfo: any, context: any) => {
-    context.message.error('请检查表单填写是否正确');
+  const onFinishFailed = (errorInfo: any) => {
+    message.error('请检查表单填写是否正确');
     console.error('表单错误:', errorInfo);
   };
 
   // 优惠券类型变更处理
-  const handleTypeChange = (e: any) => {
+  const handleTypeChange = useCallback((e: any) => {
     setCouponType(e.target.value);
-  };
+  }, []);
 
   return (
-    <App> {/* 使用App组件作为上下文提供者 */}
-      {(context) => (
-        <div className="app-container" style={{ padding: 24 }}>
-          <Card>
-            <div style={{ marginBottom: 16 }}>
-              <Space>
-                <Button icon={<ArrowLeftOutlined />} onClick={goBack}>
-                  返回
-                </Button>
-                <Title level={4} style={{ margin: 0 }}>
-                  {isEdit ? '编辑优惠券' : '新建优惠券'}
-                </Title>
-              </Space>
-            </div>
-            
-            <Divider />
-            
-            <Spin spinning={loading || fetchingOptions}>
-              <Form
-                form={form}
-                layout="vertical"
-                initialValues={initialValues}
-                onFinish={(values) => handleSubmit(values, context)}
-                onFinishFailed={(errorInfo) => onFinishFailed(errorInfo, context)}
-                requiredMark="optional"
-              >
+    <div className="app-container" style={{ padding: 24 }}>
+      <Card>
+        <div style={{ marginBottom: 16 }}>
+          <Space>
+            <Button icon={<ArrowLeftOutlined />} onClick={goBack}>
+              返回
+            </Button>
+            <Title level={4} style={{ margin: 0 }}>
+              {isEdit ? '编辑优惠券' : '新建优惠券'}
+            </Title>
+          </Space>
+        </div>
+
+        <Divider />
+
+        <Spin spinning={loading || fetchingOptions} tip={loading ? "加载优惠券数据中..." : "加载选项数据中..."}>
+          <Form
+            form={form}
+            layout="vertical"
+            initialValues={initialValues()}
+            onFinish={handleSubmit}
+            onFinishFailed={onFinishFailed}
+            requiredMark="optional"
+          >
                 <Row gutter={24}>
                   <Col span={12}>
                     <Form.Item
@@ -500,10 +516,14 @@ const CouponForm: React.FC = () => {
                       rules={[{ required: true, message: '请选择有效期' }]}
                     >
                       <RangePicker
+                        key={`date-picker-${isEdit ? id : 'create'}`}
                         style={{ width: '100%' }}
-                        showTime
+                        showTime={{
+                          format: 'HH:mm:ss',
+                        }}
                         format="YYYY-MM-DD HH:mm:ss"
                         placeholder={['开始时间', '结束时间']}
+                        allowClear
                       />
                     </Form.Item>
                   </Col>
@@ -635,8 +655,6 @@ const CouponForm: React.FC = () => {
             </Spin>
           </Card>
         </div>
-      )}
-    </App>
   );
 };
 

@@ -12,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import type { ColumnsType } from 'antd/es/table';
 import { getRefundList, getRefundStatistics, reviewRefund, processRefund, completeRefund } from '@/api/afterSale';
+import { translateRefundReason } from '@/utils/refundUtils';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
@@ -144,6 +145,7 @@ const RefundList: React.FC = () => {
       dataIndex: 'refundReason',
       key: 'refundReason',
       ellipsis: true,
+      render: (reason: string) => translateRefundReason(reason),
     },
     {
       title: '状态',

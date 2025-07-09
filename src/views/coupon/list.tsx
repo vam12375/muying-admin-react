@@ -331,6 +331,7 @@ const CouponList: React.FC = () => {
                 title="优惠券总数"
                 value={stats?.totalCoupons || 0}
                 suffix="张"
+                valueStyle={{ color: '#1890ff' }}
               />
             </Col>
             <Col span={6}>
@@ -338,6 +339,7 @@ const CouponList: React.FC = () => {
                 title="已领取优惠券"
                 value={stats?.receivedCount || 0}
                 suffix="张"
+                valueStyle={{ color: '#52c41a' }}
               />
             </Col>
             <Col span={6}>
@@ -345,6 +347,7 @@ const CouponList: React.FC = () => {
                 title="已使用优惠券"
                 value={stats?.usedCoupons || 0}
                 suffix="张"
+                valueStyle={{ color: '#faad14' }}
               />
             </Col>
             <Col span={6}>
@@ -352,6 +355,7 @@ const CouponList: React.FC = () => {
                 title="已过期优惠券"
                 value={stats?.expiredCoupons || 0}
                 suffix="张"
+                valueStyle={{ color: '#f5222d' }}
               />
             </Col>
           </Row>

@@ -32,12 +32,23 @@ const { TextArea } = Input;
 // 定义日志数据类型
 interface SystemLogData {
   id: number;
-  type: string;
-  level: string;
-  content: string;
-  operator: string;
-  ip: string;
+  adminId: number;
+  adminName: string;
+  operation: string;
+  module: string;
+  operationType: string;
+  targetType: string;
+  targetId: string;
+  requestMethod: string;
+  requestUrl: string;
+  requestParams: string;
+  responseStatus: number;
+  ipAddress: string;
   userAgent: string;
+  operationResult: string;
+  errorMessage: string;
+  executionTimeMs: number;
+  description: string;
   createTime: string;
 }
 
@@ -46,7 +57,7 @@ const SystemLog: React.FC = () => {
   const [form] = Form.useForm();
   
   // 从Redux获取状态
-  const { logList, logDetail, pagination, loading } = useSelector((state: RootState) => state.system);
+  const { systemLogs, logDetail, pagination, loading } = useSelector((state: RootState) => state.system);
   
   // 本地状态
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -105,37 +116,7 @@ const SystemLog: React.FC = () => {
     setDetailModalVisible(true);
   };
   
-  // 获取日志级别标签
-  const getLevelTag = (level: string) => {
-    switch (level.toLowerCase()) {
-      case 'info':
-        return <Tag color="blue">信息</Tag>;
-      case 'warning':
-        return <Tag color="orange">警告</Tag>;
-      case 'error':
-        return <Tag color="red">错误</Tag>;
-      case 'debug':
-        return <Tag color="green">调试</Tag>;
-      default:
-        return <Tag>{level}</Tag>;
-    }
-  };
-  
-  // 获取日志类型文本
-  const getTypeText = (type: string) => {
-    switch (type) {
-      case 'login':
-        return '登录';
-      case 'operation':
-        return '操作';
-      case 'system':
-        return '系统';
-      case 'error':
-        return '错误';
-      default:
-        return type;
-    }
-  };
+
   
   // 表格列定义
   const columns: ColumnsType<SystemLogData> = [
@@ -147,47 +128,70 @@ const SystemLog: React.FC = () => {
     },
     {
       title: '日志类型',
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'operationType',
+      key: 'operationType',
       width: 100,
-      render: (type) => getTypeText(type)
+      render: (operationType) => {
+        const typeMap: { [key: string]: { text: string; color: string } } = {
+          'READ': { text: '查看', color: 'blue' },
+          'CREATE': { text: '新增', color: 'green' },
+          'UPDATE': { text: '更新', color: 'orange' },
+          'DELETE': { text: '删除', color: 'red' },
+          'LOGIN': { text: '登录', color: 'purple' },
+          'LOGOUT': { text: '登出', color: 'gray' },
+          'EXPORT': { text: '导出', color: 'cyan' },
+          'IMPORT': { text: '导入', color: 'magenta' }
+        };
+        const typeInfo = typeMap[operationType] || { text: operationType, color: 'default' };
+        return <Tag color={typeInfo.color}>{typeInfo.text}</Tag>;
+      }
     },
     {
-      title: '级别',
-      dataIndex: 'level',
-      key: 'level',
-      width: 100,
-      render: (level) => getLevelTag(level)
+      title: '模块',
+      dataIndex: 'module',
+      key: 'module',
+      width: 120
     },
     {
-      title: '内容',
-      dataIndex: 'content',
-      key: 'content',
-      width: 300,
-      render: (content) => (
-        <Tooltip title={content}>
-          <div style={{ 
-            maxWidth: 300, 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis', 
-            whiteSpace: 'nowrap' 
+      title: '操作',
+      dataIndex: 'operation',
+      key: 'operation',
+      width: 150,
+      render: (operation) => (
+        <Tooltip title={operation}>
+          <div style={{
+            maxWidth: 150,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
           }}>
-            {content}
+            {operation}
           </div>
         </Tooltip>
       )
     },
     {
       title: '操作人',
-      dataIndex: 'operator',
-      key: 'operator',
+      dataIndex: 'adminName',
+      key: 'adminName',
       width: 120
     },
     {
       title: 'IP地址',
-      dataIndex: 'ip',
-      key: 'ip',
+      dataIndex: 'ipAddress',
+      key: 'ipAddress',
       width: 140
+    },
+    {
+      title: '操作结果',
+      dataIndex: 'operationResult',
+      key: 'operationResult',
+      width: 100,
+      render: (result) => (
+        <Tag color={result === 'success' ? 'green' : 'red'}>
+          {result === 'success' ? '成功' : '失败'}
+        </Tag>
+      )
     },
     {
       title: '创建时间',
@@ -202,9 +206,9 @@ const SystemLog: React.FC = () => {
       fixed: 'right',
       width: 100,
       render: (_, record) => (
-        <Button 
-          type="link" 
-          icon={<EyeOutlined />} 
+        <Button
+          type="link"
+          icon={<EyeOutlined />}
           onClick={() => viewLogDetail(record.id)}
         >
           详情
@@ -223,29 +227,35 @@ const SystemLog: React.FC = () => {
           layout="inline" 
           onFinish={handleSearch}
         >
-          <Form.Item name="type" label="日志类型">
-            <Select placeholder="日志类型" style={{ width: 120 }} allowClear>
+          <Form.Item name="operationType" label="操作类型">
+            <Select placeholder="操作类型" style={{ width: 120 }} allowClear>
               <Option value="">全部</Option>
-              <Option value="login">登录</Option>
-              <Option value="operation">操作</Option>
-              <Option value="system">系统</Option>
-              <Option value="error">错误</Option>
+              <Option value="READ">查看</Option>
+              <Option value="CREATE">新增</Option>
+              <Option value="UPDATE">更新</Option>
+              <Option value="DELETE">删除</Option>
+              <Option value="LOGIN">登录</Option>
+              <Option value="LOGOUT">登出</Option>
+              <Option value="EXPORT">导出</Option>
+              <Option value="IMPORT">导入</Option>
             </Select>
           </Form.Item>
-          <Form.Item name="level" label="级别">
-            <Select placeholder="级别" style={{ width: 120 }} allowClear>
+          <Form.Item name="module" label="模块">
+            <Select placeholder="模块" style={{ width: 120 }} allowClear>
               <Option value="">全部</Option>
-              <Option value="info">信息</Option>
-              <Option value="warning">警告</Option>
-              <Option value="error">错误</Option>
-              <Option value="debug">调试</Option>
+              <Option value="管理员管理">管理员管理</Option>
+              <Option value="用户管理">用户管理</Option>
+              <Option value="商品管理">商品管理</Option>
+              <Option value="订单管理">订单管理</Option>
+              <Option value="系统管理">系统管理</Option>
             </Select>
           </Form.Item>
-          <Form.Item name="keyword" label="关键词">
-            <Input placeholder="内容关键词" allowClear />
-          </Form.Item>
-          <Form.Item name="operator" label="操作人">
-            <Input placeholder="操作人" allowClear />
+          <Form.Item name="operationResult" label="操作结果">
+            <Select placeholder="操作结果" style={{ width: 120 }} allowClear>
+              <Option value="">全部</Option>
+              <Option value="success">成功</Option>
+              <Option value="failed">失败</Option>
+            </Select>
           </Form.Item>
           <Form.Item name="timeRange" label="时间范围">
             <RangePicker style={{ width: 240 }} />
@@ -266,7 +276,7 @@ const SystemLog: React.FC = () => {
       <Card>
         <Table<SystemLogData>
           columns={columns}
-          dataSource={logList}
+          dataSource={systemLogs}
           rowKey="id"
           loading={loading}
           pagination={{
@@ -298,23 +308,61 @@ const SystemLog: React.FC = () => {
           <div>
             <div style={{ marginBottom: 16 }}>
               <p><strong>ID:</strong> {logDetail.id}</p>
-              <p><strong>日志类型:</strong> {getTypeText(logDetail.type)}</p>
-              <p><strong>级别:</strong> {getLevelTag(logDetail.level)}</p>
-              <p><strong>操作人:</strong> {logDetail.operator}</p>
-              <p><strong>IP地址:</strong> {logDetail.ip}</p>
+              <p><strong>管理员:</strong> {logDetail.adminName} (ID: {logDetail.adminId})</p>
+              <p><strong>操作:</strong> {logDetail.operation}</p>
+              <p><strong>模块:</strong> {logDetail.module}</p>
+              <p><strong>操作类型:</strong> {logDetail.operationType}</p>
+              <p><strong>目标类型:</strong> {logDetail.targetType}</p>
+              <p><strong>目标ID:</strong> {logDetail.targetId}</p>
+              <p><strong>请求方法:</strong> {logDetail.requestMethod}</p>
+              <p><strong>请求URL:</strong> {logDetail.requestUrl}</p>
+              <p><strong>响应状态:</strong> {logDetail.responseStatus}</p>
+              <p><strong>IP地址:</strong> {logDetail.ipAddress}</p>
               <p><strong>User Agent:</strong> {logDetail.userAgent}</p>
+              <p><strong>操作结果:</strong>
+                <Tag color={logDetail.operationResult === 'success' ? 'green' : 'red'}>
+                  {logDetail.operationResult === 'success' ? '成功' : '失败'}
+                </Tag>
+              </p>
+              <p><strong>执行时间:</strong> {logDetail.executionTimeMs}ms</p>
               <p><strong>创建时间:</strong> {formatDateTime(logDetail.createTime)}</p>
             </div>
-            
-            <div>
-              <p><strong>日志内容:</strong></p>
-              <TextArea 
-                value={logDetail.content} 
-                rows={10} 
-                readOnly 
-                style={{ marginTop: 8 }}
-              />
-            </div>
+
+            {logDetail.requestParams && (
+              <div style={{ marginBottom: 16 }}>
+                <p><strong>请求参数:</strong></p>
+                <TextArea
+                  value={logDetail.requestParams}
+                  rows={4}
+                  readOnly
+                  style={{ marginTop: 8 }}
+                />
+              </div>
+            )}
+
+            {logDetail.description && (
+              <div style={{ marginBottom: 16 }}>
+                <p><strong>操作描述:</strong></p>
+                <TextArea
+                  value={logDetail.description}
+                  rows={3}
+                  readOnly
+                  style={{ marginTop: 8 }}
+                />
+              </div>
+            )}
+
+            {logDetail.errorMessage && (
+              <div>
+                <p><strong>错误信息:</strong></p>
+                <TextArea
+                  value={logDetail.errorMessage}
+                  rows={4}
+                  readOnly
+                  style={{ marginTop: 8, backgroundColor: '#fff2f0' }}
+                />
+              </div>
+            )}
           </div>
         ) : (
           <div style={{ textAlign: 'center' }}>加载中...</div>

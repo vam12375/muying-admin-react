@@ -7,7 +7,9 @@ import { ThemeProvider } from './theme/themeContext'
 import { useTheme } from './theme/useTheme'
 import NotificationProvider from './components/Notification/NotificationManager'
 import Loader from './components/Loader'
-import { isLoggedIn, getToken } from './utils/auth'
+import { isLoggedIn, getToken, getUser } from './utils/auth'
+import { useDispatch } from 'react-redux'
+import { setCredentials } from './store/slices/userSlice'
 import axios from 'axios'
 import './App.css'
 
@@ -142,11 +144,21 @@ const AppContent = () => {
   const { isDark } = useTheme()
   const [isLoading, setIsLoading] = useState(true)
   const [authError, setAuthError] = useState<string | null>(null)
+  const dispatch = useDispatch()
 
-  // 应用初始化时检查token有效性
+  // 应用初始化时检查token有效性并同步用户信息到Redux
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // 首先同步localStorage中的用户信息到Redux store
+        const token = getToken()
+        const user = getUser()
+
+        if (token && user) {
+          console.log('AppContent: 同步用户信息到Redux store')
+          dispatch(setCredentials({ token, user }))
+        }
+
         // 如果当前不在登录页且用户已登录，验证token有效性
         if (location.pathname !== '/login' && isLoggedIn()) {
           console.log('AppContent: 检查token有效性')
@@ -156,7 +168,7 @@ const AppContent = () => {
             // 如果token无效，清除本地存储并重定向到登录页
             localStorage.removeItem('muying_admin_token')
             localStorage.removeItem('muying_admin_user')
-            
+
             // 保存当前路径，以便登录后返回
             navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`, { replace: true })
             setAuthError('登录已过期，请重新登录')
@@ -175,9 +187,9 @@ const AppContent = () => {
         setIsLoading(false)
       }
     }
-    
+
     checkAuth()
-  }, [location.pathname, navigate])
+  }, [location.pathname, navigate, dispatch])
 
   // 监听路由变化
   useEffect(() => {

@@ -397,7 +397,7 @@ const systemSlice = createSlice({
     });
     builder.addCase(fetchSystemLogs.fulfilled, (state, action) => {
       state.loading = false;
-      state.systemLogs = action.payload.data.list || [];
+      state.systemLogs = action.payload.data.records || [];
       state.pagination.total = action.payload.data.total || 0;
     });
     builder.addCase(fetchSystemLogs.rejected, (state, action) => {

@@ -222,6 +222,7 @@ const couponSlice = createSlice({
     builder.addCase(fetchCouponDetail.fulfilled, (state, action) => {
       state.loading = false;
       state.couponDetail = action.payload;
+      console.log('Redux: 优惠券详情已更新:', action.payload);
     });
     builder.addCase(fetchCouponDetail.rejected, (state, action) => {
       state.loading = false;
