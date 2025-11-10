@@ -39,7 +39,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '@/store';
 import { fetchOrderDetail, clearOrderDetail, shipOrder } from '@/store/slices/orderSlice';
-import { getEnabledLogisticsCompanies, generateTrackingNo } from '@/api/logistics';
+import { getEnabledLogisticsCompanies, generateTrackingNo, getLogisticsByOrderId } from '@/api/logistics';
 import OrderStatusTag from '@/components/OrderStatusTag';
 import OrderFlowChart from '@/components/OrderFlowChart';
 import OrderTimeline from '@/components/OrderTimeline';
@@ -332,6 +332,9 @@ const OrderDetail: React.FC = () => {
   const [logisticsTracks, setLogisticsTracks] = useState<LogisticsTrack[]>([]);
   const [orderHistory, setOrderHistory] = useState<OrderHistory[]>([]);
   const [formattedData, setFormattedData] = useState<any>(null);
+  const [realLogisticsInfo, setRealLogisticsInfo] = useState<any>(null);
+  const [loadingLogisticsInfo, setLoadingLogisticsInfo] = useState(false);
+  const [logisticsError, setLogisticsError] = useState<string | null>(null);
   
   // 发货相关状态
   const [shipModalVisible, setShipModalVisible] = useState(false);
@@ -360,7 +363,7 @@ const OrderDetail: React.FC = () => {
       const formatted = formatOrderData(orderDetail);
       setFormattedData(formatted);
       console.log('格式化后的数据:', formatted); // 添加日志，便于调试
-      
+
       // 检查产品数据
       if (formatted && formatted.products && formatted.products.length > 0) {
         console.log('产品数据:', formatted.products);
@@ -369,48 +372,101 @@ const OrderDetail: React.FC = () => {
       }
     }
   }, [orderDetail]);
+
+  // 获取真实物流信息
+  useEffect(() => {
+    const fetchLogisticsInfo = async () => {
+      if (!formattedData || !formattedData.orderId) return;
+
+      // 只有已发货或已完成的订单才获取物流信息
+      if (formattedData.status !== 'shipped' && formattedData.status !== 'completed') {
+        setRealLogisticsInfo(null);
+        setLogisticsError(null);
+        return;
+      }
+
+      setLoadingLogisticsInfo(true);
+      setLogisticsError(null);
+      try {
+        const response = await getLogisticsByOrderId(formattedData.orderId) as unknown as ApiResponse;
+        if (response.code === 200 && response.data) {
+          console.log('获取到真实物流信息:', response.data);
+          setRealLogisticsInfo(response.data);
+          setLogisticsError(null);
+        } else {
+          console.warn('获取物流信息失败:', response.message);
+          setRealLogisticsInfo(null);
+          setLogisticsError(response.message || '获取物流信息失败');
+        }
+      } catch (error) {
+        console.error('获取物流信息异常:', error);
+        setRealLogisticsInfo(null);
+        setLogisticsError('网络错误，无法获取物流信息');
+      } finally {
+        setLoadingLogisticsInfo(false);
+      }
+    };
+
+    fetchLogisticsInfo();
+  }, [formattedData]);
   
   // 生成物流轨迹和订单历史数据
   useEffect(() => {
     if (orderDetail) {
-      // 模拟物流轨迹数据
+      // 使用真实物流轨迹数据或降级到模拟数据
       if (orderDetail.status === 'shipped' || orderDetail.status === 'completed') {
-        const tracks: LogisticsTrack[] = [
-          {
-            id: '1',
-            trackingTime: orderDetail.shippingTime || formatDateTime(new Date(Date.now() - 1000 * 60 * 60 * 24)),
-            location: '发货仓库',
-            content: '商品已发出',
-            operator: '系统'
+        let tracks: LogisticsTrack[] = [];
+
+        // 优先使用真实物流数据
+        if (realLogisticsInfo && realLogisticsInfo.tracks && realLogisticsInfo.tracks.length > 0) {
+          console.log('使用真实物流轨迹数据:', realLogisticsInfo.tracks);
+          tracks = realLogisticsInfo.tracks.map((track: any, index: number) => ({
+            id: track.id?.toString() || (index + 1).toString(),
+            trackingTime: track.trackingTime ? formatDateTime(new Date(track.trackingTime)) : '',
+            location: track.location || '',
+            content: track.content || '',
+            operator: track.operator || '系统'
+          }));
+        } else {
+          console.log('使用模拟物流轨迹数据');
+          // 降级到模拟数据
+          tracks = [
+            {
+              id: '1',
+              trackingTime: orderDetail.shippingTime || formatDateTime(new Date(Date.now() - 1000 * 60 * 60 * 24)),
+              location: '发货仓库',
+              content: '商品已发出',
+              operator: '系统'
+            }
+          ];
+
+          if (orderDetail.status === 'completed') {
+            tracks.unshift({
+              id: '2',
+              trackingTime: formatDateTime(new Date(Date.now() - 1000 * 60 * 60 * 5)),
+              location: '收货地址',
+              content: '已签收，签收人：' + (orderDetail.receiverName || '收件人'),
+              operator: '物流'
+            });
+
+            tracks.unshift({
+              id: '3',
+              trackingTime: formatDateTime(new Date(Date.now() - 1000 * 60 * 60 * 10)),
+              location: orderDetail.receiverCity || '目的地',
+              content: '包裹正在派送中',
+              operator: '物流'
+            });
+
+            tracks.unshift({
+              id: '4',
+              trackingTime: formatDateTime(new Date(Date.now() - 1000 * 60 * 60 * 15)),
+              location: orderDetail.receiverCity || '目的地',
+              content: '快件到达派送中心',
+              operator: '物流'
+            });
           }
-        ];
-        
-        if (orderDetail.status === 'completed') {
-          tracks.unshift({
-            id: '2',
-            trackingTime: formatDateTime(new Date(Date.now() - 1000 * 60 * 60 * 5)),
-            location: '收货地址',
-            content: '已签收，签收人：' + orderDetail.receiver,
-            operator: '物流'
-          });
-          
-          tracks.unshift({
-            id: '3',
-            trackingTime: formatDateTime(new Date(Date.now() - 1000 * 60 * 60 * 10)),
-            location: orderDetail.city,
-            content: '包裹正在派送中',
-            operator: '物流'
-          });
-          
-          tracks.unshift({
-            id: '4',
-            trackingTime: formatDateTime(new Date(Date.now() - 1000 * 60 * 60 * 15)),
-            location: orderDetail.city,
-            content: '快件到达派送中心',
-            operator: '物流'
-          });
         }
-        
+
         setLogisticsTracks(tracks.reverse());
       }
       
@@ -467,7 +523,7 @@ const OrderDetail: React.FC = () => {
       
       setOrderHistory(history);
     }
-  }, [orderDetail]);
+  }, [orderDetail, realLogisticsInfo]);
   
   // 返回列表
   const goBack = () => {
@@ -977,23 +1033,60 @@ const OrderDetail: React.FC = () => {
                 >
                   <InfoItem>
                     <span className="info-label">物流公司:</span>
-                    <span className="info-value">{formattedData.shippingCompany || '顺丰速运'}</span>
+                    <span className="info-value">
+                      {realLogisticsInfo?.company?.name || formattedData.shippingCompany || '顺丰速运'}
+                    </span>
                   </InfoItem>
                   <InfoItem>
                     <span className="info-label">物流单号:</span>
-                    <span className="info-value">{formattedData.trackingNo || 'SF1234567890'}</span>
+                    <span className="info-value">
+                      {realLogisticsInfo?.trackingNo || formattedData.trackingNo || 'SF1234567890'}
+                    </span>
                   </InfoItem>
                   <InfoItem>
                     <span className="info-label">发货时间:</span>
                     <span className="info-value">
-                      {formattedData.shippingTime ? formatDateTime(new Date(formattedData.shippingTime)) : '-'}
+                      {realLogisticsInfo?.shippingTime
+                        ? formatDateTime(new Date(realLogisticsInfo.shippingTime))
+                        : formattedData.shippingTime
+                        ? formatDateTime(new Date(formattedData.shippingTime))
+                        : '-'}
                     </span>
                   </InfoItem>
+                  {realLogisticsInfo?.status && (
+                    <InfoItem>
+                      <span className="info-label">物流状态:</span>
+                      <span className="info-value">
+                        <Tag color={
+                          realLogisticsInfo.status === 'DELIVERED' ? 'success' :
+                          realLogisticsInfo.status === 'SHIPPING' ? 'processing' :
+                          realLogisticsInfo.status === 'EXCEPTION' ? 'error' : 'default'
+                        }>
+                          {realLogisticsInfo.status === 'DELIVERED' ? '已送达' :
+                           realLogisticsInfo.status === 'SHIPPING' ? '运输中' :
+                           realLogisticsInfo.status === 'CREATED' ? '已创建' :
+                           realLogisticsInfo.status === 'EXCEPTION' ? '异常' : realLogisticsInfo.status}
+                        </Tag>
+                      </span>
+                    </InfoItem>
+                  )}
                   
                   <Divider orientation="left">物流轨迹</Divider>
-                  
-                  {logisticsTracks.length > 0 ? (
-                    <OrderTimeline 
+
+                  {loadingLogisticsInfo ? (
+                    <Skeleton active paragraph={{ rows: 3 }} />
+                  ) : logisticsError ? (
+                    <Empty
+                      description={
+                        <div>
+                          <Text type="secondary">{logisticsError}</Text>
+                          <br />
+                          <Text type="secondary">显示模拟轨迹数据</Text>
+                        </div>
+                      }
+                    />
+                  ) : logisticsTracks.length > 0 ? (
+                    <OrderTimeline
                       items={logisticsTracks.map(track => ({
                         id: track.id,
                         title: track.content,

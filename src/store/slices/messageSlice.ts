@@ -7,7 +7,12 @@ import {
   deleteMessage as apiDeleteMessage,
   sendMessage as apiSendMessage,
   createMessage as apiCreateMessage,
-  markAllRead as apiMarkAllRead
+  markAllRead as apiMarkAllRead,
+  getMessageTemplateList,
+  getMessageTemplateDetail,
+  createMessageTemplate as apiCreateMessageTemplate,
+  updateMessageTemplate as apiUpdateMessageTemplate,
+  deleteMessageTemplate as apiDeleteMessageTemplate
 } from '@/api/message';
 
 // 定义消息状态类型
@@ -17,6 +22,8 @@ interface MessageState {
   unreadCount: number;
   latestMessages: any[];
   statistics: any | null;
+  templateList: any[];
+  templateDetail: any | null;
   pagination: {
     current: number;
     pageSize: number;
@@ -33,6 +40,8 @@ const initialState: MessageState = {
   unreadCount: 0,
   latestMessages: [],
   statistics: null,
+  templateList: [],
+  templateDetail: null,
   pagination: {
     current: 1,
     pageSize: 10,
@@ -154,6 +163,71 @@ export const markAllMessagesAsRead = createAsyncThunk(
       return response;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to mark all messages as read');
+    }
+  }
+);
+
+// 异步Action: 获取消息模板列表
+export const fetchMessageTemplates = createAsyncThunk(
+  'message/fetchMessageTemplates',
+  async (params: any, { rejectWithValue }) => {
+    try {
+      const response = await getMessageTemplateList(params);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch message templates');
+    }
+  }
+);
+
+// 异步Action: 获取消息模板详情
+export const fetchTemplateDetail = createAsyncThunk(
+  'message/fetchTemplateDetail',
+  async (id: number | string, { rejectWithValue }) => {
+    try {
+      const response = await getMessageTemplateDetail(id);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch template detail');
+    }
+  }
+);
+
+// 异步Action: 创建消息模板
+export const createMessageTemplate = createAsyncThunk(
+  'message/createMessageTemplate',
+  async (data: any, { rejectWithValue }) => {
+    try {
+      const response = await apiCreateMessageTemplate(data);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to create message template');
+    }
+  }
+);
+
+// 异步Action: 更新消息模板
+export const updateMessageTemplate = createAsyncThunk(
+  'message/updateMessageTemplate',
+  async ({ id, data }: { id: number | string; data: any }, { rejectWithValue }) => {
+    try {
+      const response = await apiUpdateMessageTemplate(id, data);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to update message template');
+    }
+  }
+);
+
+// 异步Action: 删除消息模板
+export const deleteMessageTemplate = createAsyncThunk(
+  'message/deleteMessageTemplate',
+  async (id: number | string, { rejectWithValue }) => {
+    try {
+      const response = await apiDeleteMessageTemplate(id);
+      return { id, response };
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to delete message template');
     }
   }
 );
@@ -298,6 +372,77 @@ const messageSlice = createSlice({
       }));
     });
     builder.addCase(markAllMessagesAsRead.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // 处理获取消息模板列表
+    builder.addCase(fetchMessageTemplates.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchMessageTemplates.fulfilled, (state, action) => {
+      state.loading = false;
+      state.templateList = action.payload.data.records || action.payload.data.list || [];
+      state.pagination.total = action.payload.data.total || 0;
+    });
+    builder.addCase(fetchMessageTemplates.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // 处理获取消息模板详情
+    builder.addCase(fetchTemplateDetail.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchTemplateDetail.fulfilled, (state, action) => {
+      state.loading = false;
+      state.templateDetail = action.payload.data;
+    });
+    builder.addCase(fetchTemplateDetail.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // 处理创建消息模板
+    builder.addCase(createMessageTemplate.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(createMessageTemplate.fulfilled, (state) => {
+      state.loading = false;
+    });
+    builder.addCase(createMessageTemplate.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // 处理更新消息模板
+    builder.addCase(updateMessageTemplate.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(updateMessageTemplate.fulfilled, (state) => {
+      state.loading = false;
+    });
+    builder.addCase(updateMessageTemplate.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
+
+    // 处理删除消息模板
+    builder.addCase(deleteMessageTemplate.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(deleteMessageTemplate.fulfilled, (state, action) => {
+      state.loading = false;
+      if (action.payload.id) {
+        state.templateList = state.templateList.filter(template => template.id !== action.payload.id);
+      }
+    });
+    builder.addCase(deleteMessageTemplate.rejected, (state, action) => {
       state.loading = false;
       state.error = action.payload as string;
     });

@@ -25,8 +25,6 @@ const BrandManage: React.FC = () => {
     total: 0
   })
   const [keyword, setKeyword] = useState('')
-  const [showDebug, setShowDebug] = useState(false)
-  const [debugData, setDebugData] = useState<any>(null)
   
   // 获取品牌列表
   const fetchBrands = async (page = 1, size = 10, searchKeyword = '') => {
@@ -35,9 +33,6 @@ const BrandManage: React.FC = () => {
       console.log('获取品牌列表, 参数:', { page, size, searchKeyword })
       const result = await brandApi.getBrandPage(page, size, searchKeyword)
       console.log('获取品牌列表成功:', result)
-      
-      // 保存调试数据
-      setDebugData(result)
       
       // 确保result.list存在，否则使用空数组
       const brandList = result.list || result.records || []

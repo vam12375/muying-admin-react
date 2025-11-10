@@ -114,4 +114,63 @@ export const getMessageStatistics = () => {
     url: '/admin/message/statistics',
     method: 'get'
   });
+};
+
+/**
+ * 获取消息模板列表
+ * @param params 查询参数
+ */
+export const getMessageTemplateList = (params: any) => {
+  return request({
+    url: '/admin/message/template/list',
+    method: 'get',
+    params
+  });
+};
+
+/**
+ * 获取消息模板详情
+ * @param id 模板ID
+ */
+export const getMessageTemplateDetail = (id: number | string) => {
+  return request({
+    url: `/admin/message/template/${id}`,
+    method: 'get'
+  });
+};
+
+/**
+ * 创建消息模板
+ * @param data 模板数据
+ */
+export const createMessageTemplate = (data: any) => {
+  return request({
+    url: '/admin/message/template',
+    method: 'post',
+    data
+  });
+};
+
+/**
+ * 更新消息模板
+ * @param id 模板ID
+ * @param data 更新数据
+ */
+export const updateMessageTemplate = (id: number | string, data: any) => {
+  return request({
+    url: `/admin/message/template/${id}`,
+    method: 'put',
+    data
+  });
+};
+
+/**
+ * 删除消息模板
+ * @param id 模板ID
+ */
+export const deleteMessageTemplate = (id: number | string) => {
+  return request({
+    url: `/admin/message/template/${id}`,
+    method: 'delete'
+  });
 }; 

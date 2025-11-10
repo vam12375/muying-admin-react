@@ -7,6 +7,8 @@ import type { ProductData, PageResult } from '../../api/product'
 import { brandApi } from '../../api/product'
 import { categoryApi } from '../../api/product'
 import type { BrandData, CategoryData } from '../../api/product'
+import ProductDetailModal from '../../components/ProductDetailModal'
+import ProductEditModal from '../../components/ProductEditModal'
 
 const { Title } = Typography
 const { Option } = Select
@@ -26,19 +28,18 @@ const ProductList: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [products, setProducts] = useState<ProductData[]>([])
   const [form] = Form.useForm()
-  const [productForm] = Form.useForm()
+
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0
   })
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false)
   const [isViewMode, setIsViewMode] = useState(false)
   const [currentProduct, setCurrentProduct] = useState<ProductData | null>(null)
   const [brands, setBrands] = useState<BrandData[]>([])
   const [categories, setCategories] = useState<CategoryData[]>([])
-  const [showDebug, setShowDebug] = useState(false);
-  const [debugData, setDebugData] = useState<any>(null);
   
   // 获取商品列表数据
   const fetchProducts = async (page = 1, size = 10, searchParams: any = {}) => {
@@ -54,14 +55,6 @@ const ProductList: React.FC = () => {
         undefined, 
         status !== undefined ? Number(status) : undefined
       )
-      
-      // 添加调试信息，检查返回的数据结构
-      console.log('API返回的商品数据:', result)
-      console.log('商品列表数据类型:', Array.isArray(result.list) ? '数组' : typeof result.list)
-      console.log('商品列表长度:', result.list ? result.list.length : 0)
-      
-      // 保存调试数据
-      setDebugData(result);
       
       // 使用 list 字段，这个字段在 API 层已经被正确映射
       setProducts(result.list || [])
@@ -197,21 +190,9 @@ const ProductList: React.FC = () => {
   const handleView = async (id: number) => {
     try {
       const product = await productApi.getProductDetail(id)
+      console.log('获取到的商品详情:', product) // 调试日志
       setCurrentProduct(product)
-      setIsViewMode(true)
-      productForm.setFieldsValue({
-        ...product,
-        categoryId: product.categoryId?.toString(),
-        brandId: product.brandId?.toString(),
-        name: product.productName,
-        image: product.productImg,
-        price: product.priceNew || 0,
-        originalPrice: product.priceOld || 0,
-        description: product.productDetail,
-        stock: product.stock || 0,
-        status: product.productStatus === '上架' ? 1 : 0
-      })
-      setIsModalVisible(true)
+      setIsDetailModalVisible(true)
     } catch (error) {
       message.error('获取商品详情失败')
       console.error('获取商品详情失败:', error)
@@ -224,38 +205,23 @@ const ProductList: React.FC = () => {
       const product = await productApi.getProductDetail(id)
       setCurrentProduct(product)
       setIsViewMode(false)
-      productForm.setFieldsValue({
-        ...product,
-        categoryId: product.categoryId?.toString(),
-        brandId: product.brandId?.toString(),
-        name: product.productName,
-        image: product.productImg,
-        price: product.priceNew || 0,
-        originalPrice: product.priceOld || 0,
-        description: product.productDetail,
-        stock: product.stock || 0,
-        status: product.productStatus === '上架' ? 1 : 0
-      })
       setIsModalVisible(true)
     } catch (error) {
       message.error('获取商品详情失败')
       console.error('获取商品详情失败:', error)
     }
   }
-  
+
   // 打开添加商品表单
   const handleAdd = () => {
     setCurrentProduct(null)
     setIsViewMode(false)
-    productForm.resetFields()
     setIsModalVisible(true)
   }
   
   // 保存商品
-  const handleSave = async () => {
+  const handleSave = async (values: any) => {
     try {
-      const values = await productForm.validateFields()
-      
       // 转换一些字段类型
       const productData = {
         ...values,
@@ -269,9 +235,9 @@ const ProductList: React.FC = () => {
         productDetail: values.description,
         productStatus: values.status === 1 ? '上架' : '下架'
       }
-      
+
       let success = false
-      
+
       if (currentProduct) {
         // 更新商品
         success = await productApi.updateProduct(currentProduct.productId, productData)
@@ -289,13 +255,14 @@ const ProductList: React.FC = () => {
           message.error('创建商品失败')
         }
       }
-      
+
       if (success) {
         setIsModalVisible(false)
         fetchProducts(pagination.current, pagination.pageSize, form.getFieldsValue())
       }
     } catch (error) {
       console.error('保存商品失败:', error)
+      throw error // 重新抛出错误，让组件处理
     }
   }
   
@@ -455,8 +422,7 @@ const ProductList: React.FC = () => {
     onChange(info: any) {
       if (info.file.status === 'done') {
         message.success(`${info.file.name} 上传成功`);
-        // 假设上传成功后，服务器返回的URL在response.url中
-        productForm.setFieldsValue({ image: info.file.response.url });
+        // 新组件会自己处理图片URL更新
       } else if (info.file.status === 'error') {
         message.error(`${info.file.name} 上传失败`);
       }
@@ -523,13 +489,6 @@ const ProductList: React.FC = () => {
               添加商品
             </Button>
           </Form.Item>
-          
-          {/* 添加调试按钮 */}
-          <Form.Item>
-            <Button onClick={() => setShowDebug(!showDebug)}>
-              {showDebug ? '隐藏调试' : '显示调试'}
-            </Button>
-          </Form.Item>
         </Form>
         
         <Table<ProductData>
@@ -546,196 +505,27 @@ const ProductList: React.FC = () => {
           scroll={{ x: 1300 }}
           bordered
         />
-        
-        {/* 调试面板 */}
-        {showDebug && debugData && (
-          <div style={{ 
-            marginTop: 16, 
-            padding: 16, 
-            background: 'var(--bg-code, #f5f7fa)',
-            color: 'var(--text-code, #1e293b)', 
-            borderRadius: 4,
-            border: '1px solid var(--border-base, #e2e8f0)'
-          }}
-          className="dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
-          >
-            <h3 className="text-lg font-medium mb-3 dark:text-white">调试信息</h3>
-            <div>
-              <h4 className="text-base font-medium mb-2 dark:text-gray-200">原始数据结构:</h4>
-              <pre 
-                style={{ maxHeight: 300, overflow: 'auto' }}
-                className="p-3 rounded bg-opacity-50 bg-gray-100 dark:bg-gray-900 text-sm font-mono dark:text-gray-300"
-              >
-                {JSON.stringify(debugData, null, 2)}
-              </pre>
-            </div>
-            {debugData.list && debugData.list.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-base font-medium mb-2 dark:text-gray-200">第一条记录字段:</h4>
-                <pre 
-                  className="p-3 rounded bg-opacity-50 bg-gray-100 dark:bg-gray-900 text-sm font-mono dark:text-gray-300"
-                >
-                  {JSON.stringify(Object.keys(debugData.list[0]), null, 2)}
-                </pre>
-                <h4 className="text-base font-medium mt-3 mb-2 dark:text-gray-200">第一条记录内容:</h4>
-                <pre 
-                  style={{ maxHeight: 300, overflow: 'auto' }}
-                  className="p-3 rounded bg-opacity-50 bg-gray-100 dark:bg-gray-900 text-sm font-mono dark:text-gray-300"
-                >
-                  {JSON.stringify(debugData.list[0], null, 2)}
-                </pre>
-              </div>
-            )}
-          </div>
-        )}
       </Card>
       
-      {/* 商品表单模态框 */}
-      <Modal
-        title={
-          isViewMode 
-            ? '商品详情' 
-            : currentProduct 
-              ? '编辑商品' 
-              : '添加商品'
-        }
-        open={isModalVisible}
+      {/* 商品编辑模态框 */}
+      <ProductEditModal
+        visible={isModalVisible && !isViewMode}
+        product={currentProduct}
+        brands={brands || []}
+        categories={categories || []}
         onCancel={() => setIsModalVisible(false)}
-        onOk={handleSave}
-        okButtonProps={{ disabled: isViewMode }}
-        width={700}
-      >
-        <Form
-          form={productForm}
-          layout="vertical"
-          disabled={isViewMode}
-        >
-          <Form.Item
-            name="name"
-            label="商品名称"
-            rules={[{ required: true, message: '请输入商品名称' }]}
-          >
-            <Input placeholder="请输入商品名称" />
-          </Form.Item>
-          
-          <Form.Item
-            name="image"
-            label="商品图片"
-            rules={[{ required: true, message: '请上传商品图片' }]}
-          >
-            <Input placeholder="图片URL" />
-          </Form.Item>
-          
-          <Form.Item label="上传图片">
-            <Upload {...uploadProps}>
-              <Button icon={<UploadOutlined />}>上传图片</Button>
-            </Upload>
-          </Form.Item>
-          
-          <Form.Item
-            name="description"
-            label="商品描述"
-          >
-            <TextArea rows={4} placeholder="请输入商品描述" />
-          </Form.Item>
-          
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="price"
-              label="售价"
-              rules={[{ required: true, message: '请输入售价' }]}
-              style={{ width: '50%' }}
-            >
-              <InputNumber
-                min={0}
-                precision={2}
-                style={{ width: '100%' }}
-                placeholder="请输入售价"
-                addonBefore="¥"
-              />
-            </Form.Item>
-            
-            <Form.Item
-              name="originalPrice"
-              label="原价"
-              style={{ width: '50%' }}
-            >
-              <InputNumber
-                min={0}
-                precision={2}
-                style={{ width: '100%' }}
-                placeholder="请输入原价"
-                addonBefore="¥"
-              />
-            </Form.Item>
-          </div>
-          
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="categoryId"
-              label="商品分类"
-              rules={[{ required: true, message: '请选择商品分类' }]}
-              style={{ width: '50%' }}
-            >
-              <Select placeholder="请选择商品分类">
-                {(categories || []).map(category => (
-                  category && category.categoryId ? (
-                    <Option key={category.categoryId} value={safeToString(category.categoryId)}>
-                      {category.name || '未命名分类'}
-                    </Option>
-                  ) : null
-                ))}
-              </Select>
-            </Form.Item>
-            
-            <Form.Item
-              name="brandId"
-              label="商品品牌"
-              rules={[{ required: true, message: '请选择商品品牌' }]}
-              style={{ width: '50%' }}
-            >
-              <Select placeholder="请选择商品品牌">
-                {(brands || []).map(brand => (
-                  brand && brand.brandId ? (
-                    <Option key={brand.brandId} value={safeToString(brand.brandId)}>
-                      {brand.name || '未命名品牌'}
-                    </Option>
-                  ) : null
-                ))}
-              </Select>
-            </Form.Item>
-          </div>
-          
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Form.Item
-              name="stock"
-              label="库存数量"
-              rules={[{ required: true, message: '请输入库存数量' }]}
-              style={{ width: '50%' }}
-            >
-              <InputNumber
-                min={0}
-                style={{ width: '100%' }}
-                placeholder="请输入库存数量"
-              />
-            </Form.Item>
-            
-            <Form.Item
-              name="status"
-              label="商品状态"
-              initialValue={1}
-              style={{ width: '50%' }}
-            >
-              <Select placeholder="请选择商品状态">
-                <Option value={1}>在售</Option>
-                <Option value={0}>下架</Option>
-              </Select>
-            </Form.Item>
-          </div>
-        </Form>
-      </Modal>
+        onSave={handleSave}
+        uploadProps={uploadProps}
+      />
+
+      {/* 商品详情模态框 */}
+      <ProductDetailModal
+        visible={isDetailModalVisible}
+        product={currentProduct}
+        onCancel={() => setIsDetailModalVisible(false)}
+      />
     </div>
   )
 }
 
-export default ProductList 
+export default ProductList

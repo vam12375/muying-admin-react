@@ -174,9 +174,20 @@ const LogisticsDetail: React.FC = () => {
           </Row>
           
           <Divider />
-          
+
           {/* 物流轨迹组件 */}
-          <LogisticsTracks logisticsId={logisticsDetail.id} />
+          {logisticsDetail?.id ? (
+            <>
+              <div style={{ marginBottom: 16, padding: 8, backgroundColor: '#f0f0f0', borderRadius: 4 }}>
+                <Text type="secondary">调试信息: 物流ID = {logisticsDetail.id}</Text>
+              </div>
+              <LogisticsTracks logisticsId={logisticsDetail.id} />
+            </>
+          ) : (
+            <div style={{ padding: 16, textAlign: 'center' }}>
+              <Text type="secondary">等待物流详情加载...</Text>
+            </div>
+          )}
         </Spin>
       </Card>
       

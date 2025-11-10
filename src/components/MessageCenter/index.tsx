@@ -309,15 +309,14 @@ const MessageCenter: React.FC = () => {
   
   return (
     <Dropdown 
-      overlay={dropdownContent} 
+      dropdownRender={() => (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden">
+          {dropdownContent}
+        </div>
+      )}
       placement="bottomRight" 
       arrow 
       trigger={['click']}
-      dropdownRender={(menu) => (
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg overflow-hidden">
-          {React.cloneElement(menu as React.ReactElement)}
-        </div>
-      )}
     >
       <div className="message-trigger">
         <Tooltip title="消息通知">

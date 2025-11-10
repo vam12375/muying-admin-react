@@ -345,12 +345,12 @@ const RefundStatistics: React.FC = () => {
                 <Card>
                   <Statistic
                     title="环比变化"
-                    value={statistics.compareLastMonth.ratio}
+                    value={statistics.compareLastMonth?.ratio || 0}
                     precision={2}
                     valueStyle={{ 
-                      color: statistics.compareLastMonth.ratio > 0 ? '#cf1322' : '#3f8600' 
+                      color: (statistics.compareLastMonth?.ratio || 0) > 0 ? '#cf1322' : '#3f8600' 
                     }}
-                    prefix={statistics.compareLastMonth.ratio > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
+                    prefix={(statistics.compareLastMonth?.ratio || 0) > 0 ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
                     suffix="%"
                   />
                 </Card>

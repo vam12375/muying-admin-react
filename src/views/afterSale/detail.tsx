@@ -61,6 +61,12 @@ const RefundDetail: React.FC = () => {
   const [processModalVisible, setProcessModalVisible] = useState<boolean>(false);
   const [completeModalVisible, setCompleteModalVisible] = useState<boolean>(false);
   const [failModalVisible, setFailModalVisible] = useState<boolean>(false);
+
+  // 各种操作的加载状态
+  const [reviewLoading, setReviewLoading] = useState<boolean>(false);
+  const [processLoading, setProcessLoading] = useState<boolean>(false);
+  const [completeLoading, setCompleteLoading] = useState<boolean>(false);
+  const [failLoading, setFailLoading] = useState<boolean>(false);
   
   const [reviewForm] = Form.useForm();
   const [processForm] = Form.useForm();
@@ -128,24 +134,28 @@ const RefundDetail: React.FC = () => {
   // 显示审核模态框
   const showReviewModal = () => {
     reviewForm.resetFields();
+    setReviewLoading(false);
     setReviewModalVisible(true);
   };
 
   // 显示处理模态框
   const showProcessModal = () => {
     processForm.resetFields();
+    setProcessLoading(false);
     setProcessModalVisible(true);
   };
 
   // 显示完成模态框
   const showCompleteModal = () => {
     completeForm.resetFields();
+    setCompleteLoading(false);
     setCompleteModalVisible(true);
   };
 
   // 显示失败模态框
   const showFailModal = () => {
     failForm.resetFields();
+    setFailLoading(false);
     setFailModalVisible(true);
   };
 
@@ -153,20 +163,28 @@ const RefundDetail: React.FC = () => {
   const handleReviewSubmit = async () => {
     try {
       if (!refund) return;
-      
+
       const values = await reviewForm.validateFields();
       const { approved, rejectReason } = values;
-      
+
       // 如果拒绝但没有原因，则提示错误
       if (!approved && !rejectReason) {
         message.error('请填写拒绝原因');
         return;
       }
-      
+
+      setReviewLoading(true);
+
+      // 显示处理中的提示
+      const loadingMessage = message.loading(
+        approved ? '正在批准退款申请...' : '正在拒绝退款申请...',
+        0
+      );
+
       // 模拟管理员信息，实际项目中应从全局状态获取
       const adminId = 1;
       const adminName = 'admin';
-      
+
       const response = await reviewRefund(
         refund.refundId || refund.id,
         approved,
@@ -174,17 +192,30 @@ const RefundDetail: React.FC = () => {
         adminName,
         rejectReason
       );
-      
-      if (response && response.data && response.data.code === 200) {
+
+      // 关闭加载提示
+      loadingMessage();
+
+      console.log('审核退款响应:', response);
+
+      // 检查响应格式 - 根据实际API响应结构调整
+      if (response && response.data && (
+        response.data.code === 200 ||
+        response.data.success === true
+      )) {
         message.success(approved ? '退款申请已批准' : '退款申请已拒绝');
         setReviewModalVisible(false);
-        fetchRefundDetail();
+        reviewForm.resetFields();
+        await fetchRefundDetail(); // 等待数据刷新完成
       } else {
+        console.error('审核退款失败，响应:', response);
         message.error(response?.data?.message || '操作失败');
       }
     } catch (error) {
       console.error('审核失败:', error);
       message.error('审核失败，请重试');
+    } finally {
+      setReviewLoading(false);
     }
   };
 
@@ -192,14 +223,19 @@ const RefundDetail: React.FC = () => {
   const handleProcessSubmit = async () => {
     try {
       if (!refund) return;
-      
+
       const values = await processForm.validateFields();
       const { refundChannel, refundAccount } = values;
-      
+
+      setProcessLoading(true);
+
+      // 显示处理中的提示
+      const loadingMessage = message.loading('正在处理退款...', 0);
+
       // 模拟管理员信息，实际项目中应从全局状态获取
       const adminId = 1;
       const adminName = 'admin';
-      
+
       const response = await processRefund(
         refund.refundId || refund.id,
         refundChannel,
@@ -207,17 +243,30 @@ const RefundDetail: React.FC = () => {
         adminName,
         refundAccount
       );
-      
-      if (response && response.data && response.data.code === 200) {
+
+      // 关闭加载提示
+      loadingMessage();
+
+      console.log('处理退款响应:', response);
+
+      // 检查响应格式 - 根据实际API响应结构调整
+      if (response && response.data && (
+        response.data.code === 200 ||
+        response.data.success === true
+      )) {
         message.success('退款处理已开始');
         setProcessModalVisible(false);
-        fetchRefundDetail();
+        processForm.resetFields();
+        await fetchRefundDetail();
       } else {
+        console.error('处理退款失败，响应:', response);
         message.error(response?.data?.message || '操作失败');
       }
     } catch (error) {
       console.error('处理失败:', error);
       message.error('处理失败，请重试');
+    } finally {
+      setProcessLoading(false);
     }
   };
 
@@ -225,31 +274,49 @@ const RefundDetail: React.FC = () => {
   const handleCompleteSubmit = async () => {
     try {
       if (!refund) return;
-      
+
       const values = await completeForm.validateFields();
       const { transactionId } = values;
-      
+
+      setCompleteLoading(true);
+
+      // 显示处理中的提示
+      const loadingMessage = message.loading('正在完成退款...', 0);
+
       // 模拟管理员信息，实际项目中应从全局状态获取
       const adminId = 1;
       const adminName = 'admin';
-      
+
       const response = await completeRefund(
         refund.refundId || refund.id,
         transactionId,
         adminId,
         adminName
       );
-      
-      if (response && response.data && response.data.code === 200) {
+
+      // 关闭加载提示
+      loadingMessage();
+
+      console.log('完成退款响应:', response);
+
+      // 检查响应格式 - 根据实际API响应结构调整
+      if (response && response.data && (
+        response.data.code === 200 ||
+        response.data.success === true
+      )) {
         message.success('退款已完成');
         setCompleteModalVisible(false);
-        fetchRefundDetail();
+        completeForm.resetFields();
+        await fetchRefundDetail();
       } else {
+        console.error('完成退款失败，响应:', response);
         message.error(response?.data?.message || '操作失败');
       }
     } catch (error) {
       console.error('完成失败:', error);
       message.error('完成失败，请重试');
+    } finally {
+      setCompleteLoading(false);
     }
   };
 
@@ -257,31 +324,49 @@ const RefundDetail: React.FC = () => {
   const handleFailSubmit = async () => {
     try {
       if (!refund) return;
-      
+
       const values = await failForm.validateFields();
       const { reason } = values;
-      
+
+      setFailLoading(true);
+
+      // 显示处理中的提示
+      const loadingMessage = message.loading('正在标记退款失败...', 0);
+
       // 模拟管理员信息，实际项目中应从全局状态获取
       const adminId = 1;
       const adminName = 'admin';
-      
+
       const response = await failRefund(
         refund.refundId || refund.id,
         reason,
         adminId,
         adminName
       );
-      
-      if (response && response.data && response.data.code === 200) {
+
+      // 关闭加载提示
+      loadingMessage();
+
+      console.log('标记失败响应:', response);
+
+      // 检查响应格式 - 根据实际API响应结构调整
+      if (response && response.data && (
+        response.data.code === 200 ||
+        response.data.success === true
+      )) {
         message.success('退款已标记为失败');
         setFailModalVisible(false);
-        fetchRefundDetail();
+        failForm.resetFields();
+        await fetchRefundDetail();
       } else {
+        console.error('标记失败操作失败，响应:', response);
         message.error(response?.data?.message || '操作失败');
       }
     } catch (error) {
       console.error('标记失败错误:', error);
       message.error('操作失败，请重试');
+    } finally {
+      setFailLoading(false);
     }
   };
 
@@ -426,7 +511,10 @@ const RefundDetail: React.FC = () => {
       <Modal
         title="审核退款申请"
         open={reviewModalVisible}
-        onCancel={() => setReviewModalVisible(false)}
+        onCancel={() => {
+          setReviewModalVisible(false);
+          setReviewLoading(false);
+        }}
         footer={null}
       >
         <Form
@@ -464,10 +552,17 @@ const RefundDetail: React.FC = () => {
           
           <Form.Item style={{ marginTop: '16px', textAlign: 'right' }}>
             <Space>
-              <Button onClick={() => setReviewModalVisible(false)}>
+              <Button
+                onClick={() => setReviewModalVisible(false)}
+                disabled={reviewLoading}
+              >
                 取消
               </Button>
-              <Button type="primary" htmlType="submit">
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={reviewLoading}
+              >
                 提交
               </Button>
             </Space>
@@ -479,7 +574,10 @@ const RefundDetail: React.FC = () => {
       <Modal
         title="处理退款"
         open={processModalVisible}
-        onCancel={() => setProcessModalVisible(false)}
+        onCancel={() => {
+          setProcessModalVisible(false);
+          setProcessLoading(false);
+        }}
         footer={null}
       >
         <Form
@@ -519,10 +617,17 @@ const RefundDetail: React.FC = () => {
           
           <Form.Item style={{ marginTop: '16px', textAlign: 'right' }}>
             <Space>
-              <Button onClick={() => setProcessModalVisible(false)}>
+              <Button
+                onClick={() => setProcessModalVisible(false)}
+                disabled={processLoading}
+              >
                 取消
               </Button>
-              <Button type="primary" htmlType="submit">
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={processLoading}
+              >
                 提交
               </Button>
             </Space>
@@ -534,7 +639,10 @@ const RefundDetail: React.FC = () => {
       <Modal
         title="完成退款"
         open={completeModalVisible}
-        onCancel={() => setCompleteModalVisible(false)}
+        onCancel={() => {
+          setCompleteModalVisible(false);
+          setCompleteLoading(false);
+        }}
         footer={null}
       >
         <Form
@@ -552,10 +660,17 @@ const RefundDetail: React.FC = () => {
           
           <Form.Item style={{ marginTop: '16px', textAlign: 'right' }}>
             <Space>
-              <Button onClick={() => setCompleteModalVisible(false)}>
+              <Button
+                onClick={() => setCompleteModalVisible(false)}
+                disabled={completeLoading}
+              >
                 取消
               </Button>
-              <Button type="primary" htmlType="submit">
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={completeLoading}
+              >
                 提交
               </Button>
             </Space>
@@ -567,7 +682,10 @@ const RefundDetail: React.FC = () => {
       <Modal
         title="标记退款失败"
         open={failModalVisible}
-        onCancel={() => setFailModalVisible(false)}
+        onCancel={() => {
+          setFailModalVisible(false);
+          setFailLoading(false);
+        }}
         footer={null}
       >
         <Form
@@ -585,10 +703,18 @@ const RefundDetail: React.FC = () => {
           
           <Form.Item style={{ marginTop: '16px', textAlign: 'right' }}>
             <Space>
-              <Button onClick={() => setFailModalVisible(false)}>
+              <Button
+                onClick={() => setFailModalVisible(false)}
+                disabled={failLoading}
+              >
                 取消
               </Button>
-              <Button type="primary" htmlType="submit" danger>
+              <Button
+                type="primary"
+                htmlType="submit"
+                danger
+                loading={failLoading}
+              >
                 确认标记失败
               </Button>
             </Space>

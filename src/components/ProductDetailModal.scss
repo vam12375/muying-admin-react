@@ -1,0 +1,534 @@
+.product-detail-modal {
+  .ant-modal-content {
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .ant-modal-header {
+    border-bottom: none;
+    padding: 0;
+  }
+
+  .ant-modal-body {
+    padding: 0;
+  }
+
+  .product-detail-content {
+    .product-header {
+      padding: 24px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      
+      .product-image-container {
+        position: relative;
+        
+        .product-main-image {
+          width: 100%;
+          height: 320px;
+          object-fit: cover;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          transition: transform 0.3s ease;
+          
+          &:hover {
+            transform: scale(1.02);
+          }
+        }
+
+        .product-badges {
+          position: absolute;
+          top: 0;
+          right: 0;
+          z-index: 10;
+        }
+
+        .preview-mask {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 16px;
+          
+          .anticon {
+            font-size: 24px;
+            margin-bottom: 8px;
+          }
+        }
+      }
+
+      .product-info {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+
+        .product-title-section {
+          .product-title {
+            margin-bottom: 8px;
+            color: #1a1a1a;
+            font-weight: 600;
+            line-height: 1.3;
+          }
+
+          .product-meta {
+            margin-bottom: 16px;
+          }
+        }
+
+        .price-section {
+          margin: 20px 0;
+          
+          .price-container {
+            display: flex;
+            align-items: baseline;
+            gap: 16px;
+            margin-bottom: 8px;
+
+            .current-price {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              
+              .anticon {
+                color: #ff4d4f;
+                font-size: 18px;
+              }
+
+              .price-value {
+                font-size: 28px;
+                font-weight: bold;
+                color: #ff4d4f;
+                line-height: 1;
+              }
+
+              .price-label {
+                font-size: 12px;
+                color: #666;
+                margin-left: 4px;
+              }
+            }
+
+            .original-price {
+              .price-value {
+                font-size: 16px;
+                color: #999;
+                text-decoration: line-through;
+              }
+
+              .price-label {
+                font-size: 12px;
+                color: #999;
+                margin-left: 4px;
+              }
+            }
+          }
+
+          .discount-info {
+            display: flex;
+            gap: 8px;
+          }
+        }
+
+        .stats-section {
+          margin-top: 20px;
+
+          .stat-card {
+            border: none;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            height: 100%;
+
+            &:hover {
+              box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+              transform: translateY(-4px);
+              border-color: rgba(24, 144, 255, 0.2);
+            }
+
+            .ant-card-body {
+              padding: 16px 12px;
+              height: 100%;
+              display: flex;
+              align-items: center;
+            }
+
+            .stat-item {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              width: 100%;
+
+              .stat-icon {
+                font-size: 20px;
+                color: #1890ff;
+                flex-shrink: 0;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(24, 144, 255, 0.1);
+                border-radius: 6px;
+                transition: all 0.3s ease;
+              }
+
+              .stat-content {
+                flex: 1;
+                min-width: 0;
+                text-align: center;
+
+                .stat-value {
+                  font-size: 18px;
+                  font-weight: 700;
+                  color: #1a1a1a;
+                  line-height: 1.2;
+                  margin-bottom: 4px;
+                  white-space: nowrap;
+                  overflow: visible;
+                  text-overflow: clip;
+
+                  .ant-rate {
+                    font-size: 14px;
+                    line-height: 1;
+
+                    .ant-rate-star {
+                      margin-right: 2px;
+                    }
+                  }
+                }
+
+                .stat-label {
+                  font-size: 12px;
+                  color: #666;
+                  line-height: 1.2;
+                  font-weight: 500;
+                  white-space: nowrap;
+                  overflow: visible;
+                  text-overflow: clip;
+                }
+              }
+
+              .ant-tag {
+                margin: 0;
+                font-size: 10px;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-weight: 500;
+              }
+            }
+
+            // 为不同的统计项添加不同的主题色和动画
+            &:nth-child(1) {
+              animation: slideInUp 0.6s ease-out 0.1s both;
+
+              .stat-item .stat-icon {
+                color: #52c41a;
+                background: rgba(82, 196, 26, 0.1);
+              }
+
+              &:hover .stat-item .stat-icon {
+                background: rgba(82, 196, 26, 0.2);
+                transform: scale(1.1);
+              }
+            }
+
+            &:nth-child(2) {
+              animation: slideInUp 0.6s ease-out 0.2s both;
+
+              .stat-item .stat-icon {
+                color: #1890ff;
+                background: rgba(24, 144, 255, 0.1);
+              }
+
+              &:hover .stat-item .stat-icon {
+                background: rgba(24, 144, 255, 0.2);
+                transform: scale(1.1);
+              }
+            }
+
+            &:nth-child(3) {
+              animation: slideInUp 0.6s ease-out 0.3s both;
+
+              .stat-item .stat-icon {
+                color: #faad14;
+                background: rgba(250, 173, 20, 0.1);
+              }
+
+              &:hover .stat-item .stat-icon {
+                background: rgba(250, 173, 20, 0.2);
+                transform: scale(1.1);
+              }
+            }
+
+            &:nth-child(4) {
+              animation: slideInUp 0.6s ease-out 0.4s both;
+
+              .stat-item .stat-icon {
+                color: #f5222d;
+                background: rgba(245, 34, 45, 0.1);
+              }
+
+              &:hover .stat-item .stat-icon {
+                background: rgba(245, 34, 45, 0.2);
+                transform: scale(1.1);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .product-details {
+      padding: 24px;
+      background: #fff;
+
+      .ant-card {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+
+        &:hover {
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        .ant-card-head {
+          border-bottom: 1px solid #f0f0f0;
+          
+          .ant-card-head-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+
+            .anticon {
+              color: #1890ff;
+            }
+          }
+        }
+
+        .ant-card-body {
+          padding: 16px;
+        }
+      }
+
+      .ant-descriptions {
+        .ant-descriptions-item-label {
+          font-weight: 500;
+          color: #666;
+          width: 80px;
+        }
+
+        .ant-descriptions-item-content {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+
+          .anticon {
+            color: #1890ff;
+            font-size: 12px;
+          }
+        }
+      }
+
+      .product-description {
+        .ant-typography {
+          margin-bottom: 0;
+          line-height: 1.6;
+          color: #666;
+        }
+      }
+    }
+  }
+}
+
+// 深色主题适配
+.dark {
+  .product-detail-modal {
+    .product-detail-content {
+      .product-header {
+        background: linear-gradient(135deg, #2a2d3a 0%, #1f2937 100%);
+        
+        .product-info {
+          .product-title-section {
+            .product-title {
+              color: #fff;
+            }
+          }
+
+          .price-section {
+            .price-container {
+              .current-price {
+                .price-label {
+                  color: #9ca3af;
+                }
+              }
+
+              .original-price {
+                .price-label {
+                  color: #6b7280;
+                }
+              }
+            }
+          }
+
+          .stats-section {
+            .stat-card {
+              background: rgba(255, 255, 255, 0.05);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+
+              .stat-item {
+                .stat-content {
+                  .stat-value {
+                    color: #fff;
+                  }
+
+                  .stat-label {
+                    color: #9ca3af;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      .product-details {
+        background: #1f2937;
+
+        .ant-card {
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+
+          .ant-card-head {
+            background: transparent;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+            .ant-card-head-title {
+              color: #fff;
+            }
+          }
+        }
+
+        .ant-descriptions {
+          .ant-descriptions-item-label {
+            color: #9ca3af;
+          }
+
+          .ant-descriptions-item-content {
+            color: #e5e7eb;
+          }
+        }
+
+        .product-description {
+          .ant-typography {
+            color: #9ca3af;
+          }
+        }
+      }
+    }
+  }
+}
+
+// 动画关键帧
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .product-detail-modal {
+    .ant-modal {
+      width: 95% !important;
+      margin: 10px;
+    }
+
+    .product-detail-content {
+      .product-header {
+        padding: 16px;
+
+        .ant-row {
+          flex-direction: column;
+        }
+
+        .product-image-container {
+          margin-bottom: 16px;
+
+          .product-main-image {
+            height: 250px;
+          }
+        }
+
+        .stats-section {
+          .ant-row {
+            flex-direction: row;
+          }
+
+          .ant-col {
+            margin-bottom: 12px;
+          }
+
+          .stat-card {
+            .ant-card-body {
+              padding: 12px 8px;
+            }
+
+            .stat-item {
+              gap: 8px;
+
+              .stat-icon {
+                font-size: 16px;
+                width: 20px;
+                height: 20px;
+              }
+
+              .stat-content {
+                .stat-value {
+                  font-size: 16px;
+                }
+
+                .stat-label {
+                  font-size: 11px;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      .product-details {
+        padding: 16px;
+
+        .ant-row {
+          flex-direction: column;
+        }
+
+        .ant-col {
+          margin-bottom: 16px;
+        }
+      }
+    }
+  }
+}

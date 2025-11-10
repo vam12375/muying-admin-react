@@ -203,6 +203,10 @@ export const getMenuItems = (): MenuItem[] => {
       label: '系统管理',
       children: [
         {
+          key: 'system/monitor',
+          label: '系统监控',
+        },
+        {
           key: 'system/config',
           label: '系统配置',
         },

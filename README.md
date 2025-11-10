@@ -34,7 +34,7 @@
 
 ```bash
 # 克隆项目
-git clone <https://github.com/vam12375/muying-admin-react.git>
+git clone https://github.com/vam12375/muying-admin-react.git
 cd muying-admin-react
 
 # 安装依赖

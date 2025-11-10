@@ -20,8 +20,8 @@ import { AppDispatch, RootState } from '@/store';
 import { fetchCouponRuleList } from '@/store/slices/couponSlice';
 import { 
   createCouponRule, 
-  updateCouponRule, 
-  deleteCouponRule 
+  updateCouponRule,
+  deleteCouponRule
 } from '@/api/coupon';
 import { formatDateTime } from '@/utils/dateUtils';
 

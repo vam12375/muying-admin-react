@@ -345,4 +345,15 @@ const PointsExchange: React.FC = () => {
                 <Image
                   width={200}
                   src={getThumbnailUrl(currentExchange.productImage)}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </Modal>
+    </div>
+  );
+};
+
+export default PointsExchange;
  

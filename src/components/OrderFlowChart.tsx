@@ -28,21 +28,22 @@ interface OrderFlowChartProps {
 const FlowChartContainer = styled.div<{ $vertical?: boolean }>`
   display: flex;
   flex-direction: ${props => props.$vertical ? 'column' : 'row'};
-  align-items: ${props => props.$vertical ? 'flex-start' : 'center'};
+  align-items: ${props => props.$vertical ? 'flex-start' : 'flex-start'};
   justify-content: space-between;
   width: 100%;
   margin: 20px 0;
   position: relative;
   gap: ${props => props.$vertical ? '8px' : '0'};
-  
+  padding: ${props => props.$vertical ? '0' : '0 12px'};
+
   &::before {
     content: '';
     position: absolute;
     background-color: #f0f0f0;
     z-index: 1;
-    ${props => props.$vertical 
-      ? 'width: 2px; top: 0; bottom: 0; left: 12px;' 
-      : 'height: 2px; left: 0; right: 0; top: 24px;'}
+    ${props => props.$vertical
+      ? 'width: 2px; top: 0; bottom: 0; left: 12px;'
+      : 'height: 2px; left: 12px; right: 12px; top: 12px;'}
   }
 `;
 
@@ -57,12 +58,12 @@ const NodeContainer = styled(motion.div)<{ $vertical?: boolean, $active?: boolea
   margin-bottom: ${props => props.$vertical ? '24px' : '0'};
   width: ${props => props.$vertical ? '100%' : 'auto'};
   flex: ${props => props.$vertical ? '0' : '1'};
-  
+
   ${props => !props.$vertical && `
     &::before {
       content: '';
       position: absolute;
-      top: 24px;
+      top: 12px;
       left: 0;
       width: 50%;
       height: 2px;
@@ -71,11 +72,11 @@ const NodeContainer = styled(motion.div)<{ $vertical?: boolean, $active?: boolea
       };
       z-index: 1;
     }
-    
+
     &::after {
       content: '';
       position: absolute;
-      top: 24px;
+      top: 12px;
       right: 0;
       width: 50%;
       height: 2px;
@@ -84,16 +85,16 @@ const NodeContainer = styled(motion.div)<{ $vertical?: boolean, $active?: boolea
       };
       z-index: 1;
     }
-    
+
     &:first-child::before {
       display: none;
     }
-    
+
     &:last-child::after {
       display: none;
     }
   `}
-  
+
   ${props => props.$vertical && `
     &::before {
       content: '';
@@ -107,7 +108,7 @@ const NodeContainer = styled(motion.div)<{ $vertical?: boolean, $active?: boolea
       };
       z-index: 1;
     }
-    
+
     &:last-child::before {
       display: none;
     }
@@ -122,11 +123,12 @@ const Node = styled.div<{ $status: NodeStatus, $active?: boolean }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
-  z-index: 2;
+  margin-bottom: 12px;
+  z-index: 3;
+  position: relative;
   transition: all 0.3s;
   box-shadow: ${props => props.$active ? '0 0 0 4px rgba(82, 196, 26, 0.2)' : 'none'};
-  
+
   ${props => {
     switch(props.$status) {
       case 'completed':

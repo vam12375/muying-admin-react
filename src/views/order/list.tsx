@@ -420,10 +420,16 @@ const OrderList: React.FC = () => {
         return '支付宝';
       case 'wechat':
         return '微信支付';
+      case 'wallet':
+        return '钱包支付';
       case 'bank':
         return '银行卡';
       case 'balance':
         return '余额支付';
+      case 'credit_card':
+        return '信用卡';
+      case 'cod':
+        return '货到付款';
       default:
         return method || '未支付';
     }
@@ -836,8 +842,11 @@ const OrderList: React.FC = () => {
               <Option value="">全部</Option>
               <Option value="alipay">支付宝</Option>
               <Option value="wechat">微信支付</Option>
+              <Option value="wallet">钱包支付</Option>
               <Option value="bank">银行卡</Option>
               <Option value="balance">余额支付</Option>
+              <Option value="credit_card">信用卡</Option>
+              <Option value="cod">货到付款</Option>
             </Select>
           </Form.Item>
           <Form.Item name="dateRange" label="下单时间范围">

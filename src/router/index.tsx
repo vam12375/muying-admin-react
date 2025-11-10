@@ -284,10 +284,6 @@ const routeConfig: RouteObject[] = [
           {
             path: 'rule',
             element: LazyLoad(lazy(() => import('@/views/coupon/rule')))
-          },
-          {
-            path: 'test',
-            element: LazyLoad(lazy(() => import('@/views/coupon/test')))
           }
         ]
       },
@@ -336,6 +332,10 @@ const routeConfig: RouteObject[] = [
       {
         path: 'system',
         children: [
+          {
+            path: 'monitor',
+            element: LazyLoad(lazy(() => import('@/views/system/monitor')))
+          },
           {
             path: 'redis',
             element: LazyLoad(RedisManage)

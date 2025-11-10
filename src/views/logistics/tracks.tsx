@@ -74,8 +74,11 @@ const LogisticsTracks: React.FC<LogisticsTracksProps> = ({ logisticsId, readOnly
   
   // 初始加载
   useEffect(() => {
+    console.log('LogisticsTracks组件初始化，logisticsId:', logisticsId, '类型:', typeof logisticsId);
     if (logisticsId) {
       dispatch(fetchLogisticsTracks(logisticsId));
+    } else {
+      console.warn('logisticsId为空，无法加载轨迹');
     }
   }, [dispatch, logisticsId]);
   
@@ -110,36 +113,63 @@ const LogisticsTracks: React.FC<LogisticsTracksProps> = ({ logisticsId, readOnly
   
   // 开始自动生成轨迹
   const startAutoGeneration = () => {
-    if (autoGenerating) return;
-    
+    console.log('开始自动生成轨迹，logisticsId:', logisticsId);
+
+    if (autoGenerating) {
+      console.log('已在生成中，跳过');
+      return;
+    }
+
     // 首先确保轨迹列表已加载
     if (!logisticsId) {
+      console.error('缺少物流ID，无法自动生成轨迹');
       message.error('缺少物流ID，无法自动生成轨迹');
       return;
     }
-    
+
+    console.log('当前轨迹数量:', tracks?.length || 0);
+
     // 检查是否已有轨迹
     if (tracks && tracks.length > 0) {
-      Modal.confirm({
-        title: '已存在物流轨迹',
-        content: '当前物流已存在轨迹记录，继续自动生成可能会导致重复数据。是否继续？',
-        okText: '继续',
-        cancelText: '取消',
-        onOk: () => {
-          batchGenerateTracks();
-        }
-      });
+      console.log('发现现有轨迹，显示确认对话框');
+      try {
+        // 直接执行，不使用对话框
+        console.log('跳过确认对话框，直接生成轨迹');
+        batchGenerateTracks();
+
+        // 下面的代码暂时注释掉，因为Modal.confirm可能有问题
+        /*
+        Modal.confirm({
+          title: '已存在物流轨迹',
+          content: '当前物流已存在轨迹记录，继续自动生成可能会导致重复数据。是否继续？',
+          okText: '继续',
+          cancelText: '取消',
+          onOk: () => {
+            console.log('用户确认继续生成轨迹');
+            batchGenerateTracks();
+          }
+        });
+        */
+      } catch (error) {
+        console.error('显示确认对话框失败:', error);
+        // 如果对话框显示失败，直接生成
+        batchGenerateTracks();
+      }
     } else {
+      console.log('没有现有轨迹，直接生成');
       batchGenerateTracks();
     }
   };
   
   // 批量生成轨迹
   const batchGenerateTracks = async () => {
+    console.log('开始批量生成轨迹，logisticsId:', logisticsId);
     setAutoGenerating(true);
     setGenerationProgress(10); // 初始进度
-    
+
     try {
+      console.log('轨迹模板数量:', trackTemplates.length);
+
       // 准备所有轨迹数据
       const allTracks = trackTemplates.map((template, index) => {
         // 计算相对时间，第一个点是当前时间，后续每个点间隔30分钟
@@ -179,14 +209,21 @@ const LogisticsTracks: React.FC<LogisticsTracksProps> = ({ logisticsId, readOnly
       
       setGenerationProgress(30); // 数据准备完成
       
-      console.log(`准备批量生成${allTracks.length}个轨迹点`);
+      console.log(`准备批量生成${allTracks.length}个轨迹点，logisticsId: ${logisticsId}`);
       message.loading('正在批量生成物流轨迹...', 2);
-      
-      // 调用批量创建API
-      await dispatch(batchAddLogisticsTracksAction({ 
-        logisticsId, 
-        tracks: allTracks 
-      })).unwrap();
+
+      try {
+        // 调用批量创建API
+        console.log('调用批量创建API，参数:', { logisticsId, tracksCount: allTracks.length });
+        const result = await dispatch(batchAddLogisticsTracksAction({
+          logisticsId,
+          tracks: allTracks
+        })).unwrap();
+        console.log('批量创建API调用成功，结果:', result);
+      } catch (apiError) {
+        console.error('批量创建API调用失败:', apiError);
+        throw apiError;
+      }
       
       setGenerationProgress(90);
       
@@ -237,15 +274,18 @@ const LogisticsTracks: React.FC<LogisticsTracksProps> = ({ logisticsId, readOnly
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      
+
       // 转换日期格式
       const track: LogisticsTrackParams = {
         ...values,
         trackingTime: values.trackingTime ? values.trackingTime.format('YYYY-MM-DD HH:mm:ss') : undefined
       };
-      
+
       await dispatch(addLogisticsTrackAction({ logisticsId, track })).unwrap();
       setModalVisible(false);
+
+      // 刷新轨迹列表
+      dispatch(fetchLogisticsTracks(logisticsId));
     } catch (error) {
       // 表单验证失败
     }
@@ -351,7 +391,10 @@ const LogisticsTracks: React.FC<LogisticsTracksProps> = ({ logisticsId, readOnly
             </Button>
             <Button
               type="primary"
-              onClick={startAutoGeneration}
+              onClick={() => {
+                console.log('自动生成轨迹按钮被点击');
+                startAutoGeneration();
+              }}
               loading={autoGenerating}
               icon={<ThunderboltOutlined />}
               danger

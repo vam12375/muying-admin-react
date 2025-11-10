@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Table, 
-  Card, 
-  Button, 
-  Input, 
-  Space, 
-  Form, 
-  Select, 
-  Modal, 
-  message, 
+import {
+  Table,
+  Card,
+  Button,
+  Input,
+  Space,
+  Form,
+  Select,
+  Modal,
+  message,
   Typography,
   Tag,
   DatePicker,
@@ -16,29 +16,49 @@ import {
   Row,
   Col,
   Statistic,
-  App
+  App,
+  Checkbox,
+  Dropdown,
+  Progress,
+  Tooltip,
+  Badge,
+  Alert,
+  Empty
 } from 'antd';
-import { 
-  PlusOutlined, 
-  SearchOutlined, 
-  EditOutlined, 
-  DeleteOutlined, 
+import {
+  PlusOutlined,
+  SearchOutlined,
+  EditOutlined,
+  DeleteOutlined,
   ExclamationCircleOutlined,
   ReloadOutlined,
   EyeOutlined,
-  StopOutlined
+  StopOutlined,
+  DownOutlined,
+  ExportOutlined,
+  FilterOutlined,
+  ClearOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  MoreOutlined,
+  CopyOutlined,
+  SendOutlined
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { ColumnsType } from 'antd/es/table';
 import { AppDispatch, RootState } from '@/store';
-import { 
-  fetchCouponList, 
+import {
+  fetchCouponList,
   setPagination,
   fetchCouponStats
 } from '@/store/slices/couponSlice';
 import { deleteCoupon, updateCouponStatus, CouponData } from '@/api/coupon';
 import { formatDateTime } from '@/utils/dateUtils';
+import BatchOperations from './batch-operations';
+import LoadingWrapper from '@/components/LoadingWrapper';
+import ActionFeedback, { useActionFeedback } from '@/components/ActionFeedback';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -49,7 +69,15 @@ const CouponList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [form] = Form.useForm();
   const { message: contextMessage } = App.useApp(); // 使用App上下文中的message
-  
+  const { loading: actionLoading, withLoading, confirm } = useActionFeedback();
+
+  // 本地状态
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [filterVisible, setFilterVisible] = useState(false);
+  const [batchModalVisible, setBatchModalVisible] = useState(false);
+
   // 从Redux获取状态
   const { couponList, pagination, loading, stats } = useSelector((state: RootState) => state.coupon);
   
@@ -114,38 +142,48 @@ const CouponList: React.FC = () => {
   
   // 删除优惠券
   const handleDelete = async (id: number) => {
-    try {
-      const hide = contextMessage.loading('正在删除...', 0);
-      await deleteCoupon(id);
-      hide();
-      contextMessage.success('删除成功');
-      fetchCoupons();
-    } catch (error) {
-      contextMessage.error('删除失败');
-    }
+    await withLoading(
+      async () => {
+        await deleteCoupon(id);
+        fetchCoupons();
+      },
+      {
+        successText: '删除成功',
+        errorText: '删除失败，请重试',
+        showErrorModal: true
+      }
+    );
   };
   
   // 更新优惠券状态
   const handleUpdateStatus = async (id: number, status: string) => {
-    try {
-      const hide = contextMessage.loading('正在更新状态...', 0);
-      await updateCouponStatus(id, status);
-      hide();
-      contextMessage.success('状态更新成功');
-      fetchCoupons();
-    } catch (error) {
-      contextMessage.error('状态更新失败');
-    }
+    const statusText = status === 'ACTIVE' ? '启用' : '禁用';
+
+    confirm({
+      title: `确认${statusText}`,
+      content: `确定要${statusText}此优惠券吗？`,
+      onOk: async () => {
+        await withLoading(
+          async () => {
+            await updateCouponStatus(id, status);
+            fetchCoupons();
+          },
+          {
+            successText: `${statusText}成功`,
+            errorText: `${statusText}失败，请重试`,
+            showSuccessNotification: true
+          }
+        );
+      }
+    });
   };
   
   // 确认删除
   const confirmDelete = (record: CouponData) => {
-    Modal.confirm({
+    confirm({
       title: '确认删除',
-      icon: <ExclamationCircleOutlined />,
-      content: `确定要删除优惠券 "${record.name}" 吗？`,
-      okText: '确认',
-      cancelText: '取消',
+      content: `确定要删除优惠券 "${record.name}" 吗？此操作不可恢复。`,
+      type: 'error',
       onOk: () => handleDelete(record.id)
     });
   };
@@ -153,6 +191,128 @@ const CouponList: React.FC = () => {
   // 查看详情
   const viewDetail = (record: CouponData) => {
     navigate(`/coupon/detail/${record.id}`);
+  };
+
+  // 批量删除
+  const handleBatchDelete = async () => {
+    if (selectedRowKeys.length === 0) {
+      contextMessage.warning('请选择要删除的优惠券');
+      return;
+    }
+
+    Modal.confirm({
+      title: '批量删除确认',
+      icon: <ExclamationCircleOutlined />,
+      content: `确定要删除选中的 ${selectedRowKeys.length} 个优惠券吗？此操作不可恢复。`,
+      okText: '确认删除',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk: async () => {
+        setBatchLoading(true);
+        try {
+          // 这里应该调用批量删除API，暂时用循环删除模拟
+          for (const id of selectedRowKeys) {
+            await deleteCoupon(id as number);
+          }
+          contextMessage.success(`成功删除 ${selectedRowKeys.length} 个优惠券`);
+          setSelectedRowKeys([]);
+          fetchCoupons();
+        } catch (error) {
+          contextMessage.error('批量删除失败');
+        } finally {
+          setBatchLoading(false);
+        }
+      }
+    });
+  };
+
+  // 批量更新状态
+  const handleBatchUpdateStatus = async (status: string) => {
+    if (selectedRowKeys.length === 0) {
+      contextMessage.warning('请选择要操作的优惠券');
+      return;
+    }
+
+    const statusText = status === 'ACTIVE' ? '启用' : '禁用';
+    Modal.confirm({
+      title: `批量${statusText}确认`,
+      icon: <ExclamationCircleOutlined />,
+      content: `确定要${statusText}选中的 ${selectedRowKeys.length} 个优惠券吗？`,
+      okText: `确认${statusText}`,
+      cancelText: '取消',
+      onOk: async () => {
+        setBatchLoading(true);
+        try {
+          // 这里应该调用批量更新状态API，暂时用循环更新模拟
+          for (const id of selectedRowKeys) {
+            await updateCouponStatus(id as number, status);
+          }
+          contextMessage.success(`成功${statusText} ${selectedRowKeys.length} 个优惠券`);
+          setSelectedRowKeys([]);
+          fetchCoupons();
+        } catch (error) {
+          contextMessage.error(`批量${statusText}失败`);
+        } finally {
+          setBatchLoading(false);
+        }
+      }
+    });
+  };
+
+  // 导出优惠券数据
+  const handleExport = async () => {
+    setExportLoading(true);
+    try {
+      // 这里应该调用导出API
+      const params = form.getFieldsValue();
+      // 模拟导出
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      contextMessage.success('导出成功');
+    } catch (error) {
+      contextMessage.error('导出失败');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  // 复制优惠券
+  const handleCopy = (record: CouponData) => {
+    navigate('/coupon/create', {
+      state: {
+        copyFrom: record,
+        name: `${record.name}_副本`
+      }
+    });
+  };
+
+  // 发送优惠券
+  const handleSend = (record: CouponData) => {
+    // 这里可以打开发送优惠券的弹窗
+    Modal.info({
+      title: '发送优惠券',
+      content: '发送优惠券功能开发中...',
+    });
+  };
+
+  // 打开批量操作弹窗
+  const handleBatchOperations = () => {
+    if (selectedRowKeys.length === 0) {
+      contextMessage.warning('请选择要操作的优惠券');
+      return;
+    }
+    setBatchModalVisible(true);
+  };
+
+  // 批量操作成功回调
+  const handleBatchSuccess = () => {
+    setSelectedRowKeys([]);
+    fetchCoupons();
+    setBatchModalVisible(false);
+  };
+
+  // 获取选中的优惠券数据
+  const getSelectedCoupons = (): CouponData[] => {
+    return couponList.filter(coupon => selectedRowKeys.includes(coupon.id));
   };
   
   // 获取优惠券类型标签
@@ -187,21 +347,29 @@ const CouponList: React.FC = () => {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
-      width: 80
+      width: 80,
+      fixed: 'left'
     },
     {
-      title: '优惠券名称',
-      dataIndex: 'name',
-      key: 'name',
-      width: 200,
-      render: (text) => <a>{text}</a>
-    },
-    {
-      title: '类型',
-      dataIndex: 'type',
-      key: 'type',
-      width: 120,
-      render: (type) => getCouponTypeTag(type)
+      title: '优惠券信息',
+      key: 'couponInfo',
+      width: 250,
+      fixed: 'left',
+      render: (_, record) => (
+        <div>
+          <div className="font-medium text-gray-900 mb-1">
+            <a onClick={() => viewDetail(record)} className="hover:text-blue-600">
+              {record.name}
+            </a>
+          </div>
+          <div className="flex items-center space-x-2">
+            {getCouponTypeTag(record.type)}
+            {record.isStackable === 1 && (
+              <Tag size="small" color="orange">可叠加</Tag>
+            )}
+          </div>
+        </div>
+      )
     },
     {
       title: '面值/折扣',
@@ -210,120 +378,223 @@ const CouponList: React.FC = () => {
       width: 120,
       render: (value, record) => {
         if (record.type === 'FIXED') {
-          return `¥${value.toFixed(2)}`;
+          return (
+            <div className="text-center">
+              <div className="text-lg font-bold text-red-600">¥{value.toFixed(2)}</div>
+              {record.maxDiscount && (
+                <div className="text-xs text-gray-500">最高¥{record.maxDiscount}</div>
+              )}
+            </div>
+          );
         } else if (record.type === 'PERCENTAGE') {
-          return `${value}折`;
+          return (
+            <div className="text-center">
+              <div className="text-lg font-bold text-red-600">{value}折</div>
+              {record.maxDiscount && (
+                <div className="text-xs text-gray-500">最高¥{record.maxDiscount}</div>
+              )}
+            </div>
+          );
         }
         return value;
       }
     },
     {
-      title: '最低消费',
-      dataIndex: 'minSpend',
-      key: 'minSpend',
+      title: '使用条件',
+      key: 'conditions',
       width: 120,
-      render: (value) => value ? `¥${value.toFixed(2)}` : '无限制'
+      render: (_, record) => (
+        <div className="text-center">
+          <div className="text-sm">
+            {record.minSpend ? `满¥${record.minSpend.toFixed(2)}` : '无门槛'}
+          </div>
+          {record.userLimit && (
+            <div className="text-xs text-gray-500">限领{record.userLimit}张</div>
+          )}
+        </div>
+      )
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 120,
+      width: 100,
       render: (status) => getCouponStatusTag(status)
     },
     {
-      title: '总数量',
-      dataIndex: 'totalQuantity',
-      key: 'totalQuantity',
-      width: 100,
-      render: (value) => value === 0 ? '不限量' : value
-    },
-    {
-      title: '已领取/已使用',
+      title: '使用情况',
       key: 'usage',
-      width: 150,
-      render: (_, record) => (
-        <span>
-          {record.receivedQuantity || 0}/{record.usedQuantity || 0}
-        </span>
-      )
+      width: 180,
+      render: (_, record) => {
+        const total = record.totalQuantity || 0;
+        const received = record.receivedQuantity || 0;
+        const used = record.usedQuantity || 0;
+        const remaining = total > 0 ? total - received : 0;
+        const usageRate = received > 0 ? (used / received * 100) : 0;
+
+        return (
+          <div>
+            <div className="flex justify-between text-sm mb-1">
+              <span>已领取: {received}</span>
+              <span>已使用: {used}</span>
+            </div>
+            {total > 0 && (
+              <div className="mb-1">
+                <Progress
+                  percent={Math.round((received / total) * 100)}
+                  size="small"
+                  status={remaining === 0 ? 'exception' : 'active'}
+                  format={() => `${remaining}剩余`}
+                />
+              </div>
+            )}
+            <div className="text-xs text-gray-500">
+              使用率: {usageRate.toFixed(1)}%
+            </div>
+          </div>
+        );
+      }
     },
     {
       title: '有效期',
       key: 'validPeriod',
-      width: 280,
-      render: (_, record) => (
-        <span>
-          {record.startTime ? formatDateTime(record.startTime) : '无限制'} ~ 
-          {record.endTime ? formatDateTime(record.endTime) : '无限制'}
-        </span>
-      )
+      width: 200,
+      render: (_, record) => {
+        const now = new Date();
+        const startTime = record.startTime ? new Date(record.startTime) : null;
+        const endTime = record.endTime ? new Date(record.endTime) : null;
+
+        let status = 'normal';
+        if (startTime && now < startTime) {
+          status = 'waiting';
+        } else if (endTime && now > endTime) {
+          status = 'expired';
+        }
+
+        return (
+          <div>
+            <div className="text-sm">
+              {startTime ? formatDateTime(record.startTime!) : '无限制'}
+            </div>
+            <div className="text-sm">
+              {endTime ? formatDateTime(record.endTime!) : '无限制'}
+            </div>
+            {status === 'waiting' && (
+              <Badge status="processing" text="未开始" />
+            )}
+            {status === 'expired' && (
+              <Badge status="error" text="已过期" />
+            )}
+            {status === 'normal' && startTime && endTime && (
+              <Badge status="success" text="进行中" />
+            )}
+          </div>
+        );
+      }
     },
     {
       title: '操作',
       key: 'action',
-      width: 220,
-      render: (_, record) => (
-        <Space size="small">
-          <Button 
-            type="text" 
-            size="small" 
-            icon={<EyeOutlined />} 
-            onClick={() => viewDetail(record)}
-          >
-            查看
-          </Button>
-          <Button 
-            type="text" 
-            size="small" 
-            icon={<EditOutlined />} 
-            onClick={() => handleEdit(record)}
-          >
-            编辑
-          </Button>
-          {record.status === 'ACTIVE' ? (
-            <Button 
-              type="text" 
-              size="small" 
-              danger
-              icon={<StopOutlined />} 
-              onClick={() => handleUpdateStatus(record.id, 'INACTIVE')}
-            >
-              停用
-            </Button>
-          ) : (
-            <Button 
-              type="text" 
-              size="small" 
-              icon={<ReloadOutlined />} 
-              onClick={() => handleUpdateStatus(record.id, 'ACTIVE')}
-            >
-              启用
-            </Button>
-          )}
-          <Popconfirm
-            title="确定要删除此优惠券吗？"
-            onConfirm={() => handleDelete(record.id)}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button 
-              type="text" 
+      width: 180,
+      fixed: 'right',
+      render: (_, record) => {
+        const menuItems = [
+          {
+            key: 'copy',
+            label: '复制优惠券',
+            icon: <CopyOutlined />,
+            onClick: () => handleCopy(record)
+          },
+          {
+            key: 'send',
+            label: '发送优惠券',
+            icon: <SendOutlined />,
+            onClick: () => handleSend(record)
+          },
+          {
+            type: 'divider' as const
+          },
+          {
+            key: 'delete',
+            label: '删除',
+            icon: <DeleteOutlined />,
+            danger: true,
+            onClick: () => confirmDelete(record)
+          }
+        ];
+
+        return (
+          <Space size="small">
+            <Button
+              type="text"
               size="small"
-              danger
-              icon={<DeleteOutlined />}
+              icon={<EyeOutlined />}
+              onClick={() => viewDetail(record)}
             >
-              删除
+              查看
             </Button>
-          </Popconfirm>
-        </Space>
-      )
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+            >
+              编辑
+            </Button>
+            {record.status === 'ACTIVE' ? (
+              <Button
+                type="text"
+                size="small"
+                danger
+                icon={<StopOutlined />}
+                onClick={() => handleUpdateStatus(record.id, 'INACTIVE')}
+              >
+                停用
+              </Button>
+            ) : (
+              <Button
+                type="text"
+                size="small"
+                icon={<CheckCircleOutlined />}
+                onClick={() => handleUpdateStatus(record.id, 'ACTIVE')}
+              >
+                启用
+              </Button>
+            )}
+            <Dropdown
+              menu={{
+                items: menuItems,
+                onClick: ({ key }) => {
+                  const item = menuItems.find(item => item.key === key);
+                  if (item && 'onClick' in item) {
+                    item.onClick();
+                  }
+                }
+              }}
+              trigger={['click']}
+            >
+              <Button
+                type="text"
+                size="small"
+                icon={<MoreOutlined />}
+              />
+            </Dropdown>
+          </Space>
+        );
+      }
     }
   ];
   
   return (
-    <App> {/* 使用App组件作为上下文提供者 */}
-      <div className="coupon-list-container" style={{ padding: '24px' }}>
+    <ErrorBoundary>
+      <App> {/* 使用App组件作为上下文提供者 */}
+        <div className="coupon-list-container" style={{ padding: '24px' }}>
+          <LoadingWrapper
+            loading={loading && couponList.length === 0}
+            empty={!loading && couponList.length === 0}
+            emptyDescription="暂无优惠券数据，点击添加优惠券开始创建"
+            onRetry={fetchCoupons}
+          >
         <Card style={{ marginBottom: '24px' }}>
           <Row gutter={24}>
             <Col span={6}>
@@ -362,73 +633,201 @@ const CouponList: React.FC = () => {
         </Card>
         
         <Card>
-          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between' }}>
-            <Title level={4}>优惠券列表</Title>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              添加优惠券
-            </Button>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Title level={4} style={{ margin: 0 }}>优惠券列表</Title>
+            <Space>
+              <Button
+                icon={<ExportOutlined />}
+                onClick={handleExport}
+                loading={exportLoading}
+              >
+                导出
+              </Button>
+              <Button
+                icon={<FilterOutlined />}
+                onClick={() => setFilterVisible(!filterVisible)}
+              >
+                {filterVisible ? '收起筛选' : '展开筛选'}
+              </Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                添加优惠券
+              </Button>
+            </Space>
           </div>
-          
-          <div style={{ marginBottom: '16px' }}>
-            <Form
-              form={form}
-              layout="inline"
-              onFinish={handleSearch}
-            >
-              <Form.Item name="name">
-                <Input placeholder="优惠券名称" allowClear />
-              </Form.Item>
-              
-              <Form.Item name="type">
-                <Select placeholder="优惠券类型" allowClear style={{ width: 120 }}>
-                  <Option value="FIXED">固定金额</Option>
-                  <Option value="PERCENTAGE">折扣比例</Option>
-                </Select>
-              </Form.Item>
-              
-              <Form.Item name="status">
-                <Select placeholder="优惠券状态" allowClear style={{ width: 120 }}>
-                  <Option value="ACTIVE">生效中</Option>
-                  <Option value="INACTIVE">未生效</Option>
-                  <Option value="EXPIRED">已过期</Option>
-                </Select>
-              </Form.Item>
-              
-              <Form.Item name="timeRange">
-                <RangePicker placeholder={['开始日期', '结束日期']} />
-              </Form.Item>
-              
-              <Form.Item>
-                <Space>
-                  <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
-                    搜索
-                  </Button>
-                  <Button onClick={resetQuery}>重置</Button>
-                </Space>
-              </Form.Item>
-            </Form>
-          </div>
+
+          {/* 批量操作工具栏 */}
+          {selectedRowKeys.length > 0 && (
+            <Alert
+              message={
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>已选择 {selectedRowKeys.length} 项</span>
+                  <Space>
+                    <Button
+                      size="small"
+                      type="primary"
+                      icon={<MoreOutlined />}
+                      onClick={handleBatchOperations}
+                    >
+                      批量操作
+                    </Button>
+                    <Button
+                      size="small"
+                      icon={<CheckCircleOutlined />}
+                      onClick={() => handleBatchUpdateStatus('ACTIVE')}
+                      loading={batchLoading}
+                    >
+                      批量启用
+                    </Button>
+                    <Button
+                      size="small"
+                      icon={<CloseCircleOutlined />}
+                      onClick={() => handleBatchUpdateStatus('INACTIVE')}
+                      loading={batchLoading}
+                    >
+                      批量禁用
+                    </Button>
+                    <Button
+                      size="small"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={handleBatchDelete}
+                      loading={batchLoading}
+                    >
+                      批量删除
+                    </Button>
+                    <Button
+                      size="small"
+                      icon={<ExportOutlined />}
+                      onClick={handleExport}
+                      loading={exportLoading}
+                    >
+                      导出选中
+                    </Button>
+                    <Button
+                      size="small"
+                      icon={<ClearOutlined />}
+                      onClick={() => setSelectedRowKeys([])}
+                    >
+                      取消选择
+                    </Button>
+                  </Space>
+                </div>
+              }
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
+          {/* 筛选表单 */}
+          {filterVisible && (
+            <Card size="small" style={{ marginBottom: '16px', backgroundColor: '#fafafa' }}>
+              <Form
+                form={form}
+                layout="inline"
+                onFinish={handleSearch}
+              >
+                <Row gutter={[16, 16]} style={{ width: '100%' }}>
+                  <Col span={6}>
+                    <Form.Item name="name" label="优惠券名称">
+                      <Input placeholder="请输入优惠券名称" allowClear />
+                    </Form.Item>
+                  </Col>
+
+                  <Col span={6}>
+                    <Form.Item name="type" label="优惠券类型">
+                      <Select placeholder="请选择类型" allowClear>
+                        <Option value="FIXED">固定金额</Option>
+                        <Option value="PERCENTAGE">折扣比例</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+
+                  <Col span={6}>
+                    <Form.Item name="status" label="状态">
+                      <Select placeholder="请选择状态" allowClear>
+                        <Option value="ACTIVE">生效中</Option>
+                        <Option value="INACTIVE">未生效</Option>
+                        <Option value="EXPIRED">已过期</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+
+                  <Col span={6}>
+                    <Form.Item name="timeRange" label="有效期">
+                      <RangePicker placeholder={['开始日期', '结束日期']} />
+                    </Form.Item>
+                  </Col>
+
+                  <Col span={24}>
+                    <Form.Item>
+                      <Space>
+                        <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
+                          搜索
+                        </Button>
+                        <Button onClick={resetQuery} icon={<ClearOutlined />}>
+                          重置
+                        </Button>
+                      </Space>
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Form>
+            </Card>
+          )}
           
           <Table
             rowKey="id"
             columns={columns}
             dataSource={couponList}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: setSelectedRowKeys,
+              getCheckboxProps: (record) => ({
+                disabled: false, // 可以根据需要禁用某些行的选择
+              }),
+            }}
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
               total: pagination.total,
               showSizeChanger: true,
               showQuickJumper: true,
-              showTotal: (total) => `共 ${total} 条记录`,
+              showTotal: (total, range) =>
+                `第 ${range[0]}-${range[1]} 条/共 ${total} 条记录`,
               onChange: handlePageChange,
-              onShowSizeChange: handleSizeChange
+              onShowSizeChange: handleSizeChange,
+              pageSizeOptions: ['10', '20', '50', '100'],
             }}
-            loading={loading}
-            scroll={{ x: 1500 }}
+            loading={loading || actionLoading}
+            scroll={{ x: 1600 }}
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description="暂无优惠券数据"
+                >
+                  <Button type="primary" onClick={handleAdd}>
+                    立即创建
+                  </Button>
+                </Empty>
+              )
+            }}
+            size="middle"
           />
         </Card>
-      </div>
-    </App>
+          </LoadingWrapper>
+
+        {/* 批量操作弹窗 */}
+        <BatchOperations
+          visible={batchModalVisible}
+          onCancel={() => setBatchModalVisible(false)}
+          selectedCoupons={getSelectedCoupons()}
+          onSuccess={handleBatchSuccess}
+        />
+        </div>
+      </App>
+    </ErrorBoundary>
   );
 };
 

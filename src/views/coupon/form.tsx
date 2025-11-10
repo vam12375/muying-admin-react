@@ -15,30 +15,53 @@ import {
   Divider,
   Spin,
   Row,
-  Col
+  Col,
+  Upload,
+  Image,
+  Alert,
+  Tabs,
+  Checkbox,
+  TreeSelect,
+  Tag,
+  Tooltip,
+  Progress,
+  Steps
 } from 'antd';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import dayjs from 'dayjs';
-import { 
-  getCouponDetail, 
-  createCoupon, 
-  updateCoupon, 
-  CouponData, 
+import {
+  getCouponDetail,
+  createCoupon,
+  updateCoupon,
+  CouponData,
   getCouponRuleList,
   getCouponBatchList
 } from '@/api/coupon';
 import { AppDispatch, RootState } from '@/store';
 import { fetchCouponDetail, clearCouponDetail } from '@/store/slices/couponSlice';
-import { ArrowLeftOutlined, SaveOutlined, CloseOutlined } from '@ant-design/icons';
+import {
+  ArrowLeftOutlined,
+  SaveOutlined,
+  CloseOutlined,
+  PlusOutlined,
+  DeleteOutlined,
+  InfoCircleOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined
+} from '@ant-design/icons';
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
+const { TabPane } = Tabs;
+const { TextArea } = Input;
+const { Step } = Steps;
 
 // 优惠券表单数据接口
 interface CouponFormData {
   name: string;
+  description?: string;
   type: string;
   batchId?: number;
   ruleId?: number;
@@ -55,6 +78,12 @@ interface CouponFormData {
   brandIds: string[];
   productIds: string[];
   status: string;
+  image?: string;
+  tags?: string[];
+  priority?: number;
+  autoReceive?: boolean;
+  receiveStartTime?: string;
+  receiveEndTime?: string;
 }
 
 // 商品分类接口
@@ -78,6 +107,7 @@ interface Product {
 const CouponForm: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
+  const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -89,12 +119,20 @@ const CouponForm: React.FC = () => {
   const [rules, setRules] = useState<{ruleId: number, name: string}[]>([]);
   const [batches, setBatches] = useState<{batchId: number, couponName: string}[]>([]);
   const [fetchingOptions, setFetchingOptions] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+  const [inputTag, setInputTag] = useState('');
+  const [inputVisible, setInputVisible] = useState(false);
 
   const { couponDetail } = useSelector((state: RootState) => state.coupon);
 
   // 表单初始值
   const initialValues = useCallback((): CouponFormData => ({
     name: '',
+    description: '',
     type: 'FIXED',
     value: 0,
     maxDiscount: 0,
@@ -105,8 +143,30 @@ const CouponForm: React.FC = () => {
     categoryIds: [],
     brandIds: [],
     productIds: [],
-    status: 'ACTIVE'
+    status: 'ACTIVE',
+    image: '',
+    tags: [],
+    priority: 1,
+    autoReceive: false
   }), []);
+
+  // 处理复制模式
+  useEffect(() => {
+    if (location.state?.copyFrom) {
+      const copyData = location.state.copyFrom;
+      const formData = {
+        ...copyData,
+        name: location.state.name || `${copyData.name}_副本`,
+        id: undefined, // 清除ID
+        totalQuantity: 0,
+        usedQuantity: 0,
+        receivedQuantity: 0,
+        status: 'INACTIVE' // 复制的优惠券默认为未激活状态
+      };
+      form.setFieldsValue(formData);
+      setCouponType(copyData.type || 'FIXED');
+    }
+  }, [location.state, form]);
 
   // 加载分类、品牌、规则和批次数据
   useEffect(() => {
@@ -354,7 +414,94 @@ const CouponForm: React.FC = () => {
   // 优惠券类型变更处理
   const handleTypeChange = useCallback((e: any) => {
     setCouponType(e.target.value);
-  }, []);
+
+    // 如果切换到固定金额类型，清除最大折扣金额
+    if (e.target.value === 'FIXED') {
+      form.setFieldsValue({ maxDiscount: 0 });
+    }
+  }, [form]);
+
+  // 处理图片上传
+  const handleImageUpload = async (file: File) => {
+    setUploadLoading(true);
+    try {
+      // 这里应该调用实际的上传API
+      // const response = await uploadImage(file);
+      // setImageUrl(response.data.url);
+
+      // 模拟上传
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImageUrl(reader.result as string);
+        form.setFieldsValue({ image: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+
+      message.success('图片上传成功');
+    } catch (error) {
+      message.error('图片上传失败');
+    } finally {
+      setUploadLoading(false);
+    }
+  };
+
+  // 处理标签添加
+  const handleTagAdd = () => {
+    if (inputTag && !tags.includes(inputTag)) {
+      const newTags = [...tags, inputTag];
+      setTags(newTags);
+      form.setFieldsValue({ tags: newTags });
+      setInputTag('');
+    }
+    setInputVisible(false);
+  };
+
+  // 处理标签删除
+  const handleTagRemove = (removedTag: string) => {
+    const newTags = tags.filter(tag => tag !== removedTag);
+    setTags(newTags);
+    form.setFieldsValue({ tags: newTags });
+  };
+
+  // 步骤验证
+  const validateCurrentStep = async () => {
+    try {
+      const fieldsToValidate = getFieldsForStep(currentStep);
+      await form.validateFields(fieldsToValidate);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  // 获取当前步骤需要验证的字段
+  const getFieldsForStep = (step: number) => {
+    switch (step) {
+      case 0:
+        return ['name', 'description', 'type', 'value', 'minSpend'];
+      case 1:
+        return ['totalQuantity', 'userLimit', 'validDate'];
+      case 2:
+        return [];
+      default:
+        return [];
+    }
+  };
+
+  // 下一步
+  const nextStep = async () => {
+    const isValid = await validateCurrentStep();
+    if (isValid && currentStep < 2) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  // 上一步
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
 
   return (
     <div className="app-container" style={{ padding: 24 }}>
@@ -373,6 +520,13 @@ const CouponForm: React.FC = () => {
         <Divider />
 
         <Spin spinning={loading || fetchingOptions} tip={loading ? "加载优惠券数据中..." : "加载选项数据中..."}>
+          {/* 步骤指示器 */}
+          <Steps current={currentStep} style={{ marginBottom: 24 }}>
+            <Step title="基本信息" description="设置优惠券基本信息" icon={<InfoCircleOutlined />} />
+            <Step title="使用规则" description="配置使用条件和限制" icon={<ExclamationCircleOutlined />} />
+            <Step title="高级设置" description="图片、标签等高级配置" icon={<CheckCircleOutlined />} />
+          </Steps>
+
           <Form
             form={form}
             layout="vertical"
@@ -381,40 +535,106 @@ const CouponForm: React.FC = () => {
             onFinishFailed={onFinishFailed}
             requiredMark="optional"
           >
+            {/* 步骤1: 基本信息 */}
+            {currentStep === 0 && (
+              <Card title="基本信息" style={{ marginBottom: 16 }}>
                 <Row gutter={24}>
                   <Col span={12}>
                     <Form.Item
                       name="name"
                       label="优惠券名称"
-                      rules={[{ required: true, message: '请输入优惠券名称' }]}
+                      rules={[
+                        { required: true, message: '请输入优惠券名称' },
+                        { min: 2, max: 50, message: '优惠券名称长度应在2-50个字符之间' }
+                      ]}
                     >
-                      <Input placeholder="请输入优惠券名称" maxLength={50} />
+                      <Input placeholder="请输入优惠券名称" maxLength={50} showCount />
                     </Form.Item>
                   </Col>
-                  
+
                   <Col span={12}>
+                    <Form.Item
+                      name="status"
+                      label="优惠券状态"
+                      rules={[{ required: true, message: '请选择优惠券状态' }]}
+                    >
+                      <Select placeholder="请选择优惠券状态">
+                        <Option value="ACTIVE">生效中</Option>
+                        <Option value="INACTIVE">未生效</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={24}>
+                  <Col span={24}>
+                    <Form.Item
+                      name="description"
+                      label="优惠券描述"
+                      rules={[{ max: 200, message: '描述长度不能超过200个字符' }]}
+                    >
+                      <TextArea
+                        rows={3}
+                        placeholder="请输入优惠券描述信息，将显示给用户"
+                        showCount
+                        maxLength={200}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={24}>
+                  <Col span={24}>
                     <Form.Item
                       name="type"
                       label="优惠券类型"
                       rules={[{ required: true, message: '请选择优惠券类型' }]}
                     >
                       <Radio.Group onChange={handleTypeChange}>
-                        <Radio value="FIXED">固定金额</Radio>
-                        <Radio value="PERCENTAGE">折扣比例</Radio>
+                        <Radio value="FIXED">
+                          <div>
+                            <div>固定金额</div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>
+                              减免固定金额，如减10元
+                            </div>
+                          </div>
+                        </Radio>
+                        <Radio value="PERCENTAGE">
+                          <div>
+                            <div>折扣比例</div>
+                            <div style={{ fontSize: '12px', color: '#666' }}>
+                              按比例折扣，如9.5折
+                            </div>
+                          </div>
+                        </Radio>
                       </Radio.Group>
                     </Form.Item>
                   </Col>
                 </Row>
-                
+
                 <Row gutter={24}>
                   <Col span={12}>
                     <Form.Item
                       name="value"
                       label={couponType === 'FIXED' ? '优惠金额' : '折扣比例'}
-                      rules={[{ required: true, message: '请输入优惠值' }]}
+                      rules={[
+                        { required: true, message: '请输入优惠值' },
+                        {
+                          validator: (_, value) => {
+                            if (couponType === 'FIXED' && value <= 0) {
+                              return Promise.reject('固定金额必须大于0');
+                            }
+                            if (couponType === 'PERCENTAGE' && (value <= 0 || value > 10)) {
+                              return Promise.reject('折扣比例必须在0-10之间');
+                            }
+                            return Promise.resolve();
+                          }
+                        }
+                      ]}
                     >
                       <InputNumber
                         min={0}
+                        max={couponType === 'PERCENTAGE' ? 10 : undefined}
                         precision={couponType === 'FIXED' ? 2 : 1}
                         style={{ width: '100%' }}
                         placeholder={couponType === 'FIXED' ? '请输入优惠金额' : '请输入折扣比例，如9.5代表9.5折'}
@@ -423,12 +643,23 @@ const CouponForm: React.FC = () => {
                       />
                     </Form.Item>
                   </Col>
-                  
+
                   <Col span={12}>
                     <Form.Item
                       name="minSpend"
                       label="最低消费金额"
-                      rules={[{ required: true, message: '请输入最低消费金额' }]}
+                      rules={[
+                        { required: true, message: '请输入最低消费金额' },
+                        {
+                          validator: (_, value) => {
+                            const couponValue = form.getFieldValue('value');
+                            if (couponType === 'FIXED' && value > 0 && value <= couponValue) {
+                              return Promise.reject('最低消费金额应大于优惠金额');
+                            }
+                            return Promise.resolve();
+                          }
+                        }
+                      ]}
                       tooltip="设置为0表示无限制"
                     >
                       <InputNumber
@@ -461,6 +692,105 @@ const CouponForm: React.FC = () => {
                     </Col>
                   </Row>
                 )}
+              </Card>
+            )}
+
+            {/* 步骤2: 使用规则 */}
+            {currentStep === 1 && (
+              <Card title="使用规则" style={{ marginBottom: 16 }}>
+                <Row gutter={24}>
+                  <Col span={8}>
+                    <Form.Item
+                      name="totalQuantity"
+                      label="发行总量"
+                      rules={[{ required: true, message: '请输入发行总量' }]}
+                      tooltip="设置为0表示不限量"
+                    >
+                      <InputNumber
+                        min={0}
+                        style={{ width: '100%' }}
+                        placeholder="请输入发行总量，0表示不限量"
+                        formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+                      />
+                    </Form.Item>
+                  </Col>
+
+                  <Col span={8}>
+                    <Form.Item
+                      name="userLimit"
+                      label="每用户领取限制"
+                      rules={[{ required: true, message: '请输入每用户领取限制' }]}
+                      tooltip="设置为0表示不限制每个用户可领取的数量"
+                    >
+                      <InputNumber
+                        min={0}
+                        style={{ width: '100%' }}
+                        placeholder="请输入每用户领取限制，0表示不限制"
+                      />
+                    </Form.Item>
+                  </Col>
+
+                  <Col span={8}>
+                    <Form.Item
+                      name="priority"
+                      label="优先级"
+                      tooltip="数字越大优先级越高，影响优惠券的排序和推荐"
+                    >
+                      <InputNumber
+                        min={1}
+                        max={10}
+                        style={{ width: '100%' }}
+                        placeholder="请输入优先级(1-10)"
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={24}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="validDate"
+                      label="有效期"
+                      rules={[{ required: true, message: '请选择有效期' }]}
+                    >
+                      <RangePicker
+                        showTime
+                        style={{ width: '100%' }}
+                        placeholder={['开始时间', '结束时间']}
+                        format="YYYY-MM-DD HH:mm:ss"
+                      />
+                    </Form.Item>
+                  </Col>
+
+                  <Col span={12}>
+                    <Form.Item
+                      name="isStackable"
+                      label="是否可叠加使用"
+                      rules={[{ required: true, message: '请选择是否可叠加使用' }]}
+                      tooltip="允许与其他优惠券同时使用"
+                    >
+                      <Radio.Group>
+                        <Radio value={1}>可叠加</Radio>
+                        <Radio value={0}>不可叠加</Radio>
+                      </Radio.Group>
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                <Row gutter={24}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="autoReceive"
+                      label="自动发放"
+                      tooltip="满足条件时自动发放给用户"
+                    >
+                      <Switch />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Card>
+            )}
                 
                 <Row gutter={24}>
                   <Col span={8}>
@@ -641,16 +971,31 @@ const CouponForm: React.FC = () => {
                   </Row>
                 )}
                 
-                <Divider />
-                
-                <Form.Item>
-                  <Space>
-                    <Button type="primary" htmlType="submit" loading={loading} icon={<SaveOutlined />}>
-                      {isEdit ? '保存修改' : '创建优惠券'}
-                    </Button>
-                    <Button onClick={goBack} icon={<CloseOutlined />}>取消</Button>
-                  </Space>
-                </Form.Item>
+            {/* 步骤导航按钮 */}
+            <Divider />
+            <div style={{ textAlign: 'center', marginTop: 24 }}>
+              <Space size="large">
+                {currentStep > 0 && (
+                  <Button onClick={prevStep}>
+                    上一步
+                  </Button>
+                )}
+
+                {currentStep < 2 ? (
+                  <Button type="primary" onClick={nextStep}>
+                    下一步
+                  </Button>
+                ) : (
+                  <Button type="primary" htmlType="submit" loading={loading} icon={<SaveOutlined />}>
+                    {isEdit ? '保存修改' : '创建优惠券'}
+                  </Button>
+                )}
+
+                <Button onClick={goBack} icon={<CloseOutlined />}>
+                  取消
+                </Button>
+              </Space>
+            </div>
               </Form>
             </Spin>
           </Card>

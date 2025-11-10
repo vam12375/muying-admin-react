@@ -1,0 +1,577 @@
+/* ========================================
+   系统监控 - 现代化UI样式
+   ======================================== */
+
+/* 容器 */
+.system-monitor-page {
+  padding: 24px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
+  position: relative;
+  overflow-x: hidden;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* 背景装饰 */
+.system-monitor-page::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: backgroundMove 20s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes backgroundMove {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+}
+
+/* 内容区域 */
+.monitor-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========================================
+   页面头部
+   ======================================== */
+
+.monitor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 24px 32px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12), 
+              0 0 0 1px rgba(255, 255, 255, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+.monitor-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 14px;
+  color: #fff;
+  font-size: 24px;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+}
+
+.header-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.header-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.header-subtitle {
+  font-size: 13px;
+  color: #999;
+  margin-top: 2px;
+}
+
+/* 按钮样式 */
+.btn-auto-refresh-active {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(24, 144, 255, 0);
+  }
+}
+
+/* ========================================
+   玻璃态卡片
+   ======================================== */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1),
+              0 0 0 1px rgba(255, 255, 255, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+  position: relative;
+  overflow: visible;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15),
+              0 0 0 1px rgba(255, 255, 255, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px 20px 0 0;
+}
+
+/* 卡片标题 */
+.glass-card .ant-card-head {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 20px 20px 0 0;
+  padding: 16px 24px;
+}
+
+.glass-card .ant-card-head-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.glass-card .ant-card-body {
+  padding: 24px;
+}
+
+/* ========================================
+   性能指标卡片
+   ======================================== */
+
+.metrics-card .ant-card-body {
+  padding: 24px;
+}
+
+.enhanced-metric-card {
+  height: 100%;
+}
+
+/* ========================================
+   详细统计
+   ======================================== */
+
+.detail-stat {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  text-align: center;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.detail-stat:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 1);
+}
+
+.detail-stat-label {
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.detail-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", monospace;
+}
+
+/* ========================================
+   健康状态面板
+   ======================================== */
+
+.health-panel .health-component {
+  height: 100%;
+}
+
+/* ========================================
+   数据库和Redis面板
+   ======================================== */
+
+.database-panel,
+.redis-panel {
+  height: 100%;
+}
+
+.stat-box {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.stat-box:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+/* ========================================
+   API统计面板
+   ======================================== */
+
+.api-panel .ant-table-wrapper {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.api-panel .ant-table {
+  background: transparent;
+}
+
+.api-panel .ant-table-thead > tr > th {
+  background: rgba(255, 255, 255, 0.8);
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  font-weight: 600;
+  color: #333;
+}
+
+.api-panel .ant-table-tbody > tr {
+  transition: all 0.2s ease;
+}
+
+.api-panel .ant-table-tbody > tr:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+/* ========================================
+   实时图表
+   ======================================== */
+
+.realtime-chart-container {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   加载状态
+   ======================================== */
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  margin: 24px;
+}
+
+/* ========================================
+   Ant Design 样式覆盖
+   ======================================== */
+
+/* Progress */
+.system-monitor-page .ant-progress-inner {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 100px;
+}
+
+.system-monitor-page .ant-progress-bg {
+  border-radius: 100px !important;
+}
+
+/* Badge */
+.system-monitor-page .ant-badge-status-dot {
+  width: 10px;
+  height: 10px;
+}
+
+/* Tag */
+.system-monitor-page .ant-tag {
+  border-radius: 8px;
+  padding: 2px 12px;
+  font-weight: 500;
+  border: none;
+}
+
+/* Button */
+.system-monitor-page .ant-btn {
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.system-monitor-page .ant-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.system-monitor-page .ant-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.system-monitor-page .ant-btn-primary:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+/* Segmented */
+.system-monitor-page .ant-segmented {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 10px;
+  padding: 2px;
+}
+
+.system-monitor-page .ant-segmented-item-selected {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Alert */
+.system-monitor-page .ant-alert {
+  border-radius: 12px;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* ========================================
+   响应式设计
+   ======================================== */
+
+@media (max-width: 1200px) {
+  .monitor-header {
+    padding: 20px 24px;
+  }
+
+  .header-title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .system-monitor-page {
+    padding: 16px;
+  }
+
+  .monitor-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .header-left {
+    width: 100%;
+  }
+
+  .header-title {
+    font-size: 22px;
+  }
+
+  .header-subtitle {
+    font-size: 12px;
+  }
+
+  .glass-card {
+    border-radius: 16px !important;
+  }
+
+  .glass-card .ant-card-body {
+    padding: 16px;
+  }
+
+  .detail-stat-value {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 576px) {
+  .system-monitor-page {
+    padding: 12px;
+  }
+
+  .monitor-header {
+    padding: 16px;
+  }
+
+  .header-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .header-title {
+    font-size: 20px;
+  }
+
+  .glass-card .ant-card-body {
+    padding: 12px;
+  }
+
+  .stat-box {
+    padding: 12px !important;
+  }
+}
+
+/* ========================================
+   滚动条样式
+   ======================================== */
+
+.system-monitor-page ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.system-monitor-page ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+
+.system-monitor-page ::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.5);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.system-monitor-page ::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.8);
+}
+
+/* ========================================
+   打印样式
+   ======================================== */
+
+@media print {
+  .system-monitor-page {
+    background: #fff;
+  }
+
+  .monitor-header,
+  .glass-card {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+
+  .ant-btn {
+    display: none;
+  }
+}
+
+/* ========================================
+   深色模式支持
+   ======================================== */
+
+.dark .system-monitor-page {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #1a1a2e 100%);
+}
+
+.dark .glass-card {
+  background: rgba(30, 30, 46, 0.95) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .monitor-header {
+  background: rgba(30, 30, 46, 0.95);
+}
+
+.dark .header-title,
+.dark .detail-stat-value {
+  color: #fff;
+}
+
+.dark .detail-stat-label,
+.dark .header-subtitle {
+  color: #999;
+}
+
+.dark .detail-stat {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .ant-table-thead > tr > th {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
+.dark .ant-table-tbody > tr {
+  color: #fff;
+}
+
+/* ========================================
+   动画性能优化
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

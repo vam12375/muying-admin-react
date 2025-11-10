@@ -150,6 +150,17 @@ export const deleteCoupon = (id: number | string) => {
 };
 
 /**
+ * 删除优惠券规则
+ * @param id 规则ID
+ */
+export const deleteCouponRule = (id: number | string) => {
+  return request({
+    url: `admin/coupon/rule/${id}`,
+    method: 'delete'
+  });
+};
+
+/**
  * 更新优惠券状态
  * @param id 优惠券ID
  * @param status 状态值
