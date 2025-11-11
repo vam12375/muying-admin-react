@@ -213,6 +213,30 @@ export const updateExchangeStatus = (id: number | string, status: string) => {
 };
 
 /**
+ * 积分兑换发货
+ * @param id 兑换记录ID
+ * @param data 发货数据
+ */
+export const shipExchange = (id: number | string, data: any) => {
+  return request({
+    url: `/admin/points/exchange/${id}/ship`,
+    method: 'post',
+    data
+  });
+};
+
+/**
+ * 获取积分兑换详情
+ * @param id 兑换记录ID
+ */
+export const getExchangeDetail = (id: number | string) => {
+  return request({
+    url: `/admin/points/exchange/${id}`,
+    method: 'get'
+  });
+};
+
+/**
  * 获取积分统计数据
  * @param params 查询参数
  */
