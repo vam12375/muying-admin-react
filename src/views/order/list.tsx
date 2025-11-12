@@ -69,6 +69,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import OrderStatCard from '@/components/OrderStatCard';
 import AdvancedSearchPanel from '@/components/AdvancedSearchPanel';
 import '@/styles/animations.css';
+import './list.css';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -477,51 +478,40 @@ const OrderList: React.FC = () => {
   // 表格列定义
   const columns: ColumnsType<OrderData> = [
     {
-      title: '订单编号',
-      dataIndex: 'orderNo',
-      key: 'orderNo',
-      width: 180,
-      render: (orderNo, record) => (
+      title: '订单信息',
+      key: 'orderInfo',
+      width: 280,
+      fixed: 'left' as const,
+      render: (_, record) => (
         <div>
-          <Text strong className="hover-text" onClick={() => navigate(`/order/detail/${record.orderId}`)}>
-            {orderNo}
-          </Text>
-          {record.createTime && (
-            <div>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                {formatDateTime(record.createTime, 'YYYY-MM-DD HH:mm')}
-              </Text>
-            </div>
-          )}
-        </div>
-      )
-    },
-    {
-      title: '用户信息',
-      dataIndex: 'userId',
-      key: 'userId',
-      width: 150,
-      render: (userId, record) => (
-        <div className="user-info">
-          <Avatar size="small" icon={<UserOutlined />} style={{ marginRight: 8 }} />
-          <div>
-            <div>{record.username || `用户${userId}`}</div>
-            <div style={{ fontSize: '12px', color: 'rgba(0, 0, 0, 0.45)' }}>ID: {userId}</div>
+          <div className="mb-1">
+            <Text strong className="hover-text text-sm" onClick={() => navigate(`/order/detail/${record.orderId}`)}>
+              {record.orderNo}
+            </Text>
           </div>
+          <div className="flex items-center gap-2 mb-1">
+            <Avatar size="small" icon={<UserOutlined />} />
+            <span className="text-xs">{record.username || `用户${record.userId}`}</span>
+          </div>
+          {record.createTime && (
+            <Text type="secondary" style={{ fontSize: '11px' }}>
+              {formatDateTime(record.createTime, 'MM-DD HH:mm')}
+            </Text>
+          )}
         </div>
       )
     },
     {
       title: '金额',
       key: 'amount',
-      width: 120,
+      width: 100,
       render: (_, record) => (
         <div>
-          <div style={{ color: '#f5222d', fontWeight: 500 }}>
+          <div style={{ color: '#f5222d', fontWeight: 500, fontSize: '14px' }}>
             ¥{record.actualAmount.toFixed(2)}
           </div>
           {record.totalAmount !== record.actualAmount && (
-            <div style={{ fontSize: '12px', textDecoration: 'line-through', color: 'rgba(0, 0, 0, 0.45)' }}>
+            <div style={{ fontSize: '11px', textDecoration: 'line-through', color: 'rgba(0, 0, 0, 0.45)' }}>
               ¥{record.totalAmount.toFixed(2)}
             </div>
           )}
@@ -529,7 +519,7 @@ const OrderList: React.FC = () => {
       )
     },
     {
-      title: '订单状态',
+      title: '状态',
       dataIndex: 'status',
       key: 'status',
       width: 120,
@@ -541,23 +531,14 @@ const OrderList: React.FC = () => {
         { text: '已取消', value: 'cancelled' }
       ],
       onFilter: (value, record) => record.status === value,
-      render: (status) => <OrderStatusTag status={status} size="default" />
-    },
-    {
-      title: '支付信息',
-      width: 150,
-      render: (_, record) => (
+      render: (status, record) => (
         <div>
-          <div>
-            {record.paymentMethod ? (
-              <Badge status="success" text={getPaymentMethodText(record.paymentMethod)} />
-            ) : (
-              <Badge status="default" text="未支付" />
-            )}
+          <div className="mb-1">
+            <OrderStatusTag status={status} size="default" />
           </div>
-          {record.payTime && (
-            <div style={{ fontSize: '12px', color: 'rgba(0, 0, 0, 0.45)' }}>
-              {formatDateTime(record.payTime, 'YYYY-MM-DD HH:mm')}
+          {record.paymentMethod && (
+            <div className="text-xs text-gray-500">
+              {getPaymentMethodText(record.paymentMethod)}
             </div>
           )}
         </div>
@@ -566,78 +547,83 @@ const OrderList: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      fixed: 'right',
-      width: 180,
-      render: (_, record) => (
-        <Space size={4}>
-          <Tooltip title="查看详情">
-            <TableActionButton 
-              type="primary" 
-              ghost
-              icon={<EyeOutlined />} 
+      fixed: 'right' as const,
+      width: 100,
+      render: (_, record) => {
+        // 构建下拉菜单项
+        const menuItems = [
+          {
+            key: 'detail',
+            icon: <EyeOutlined />,
+            label: '查看详情',
+          },
+          ...(record.status === 'pending_shipment' ? [
+            {
+              type: 'divider' as const
+            },
+            {
+              key: 'ship',
+              icon: <SendOutlined />,
+              label: '发货',
+            }
+          ] : []),
+          ...(['pending_payment', 'pending_shipment'].includes(record.status) ? [
+            {
+              type: 'divider' as const
+            },
+            {
+              key: 'cancel',
+              icon: <CloseCircleOutlined />,
+              label: '取消订单',
+              danger: true,
+            }
+          ] : [])
+        ];
+
+        // 处理菜单点击
+        const handleMenuClick = ({ key }: { key: string }) => {
+          switch (key) {
+            case 'detail':
+              handleDetail(record);
+              break;
+            case 'ship':
+              handleShip(record);
+              break;
+            case 'cancel':
+              handleCancel(record);
+              break;
+          }
+        };
+
+        return (
+          <Space size="small">
+            <Button
+              type="link"
+              size="small"
+              icon={<EyeOutlined />}
               onClick={() => handleDetail(record)}
+              className="action-btn"
             >
               详情
-            </TableActionButton>
-          </Tooltip>
-          
-          {record.status === 'pending_shipment' && (
-            <Tooltip title="发货">
-              <TableActionButton 
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={() => handleShip(record)}
-              >
-                发货
-              </TableActionButton>
-            </Tooltip>
-          )}
-          
-          {['pending_payment', 'pending_shipment'].includes(record.status) && (
-            <Tooltip title="取消订单">
-              <TableActionButton 
-                danger
-                icon={<CloseCircleOutlined />}
-                onClick={() => handleCancel(record)}
-              >
-                取消
-              </TableActionButton>
-            </Tooltip>
-          )}
-          
-          <Dropdown 
-            menu={{
-              items: [
-                {
-                  key: 'detail',
-                  icon: <EyeOutlined />,
-                  label: '查看详情',
-                  onClick: () => handleDetail(record)
-                },
-                ...(record.status === 'pending_shipment' ? [
-                  {
-                    key: 'ship',
-                    icon: <SendOutlined />,
-                    label: '发货',
-                    onClick: () => handleShip(record)
-                  }
-                ] : []),
-                ...(['pending_payment', 'pending_shipment'].includes(record.status) ? [
-                  {
-                    key: 'cancel',
-                    icon: <CloseCircleOutlined />,
-                    label: '取消订单',
-                    onClick: () => handleCancel(record)
-                  }
-                ] : [])
-              ]
-            }}
-            trigger={['click']}
-          >
-            <Button type="text" size="small" icon={<MoreOutlined />} />
-          </Dropdown>
-        </Space>
-      )
+            </Button>
+            <Dropdown 
+              menu={{
+                items: menuItems,
+                onClick: handleMenuClick
+              }}
+              trigger={['click']}
+              placement="bottomRight"
+            >
+              <Button 
+                type="text" 
+                size="small" 
+                icon={<MoreOutlined />}
+                className="action-more-btn"
+              />
+            </Dropdown>
+          </Space>
+        );
+      }
     }
   ];
   
@@ -933,7 +919,8 @@ const OrderList: React.FC = () => {
             onChange: handlePageChange,
             onShowSizeChange: handleSizeChange
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 800 }}
+          size="small"
           rowClassName={(record) => {
             if (record.status === 'pending_shipment') return 'row-highlight';
             return '';
