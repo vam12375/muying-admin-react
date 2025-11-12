@@ -59,6 +59,7 @@ import BatchOperations from './batch-operations';
 import LoadingWrapper from '@/components/LoadingWrapper';
 import ActionFeedback, { useActionFeedback } from '@/components/ActionFeedback';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import './list.css';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -347,110 +348,77 @@ const CouponList: React.FC = () => {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
-      width: 80,
-      fixed: 'left'
+      width: 60,
+      fixed: 'left' as const
     },
     {
       title: '优惠券信息',
       key: 'couponInfo',
-      width: 250,
-      fixed: 'left',
-      render: (_, record) => (
-        <div>
-          <div className="font-medium text-gray-900 mb-1">
-            <a onClick={() => viewDetail(record)} className="hover:text-blue-600">
-              {record.name}
-            </a>
-          </div>
-          <div className="flex items-center space-x-2">
-            {getCouponTypeTag(record.type)}
-            {record.isStackable === 1 && (
-              <Tag size="small" color="orange">可叠加</Tag>
-            )}
-          </div>
-        </div>
-      )
-    },
-    {
-      title: '面值/折扣',
-      dataIndex: 'value',
-      key: 'value',
-      width: 120,
-      render: (value, record) => {
-        if (record.type === 'FIXED') {
-          return (
-            <div className="text-center">
-              <div className="text-lg font-bold text-red-600">¥{value.toFixed(2)}</div>
-              {record.maxDiscount && (
-                <div className="text-xs text-gray-500">最高¥{record.maxDiscount}</div>
+      width: 280,
+      fixed: 'left' as const,
+      render: (_, record) => {
+        const total = record.totalQuantity || 0;
+        const received = record.receivedQuantity || 0;
+        const remaining = total > 0 ? total - received : 0;
+        
+        return (
+          <div>
+            <div className="font-medium text-sm mb-1">
+              <a onClick={() => viewDetail(record)} className="hover:text-blue-600">
+                {record.name}
+              </a>
+            </div>
+            <div className="flex items-center gap-2 mb-1">
+              {getCouponTypeTag(record.type)}
+              {record.type === 'FIXED' ? (
+                <span className="text-red-600 font-bold">¥{record.value.toFixed(2)}</span>
+              ) : (
+                <span className="text-red-600 font-bold">{record.value}折</span>
+              )}
+              <span className="text-xs text-gray-500">
+                {record.minSpend ? `满¥${record.minSpend.toFixed(2)}` : '无门槛'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              {record.isStackable === 1 && (
+                <Tag color="orange">可叠加</Tag>
+              )}
+              {total > 0 && (
+                <span className="text-gray-500">剩余: {remaining}/{total}</span>
               )}
             </div>
-          );
-        } else if (record.type === 'PERCENTAGE') {
-          return (
-            <div className="text-center">
-              <div className="text-lg font-bold text-red-600">{value}折</div>
-              {record.maxDiscount && (
-                <div className="text-xs text-gray-500">最高¥{record.maxDiscount}</div>
-              )}
-            </div>
-          );
-        }
-        return value;
+          </div>
+        );
       }
-    },
-    {
-      title: '使用条件',
-      key: 'conditions',
-      width: 120,
-      render: (_, record) => (
-        <div className="text-center">
-          <div className="text-sm">
-            {record.minSpend ? `满¥${record.minSpend.toFixed(2)}` : '无门槛'}
-          </div>
-          {record.userLimit && (
-            <div className="text-xs text-gray-500">限领{record.userLimit}张</div>
-          )}
-        </div>
-      )
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
+      width: 90,
       render: (status) => getCouponStatusTag(status)
     },
     {
       title: '使用情况',
       key: 'usage',
-      width: 180,
+      width: 140,
       render: (_, record) => {
-        const total = record.totalQuantity || 0;
         const received = record.receivedQuantity || 0;
         const used = record.usedQuantity || 0;
-        const remaining = total > 0 ? total - received : 0;
         const usageRate = received > 0 ? (used / received * 100) : 0;
 
         return (
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span>已领取: {received}</span>
-              <span>已使用: {used}</span>
+          <div className="text-xs">
+            <div className="flex justify-between mb-1">
+              <span>已领: {received}</span>
+              <span>已用: {used}</span>
             </div>
-            {total > 0 && (
-              <div className="mb-1">
-                <Progress
-                  percent={Math.round((received / total) * 100)}
-                  size="small"
-                  status={remaining === 0 ? 'exception' : 'active'}
-                  format={() => `${remaining}剩余`}
-                />
-              </div>
-            )}
-            <div className="text-xs text-gray-500">
-              使用率: {usageRate.toFixed(1)}%
-            </div>
+            <Progress
+              percent={Math.round(usageRate)}
+              size="small"
+              strokeColor="#52c41a"
+              format={(percent) => `${percent}%`}
+            />
           </div>
         );
       }
@@ -458,7 +426,7 @@ const CouponList: React.FC = () => {
     {
       title: '有效期',
       key: 'validPeriod',
-      width: 200,
+      width: 160,
       render: (_, record) => {
         const now = new Date();
         const startTime = record.startTime ? new Date(record.startTime) : null;
@@ -472,12 +440,9 @@ const CouponList: React.FC = () => {
         }
 
         return (
-          <div>
-            <div className="text-sm">
-              {startTime ? formatDateTime(record.startTime!) : '无限制'}
-            </div>
-            <div className="text-sm">
-              {endTime ? formatDateTime(record.endTime!) : '无限制'}
+          <div className="text-xs">
+            <div className="mb-1">
+              {endTime ? formatDateTime(record.endTime!, 'YYYY-MM-DD') : '永久有效'}
             </div>
             {status === 'waiting' && (
               <Badge status="processing" text="未开始" />
@@ -495,19 +460,19 @@ const CouponList: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      width: 180,
-      fixed: 'right',
+      width: 160,
+      fixed: 'right' as const,
       render: (_, record) => {
         const menuItems = [
           {
             key: 'copy',
-            label: '复制优惠券',
+            label: '复制',
             icon: <CopyOutlined />,
             onClick: () => handleCopy(record)
           },
           {
             key: 'send',
-            label: '发送优惠券',
+            label: '发送',
             icon: <SendOutlined />,
             onClick: () => handleSend(record)
           },
@@ -523,60 +488,68 @@ const CouponList: React.FC = () => {
           }
         ];
 
+        // 处理菜单点击
+        const handleMenuClick = ({ key }: { key: string }) => {
+          const item = menuItems.find(item => item.key === key);
+          if (item && 'onClick' in item) {
+            item.onClick();
+          }
+        };
+
         return (
           <Space size="small">
             <Button
-              type="text"
+              type="link"
               size="small"
               icon={<EyeOutlined />}
               onClick={() => viewDetail(record)}
+              className="action-btn"
             >
               查看
             </Button>
             <Button
-              type="text"
+              type="link"
               size="small"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
+              className="action-btn"
             >
               编辑
             </Button>
-            {record.status === 'ACTIVE' ? (
-              <Button
-                type="text"
-                size="small"
-                danger
-                icon={<StopOutlined />}
-                onClick={() => handleUpdateStatus(record.id, 'INACTIVE')}
-              >
-                停用
-              </Button>
-            ) : (
-              <Button
-                type="text"
-                size="small"
-                icon={<CheckCircleOutlined />}
-                onClick={() => handleUpdateStatus(record.id, 'ACTIVE')}
-              >
-                启用
-              </Button>
-            )}
             <Dropdown
               menu={{
-                items: menuItems,
-                onClick: ({ key }) => {
-                  const item = menuItems.find(item => item.key === key);
-                  if (item && 'onClick' in item) {
-                    item.onClick();
-                  }
-                }
+                items: [
+                  ...(record.status === 'ACTIVE' ? [
+                    {
+                      key: 'disable',
+                      icon: <StopOutlined />,
+                      label: '停用',
+                      danger: true,
+                      onClick: () => handleUpdateStatus(record.id, 'INACTIVE')
+                    }
+                  ] : [
+                    {
+                      key: 'enable',
+                      icon: <CheckCircleOutlined />,
+                      label: '启用',
+                      onClick: () => handleUpdateStatus(record.id, 'ACTIVE')
+                    }
+                  ]),
+                  {
+                    type: 'divider' as const
+                  },
+                  ...menuItems
+                ],
+                onClick: handleMenuClick
               }}
               trigger={['click']}
+              placement="bottomRight"
             >
               <Button
                 type="text"
                 size="small"
                 icon={<MoreOutlined />}
+                className="action-more-btn"
               />
             </Dropdown>
           </Space>
@@ -800,7 +773,8 @@ const CouponList: React.FC = () => {
               pageSizeOptions: ['10', '20', '50', '100'],
             }}
             loading={loading || actionLoading}
-            scroll={{ x: 1600 }}
+            scroll={{ x: 900 }}
+            size="small"
             locale={{
               emptyText: (
                 <Empty
