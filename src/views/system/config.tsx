@@ -374,7 +374,8 @@ const SystemConfig: React.FC = () => {
                 rowKey="id"
                 loading={loading}
                 pagination={false}
-                scroll={{ x: 1200 }}
+                scroll={{ x: 900 }}
+                size="small"
               />
             </TabPane>
           ))}

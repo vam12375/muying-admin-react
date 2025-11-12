@@ -288,7 +288,8 @@ const SystemLog: React.FC = () => {
             onChange: handlePageChange,
             onShowSizeChange: handleSizeChange
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 900 }}
+          size="small"
         />
       </Card>
       
