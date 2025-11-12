@@ -26,6 +26,7 @@ import {
 import type { Logistics } from '@/api/logistics';
 import { LogisticsStatus } from '@/api/logistics';
 import { formatDateTime } from '@/utils/dateUtils';
+import './list.css';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -51,7 +52,7 @@ const LogisticsList: React.FC = () => {
   // 初始加载
   useEffect(() => {
     fetchLogisticsData();
-    dispatch(fetchLogisticsCompanies());
+    dispatch(fetchLogisticsCompanies({}));
   }, [dispatch, pagination.current, pagination.pageSize]);
   
   // 获取物流列表
@@ -147,71 +148,79 @@ const LogisticsList: React.FC = () => {
   // 表格列定义
   const columns: ColumnsType<Logistics> = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 80
-    },
-    {
       title: '订单ID',
       dataIndex: 'orderId',
       key: 'orderId',
-      width: 100
+      width: 80,
+      fixed: 'left' as const
     },
     {
-      title: '物流单号',
-      dataIndex: 'trackingNo',
-      key: 'trackingNo',
-      width: 180
+      title: '物流信息',
+      key: 'logisticsInfo',
+      width: 280,
+      fixed: 'left' as const,
+      render: (_, record) => (
+        <div>
+          <div className="font-medium text-sm mb-1">
+            {record.trackingNo}
+          </div>
+          <div className="text-xs text-gray-500">
+            {record.company ? record.company.name : getCompanyName(record.companyId)}
+          </div>
+        </div>
+      )
     },
     {
-      title: '物流公司',
-      dataIndex: 'companyId',
-      key: 'companyId',
-      width: 150,
-      render: (companyId, record) => record.company ? record.company.name : getCompanyName(companyId)
-    },
-    {
-      title: '物流状态',
+      title: '状态',
       dataIndex: 'status',
       key: 'status',
-      width: 120,
+      width: 100,
       render: (status) => getStatusTag(status)
     },
     {
       title: '收件人',
       dataIndex: 'receiverName',
       key: 'receiverName',
-      width: 120
+      width: 100
     },
     {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      width: 180,
-      render: (time) => formatDateTime(time)
-    },
-    {
-      title: '更新时间',
-      dataIndex: 'updateTime',
-      key: 'updateTime',
-      width: 180,
-      render: (time) => formatDateTime(time)
+      title: '时间信息',
+      key: 'timeInfo',
+      width: 160,
+      render: (_, record) => (
+        <div className="text-xs">
+          <div className="mb-1">
+            创建: {record.createTime ? formatDateTime(record.createTime).substring(5, 16) : '-'}
+          </div>
+          <div className="text-gray-500">
+            更新: {record.updateTime ? formatDateTime(record.updateTime).substring(5, 16) : '-'}
+          </div>
+        </div>
+      )
     },
     {
       title: '操作',
       key: 'action',
-      fixed: 'right',
-      width: 200,
+      fixed: 'right' as const,
+      width: 140,
       render: (_, record) => (
-        <Space size="middle">
-          <Button type="link" onClick={() => handleDetail(record)}>详情</Button>
+        <Space size="small">
           <Button 
             type="link" 
+            size="small"
+            onClick={() => handleDetail(record)}
+            className="action-btn"
+          >
+            详情
+          </Button>
+          <Button 
+            type="link" 
+            size="small"
             style={{ color: '#52c41a' }}
             onClick={() => handleUpdate(record)}
+            className="action-btn"
           >
-            更新状态
+            更新
           </Button>
         </Space>
       )
@@ -280,7 +289,8 @@ const LogisticsList: React.FC = () => {
             onChange: handlePageChange,
             onShowSizeChange: handleSizeChange
           }}
-          scroll={{ x: 1300 }}
+          scroll={{ x: 900 }}
+          size="small"
           loading={loading}
         />
       </Card>
