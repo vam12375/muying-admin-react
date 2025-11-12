@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  Table, Card, Input, Button, Space, Select, Tag, Rate, Badge, Avatar, 
-  Image, Tooltip, Modal, DatePicker, Form, message, Popconfirm, Typography
+  Table, Card, Input, Button, Space, Select, Tag, Rate, Avatar, 
+  Image, Tooltip, Modal, DatePicker, Form, message, Typography, Dropdown
 } from 'antd';
 import { 
   DeleteOutlined, MessageOutlined, 
   EyeOutlined, ExportOutlined, ReloadOutlined, 
-  ExclamationCircleOutlined, FileTextOutlined 
+  ExclamationCircleOutlined, FileTextOutlined, MoreOutlined, CheckCircleOutlined
 } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import type { TableProps } from 'antd/es/table';
-import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
 import { 
   getCommentList, 
@@ -23,6 +22,7 @@ import {
 } from '@/api/comment';
 import { formatImageUrl } from '@/utils/imageUtils';
 import CommentReplyModal from './reply';
+import './list.css';
 
 // API响应类型定义
 interface ApiResponse<T = any> {
@@ -289,115 +289,109 @@ const CommentList: React.FC = () => {
       title: '用户',
       dataIndex: 'userName',
       key: 'userName',
+      width: 120,
+      fixed: 'left' as const,
       render: (_: string, record: Comment) => {
         // 辅助函数：从用户名中移除数字后缀
         const cleanUserName = (name: string | undefined | null): string => {
           if (!name) return '';
-          
-          // 更高效的方式：直接使用正则表达式去除末尾的数字
           return name.replace(/\d+$/, '');
         };
         
-        // 获取显示名称
         const displayName = record.userNickname || record.userName || (record.isAnonymous ? '匿名用户' : '未知用户');
         
         return (
           <div className="flex items-center space-x-2">
-            <Avatar src={record.userAvatar} />
-            <span>
-              {cleanUserName(displayName)}
-            </span>
-            {record.isAnonymous && <Tag>匿名</Tag>}
+            <Avatar size="small" src={record.userAvatar} />
+            <Tooltip title={cleanUserName(displayName)}>
+              <span className="truncate max-w-[60px]">
+                {cleanUserName(displayName)}
+              </span>
+            </Tooltip>
           </div>
         );
       },
     },
     {
-      title: '商品',
+      title: '商品信息',
       dataIndex: 'productName',
       key: 'productName',
+      width: 200,
       ellipsis: true,
       render: (name: string, record: Comment) => (
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           {record.productImage && (
             <Image 
               src={formatImageUrl(record.productImage)} 
-              width={40} 
-              height={40}
-              className="mr-2 object-cover rounded"
+              width={32} 
+              height={32}
+              className="object-cover rounded flex-shrink-0"
               preview={false}
-              fallback="https://via.placeholder.com/40?text=No+Image"
-              onError={(e) => {
-                console.error('Image load error:', record.productImage);
-              }}
+              fallback="https://via.placeholder.com/32?text=No+Image"
             />
           )}
           <Tooltip title={name}>
-            <span className="line-clamp-2">{name}</span>
+            <span className="line-clamp-1 text-sm">{name}</span>
           </Tooltip>
         </div>
       ),
     },
     {
-      title: '评分',
-      dataIndex: 'rating',
-      key: 'rating',
-      render: (rating: number) => <Rate disabled defaultValue={rating} />,
-      sorter: true,
-      width: 150,
-    },
-    {
       title: '评价内容',
       dataIndex: 'content',
       key: 'content',
+      width: 280,
       ellipsis: true,
       render: (content: string, record: Comment) => (
-        <div>
-          <div className="mb-2 line-clamp-2">{content}</div>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 mb-1">
+            <Rate disabled defaultValue={record.rating} style={{ fontSize: 14 }} />
+            <span className="text-xs text-gray-500">
+              {dayjs(record.createTime).format('MM-DD HH:mm')}
+            </span>
+          </div>
+          <Tooltip title={content}>
+            <div className="text-sm line-clamp-2">{content}</div>
+          </Tooltip>
           {record.images && record.images.length > 0 && (
-            <div className="flex space-x-1">
-              {record.images.map((img, index) => (
+            <div className="flex gap-1 mt-1">
+              {record.images.slice(0, 3).map((img, index) => (
                 <Image
                   key={index}
                   src={formatImageUrl(img)}
-                  width={40}
-                  height={40}
+                  width={32}
+                  height={32}
                   className="object-cover rounded"
                   preview={{
                     mask: <EyeOutlined />,
                   }}
-                  fallback="https://via.placeholder.com/40?text=No+Image"
-                  onError={() => {
-                    console.error('Review image load error:', img);
-                  }}
+                  fallback="https://via.placeholder.com/32?text=No+Image"
                 />
               ))}
+              {record.images.length > 3 && (
+                <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center text-xs text-gray-500">
+                  +{record.images.length - 3}
+                </div>
+              )}
             </div>
           )}
         </div>
       ),
     },
     {
-      title: '评价时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      sorter: true,
-      render: (time: string) => dayjs(time).format('YYYY-MM-DD HH:mm')
-    },
-    {
       title: '状态',
       key: 'status',
       dataIndex: 'status',
+      width: 100,
       render: (status: number, record: Comment) => (
-        <Space size="middle">
-          <Badge 
-            status={record.hasReplied ? 'success' : 'warning'} 
-            text={record.hasReplied ? '已回复' : '未回复'} 
-          />
-          <Tag color={status === 1 ? 'green' : 'red'}>
-            {status === 1 ? '显示中' : '已隐藏'}
+        <div className="space-y-1">
+          <Tag color={record.hasReplied ? 'green' : 'orange'} className="m-0">
+            {record.hasReplied ? '已回复' : '未回复'}
           </Tag>
-        </Space>
+          <Tag color={status === 1 ? 'blue' : 'default'} className="m-0">
+            {status === 1 ? '显示' : '隐藏'}
+          </Tag>
+        </div>
       ),
       filters: [
         { text: '显示中', value: 1 },
@@ -409,44 +403,68 @@ const CommentList: React.FC = () => {
     {
       title: '操作',
       key: 'action',
+      width: 140,
+      fixed: 'right' as const,
       render: (_: any, record: Comment) => (
-        <Space size="middle">
+        <Space size="small">
           <Button 
-            type="primary" 
+            type="link"
             icon={<MessageOutlined />}
             size="small"
             onClick={() => handleOpenReplyModal(record.commentId, record.productName)}
+            className="action-btn"
           >
             回复
           </Button>
           <Link to={`/comment/detail/${record.commentId}`}>
             <Button
+              type="link"
               icon={<FileTextOutlined />}
               size="small"
+              className="action-btn"
             >
               详情
             </Button>
           </Link>
-          <Popconfirm
-            title="确定要删除此评价吗？"
-            onConfirm={() => handleDelete(record.commentId)}
-            okText="确定"
-            cancelText="取消"
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'status',
+                  icon: record.status === 1 ? <EyeOutlined /> : <CheckCircleOutlined />,
+                  label: record.status === 1 ? '隐藏' : '显示',
+                  onClick: () => handleStatusChange(record.commentId, record.status === 1 ? 0 : 1)
+                },
+                {
+                  type: 'divider' as const
+                },
+                {
+                  key: 'delete',
+                  icon: <DeleteOutlined />,
+                  label: '删除',
+                  danger: true,
+                  onClick: () => {
+                    Modal.confirm({
+                      title: '确定要删除此评价吗？',
+                      icon: <ExclamationCircleOutlined />,
+                      okText: '确定',
+                      cancelText: '取消',
+                      onOk: () => handleDelete(record.commentId)
+                    });
+                  }
+                }
+              ]
+            }}
+            trigger={['click']}
+            placement="bottomRight"
           >
             <Button 
-              icon={<DeleteOutlined />} 
-              danger
+              type="text"
               size="small"
-            >
-              删除
-            </Button>
-          </Popconfirm>
-          <Button
-            size="small"
-            onClick={() => handleStatusChange(record.commentId, record.status === 1 ? 0 : 1)}
-          >
-            {record.status === 1 ? '隐藏' : '显示'}
-          </Button>
+              icon={<MoreOutlined />}
+              className="action-more-btn"
+            />
+          </Dropdown>
         </Space>
       ),
     },
@@ -458,19 +476,8 @@ const CommentList: React.FC = () => {
     onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
   };
 
-  // 添加一些响应式样式
-  const tableStyle = {
-    overflow: 'auto',
-    maxWidth: '100%'
-  };
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="comment-list-container"
-    >
+    <div className="comment-list-container">
       <div className="mb-6">
         <Title level={2}>评价列表</Title>
         <div className="flex justify-between items-center">
@@ -478,10 +485,10 @@ const CommentList: React.FC = () => {
         </div>
       </div>
       
-      <Card className="mb-4 overflow-hidden">
-        <Form layout="horizontal" className="comment-filter-form">
-          <div className="flex flex-wrap gap-4">
-            <div className="w-full md:w-auto">
+      <Card className="mb-4">
+        <Form layout="horizontal">
+          <div className="flex flex-wrap gap-2 items-end">
+            <div className="flex-1 min-w-[200px]">
               <Search 
                 placeholder="搜索评价内容、商品名称或用户名" 
                 onSearch={handleSearch}
@@ -489,75 +496,69 @@ const CommentList: React.FC = () => {
                 onChange={e => setSearchText(e.target.value)}
                 enterButton
                 allowClear
-                className="min-w-[250px]"
-                style={{ maxWidth: '100%' }}
               />
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Select 
-                placeholder="评分筛选" 
-                style={{ width: 120 }} 
-                onChange={handleRatingFilter}
-                value={filterRating}
-                allowClear
-              >
-                <Option value={5}>五星</Option>
-                <Option value={4}>四星</Option>
-                <Option value={3}>三星</Option>
-                <Option value={2}>二星</Option>
-                <Option value={1}>一星</Option>
-              </Select>
-              
-              <RangePicker 
-                value={dateRange as any}
-                onChange={handleDateRangeChange as any}
-                placeholder={['开始日期', '结束日期']}
-                style={{ maxWidth: '100%' }}
-              />
-              
-              <Button icon={<ReloadOutlined />} onClick={handleReset}>
-                重置
-              </Button>
-            </div>
+            <Select 
+              placeholder="评分筛选" 
+              style={{ width: 100 }} 
+              onChange={handleRatingFilter}
+              value={filterRating}
+              allowClear
+            >
+              <Option value={5}>⭐⭐⭐⭐⭐</Option>
+              <Option value={4}>⭐⭐⭐⭐</Option>
+              <Option value={3}>⭐⭐⭐</Option>
+              <Option value={2}>⭐⭐</Option>
+              <Option value={1}>⭐</Option>
+            </Select>
+            
+            <RangePicker 
+              value={dateRange as any}
+              onChange={handleDateRangeChange as any}
+              placeholder={['开始日期', '结束日期']}
+              style={{ width: 240 }}
+            />
+            
+            <Button icon={<ReloadOutlined />} onClick={handleReset}>
+              重置
+            </Button>
           </div>
         </Form>
       </Card>
 
-      <Card className="overflow-hidden">
-        <div className="mb-4 flex flex-wrap justify-between items-center gap-2">
-          <div>
-            <Space wrap>
-              <Button 
-                danger 
-                disabled={selectedRowKeys.length === 0} 
-                onClick={handleBatchDelete}
-                icon={<DeleteOutlined />}
-              >
-                批量删除
-              </Button>
-            </Space>
-          </div>
-          <div>
-            <Space wrap>
-              <Button 
-                type="primary" 
-                icon={<ExportOutlined />} 
-                onClick={handleExportComments}
-              >
-                导出数据
-              </Button>
-              <Button 
-                icon={<ReloadOutlined />} 
-                onClick={() => fetchComments()}
-              >
-                刷新
-              </Button>
-            </Space>
-          </div>
+      <Card>
+        <div className="mb-3 flex flex-wrap justify-between items-center gap-2">
+          <Space size="small">
+            <Button 
+              danger 
+              disabled={selectedRowKeys.length === 0} 
+              onClick={handleBatchDelete}
+              icon={<DeleteOutlined />}
+              size="small"
+            >
+              批量删除 {selectedRowKeys.length > 0 && `(${selectedRowKeys.length})`}
+            </Button>
+          </Space>
+          <Space size="small">
+            <Button 
+              type="primary" 
+              icon={<ExportOutlined />} 
+              onClick={handleExportComments}
+              size="small"
+            >
+              导出
+            </Button>
+            <Button 
+              icon={<ReloadOutlined />} 
+              onClick={() => fetchComments()}
+              size="small"
+            >
+              刷新
+            </Button>
+          </Space>
         </div>
 
-        <div className="table-responsive" style={tableStyle}>
-          <Table 
+        <Table 
             rowSelection={rowSelection}
             columns={columns as TableProps<Comment>['columns']} 
             dataSource={comments}
@@ -571,10 +572,9 @@ const CommentList: React.FC = () => {
               showTotal: (total) => `共 ${total} 条评价`,
             }}
             onChange={handleTableChange as any}
-            scroll={{ x: 'max-content' }}
-            size="middle"
+            scroll={{ x: 900 }}
+            size="small"
           />
-        </div>
       </Card>
 
       {/* 评价回复模态框 */}
@@ -586,7 +586,7 @@ const CommentList: React.FC = () => {
           onClose={handleCloseReplyModal}
         />
       )}
-    </motion.div>
+    </div>
   );
 };
 
