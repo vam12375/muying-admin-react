@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Table, 
-  Card, 
-  Button, 
-  Input, 
-  Space, 
-  Form, 
-  Modal, 
-  message, 
+import {
+  Table,
+  Card,
+  Button,
+  Input,
+  Space,
+  Form,
+  Modal,
+  message,
   Typography,
   Select,
   DatePicker,
@@ -16,25 +16,26 @@ import {
   Popconfirm,
   Badge
 } from 'antd';
-import { 
-  SearchOutlined, 
-  ReloadOutlined, 
-  DeleteOutlined, 
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  DeleteOutlined,
   EyeOutlined,
-  SendOutlined,
-  PlusOutlined
+  PlusOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import type { ColumnsType } from 'antd/es/table';
-import { AppDispatch, RootState } from '@/store';
-import { 
-  fetchMessageList, 
+import type { AppDispatch, RootState } from '@/store';
+import {
+  fetchMessageList,
   fetchMessageDetail,
   deleteMessage,
   sendMessage,
-  setPagination 
+  setPagination
 } from '@/store/slices/messageSlice';
 import { formatDateTime } from '@/utils/dateUtils';
+import './list.css';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -43,7 +44,7 @@ const { TextArea } = Input;
 
 // 定义消息数据类型
 interface MessageData {
-  id: number;
+  messageId: string;
   title: string;
   content: string;
   type: string;
@@ -57,20 +58,20 @@ interface MessageData {
 const MessageList: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [form] = Form.useForm();
-  
+
   // 从Redux获取状态
   const { messageList, messageDetail, pagination, loading } = useSelector((state: RootState) => state.message);
-  
+
   // 本地状态
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [messageForm] = Form.useForm();
-  
+
   // 初始加载
   useEffect(() => {
     fetchMessages();
   }, [dispatch, pagination.current, pagination.pageSize]);
-  
+
   // 获取消息列表
   const fetchMessages = () => {
     const values = form.getFieldsValue();
@@ -82,67 +83,72 @@ const MessageList: React.FC = () => {
       startTime: values.timeRange && values.timeRange[0] ? values.timeRange[0].format('YYYY-MM-DD HH:mm:ss') : undefined,
       endTime: values.timeRange && values.timeRange[1] ? values.timeRange[1].format('YYYY-MM-DD HH:mm:ss') : undefined
     };
-    
+
     // 移除timeRange字段
     if (params.timeRange) {
       delete params.timeRange;
     }
-    
+
     dispatch(fetchMessageList(params));
   };
-  
+
   // 处理搜索
   const handleSearch = () => {
     dispatch(setPagination({ current: 1 }));
     fetchMessages();
   };
-  
+
   // 重置查询
   const resetQuery = () => {
     form.resetFields();
     dispatch(setPagination({ current: 1 }));
     fetchMessages();
   };
-  
+
   // 处理页码变化
   const handlePageChange = (page: number, pageSize?: number) => {
     dispatch(setPagination({ current: page, pageSize }));
   };
-  
+
   // 处理每页条数变化
-  const handleSizeChange = (current: number, size: number) => {
+  const handleSizeChange = (_current: number, size: number) => {
     dispatch(setPagination({ current: 1, pageSize: size }));
   };
-  
+
   // 查看消息详情
-  const viewMessageDetail = (id: number) => {
-    dispatch(fetchMessageDetail(id));
+  const viewMessageDetail = async (messageId: string) => {
     setDetailModalVisible(true);
-  };
-  
-  // 删除消息
-  const handleDelete = async (id: number) => {
     try {
-      await dispatch(deleteMessage(id));
+      await dispatch(fetchMessageDetail(messageId));
+    } catch (error) {
+      message.error('获取消息详情失败');
+      console.error('获取消息详情失败:', error);
+    }
+  };
+
+  // 删除消息
+  const handleDelete = async (messageId: string) => {
+    try {
+      await dispatch(deleteMessage(messageId));
       message.success('删除成功');
       fetchMessages();
     } catch (error) {
       message.error('删除失败');
     }
   };
-  
+
   // 打开创建消息对话框
   const openCreateModal = () => {
     messageForm.resetFields();
     setCreateModalVisible(true);
   };
-  
+
   // 创建并发送消息
   const handleCreateMessage = async () => {
     try {
       const values = await messageForm.validateFields();
       const hide = message.loading('正在发送...', 0);
-      
+
       try {
         await dispatch(sendMessage(values));
         hide();
@@ -157,7 +163,7 @@ const MessageList: React.FC = () => {
       // 表单验证失败
     }
   };
-  
+
   // 获取消息类型标签
   const getTypeTag = (type: string) => {
     switch (type) {
@@ -173,7 +179,7 @@ const MessageList: React.FC = () => {
         return <Tag>{type}</Tag>;
     }
   };
-  
+
   // 获取消息状态标签
   const getStatusTag = (status: string) => {
     switch (status) {
@@ -189,7 +195,7 @@ const MessageList: React.FC = () => {
         return <Badge status="default" text={status} />;
     }
   };
-  
+
   // 获取接收者类型文本
   const getRecipientTypeText = (type: string) => {
     switch (type) {
@@ -205,121 +211,103 @@ const MessageList: React.FC = () => {
         return type;
     }
   };
-  
+
   // 表格列定义
   const columns: ColumnsType<MessageData> = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 80
-    },
-    {
-      title: '标题',
-      dataIndex: 'title',
-      key: 'title',
-      width: 200,
-      render: (title) => (
-        <Tooltip title={title}>
-          <div style={{ 
-            maxWidth: 200, 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis', 
-            whiteSpace: 'nowrap' 
-          }}>
-            {title}
+      title: '消息信息',
+      key: 'messageInfo',
+      width: 280,
+      fixed: 'left' as const,
+      render: (_, record) => (
+        <div>
+          <Tooltip title={record.title}>
+            <div className="font-medium text-sm mb-1 line-clamp-1">
+              {record.title}
+            </div>
+          </Tooltip>
+          <div className="flex items-center gap-2">
+            {getTypeTag(record.type)}
+            {getStatusTag(record.status)}
           </div>
-        </Tooltip>
+        </div>
       )
     },
     {
-      title: '类型',
-      dataIndex: 'type',
-      key: 'type',
-      width: 120,
-      render: (type) => getTypeTag(type)
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 120,
-      render: (status) => getStatusTag(status)
-    },
-    {
-      title: '接收者类型',
-      dataIndex: 'recipientType',
-      key: 'recipientType',
-      width: 120,
-      render: (type) => getRecipientTypeText(type)
-    },
-    {
       title: '接收者',
-      dataIndex: 'recipient',
-      key: 'recipient',
+      key: 'recipientInfo',
       width: 150,
-      render: (recipient, record) => {
-        if (record.recipientType === 'all') {
-          return '所有用户';
-        }
-        return recipient || '-';
-      }
+      render: (_, record) => (
+        <div>
+          <div className="text-sm mb-1">
+            {record.recipientType === 'all' ? '所有用户' : (record.recipient || '-')}
+          </div>
+          <div className="text-xs text-gray-500">
+            {getRecipientTypeText(record.recipientType)}
+          </div>
+        </div>
+      )
     },
     {
-      title: '创建时间',
-      dataIndex: 'createTime',
-      key: 'createTime',
-      width: 180,
-      render: (time) => formatDateTime(time)
-    },
-    {
-      title: '发送时间',
-      dataIndex: 'sendTime',
-      key: 'sendTime',
-      width: 180,
-      render: (time) => time ? formatDateTime(time) : '-'
+      title: '时间信息',
+      key: 'timeInfo',
+      width: 160,
+      render: (_, record) => (
+        <div className="text-xs">
+          <div className="mb-1">
+            创建: {record.createTime ? formatDateTime(record.createTime).substring(5, 16) : '-'}
+          </div>
+          {record.sendTime && (
+            <div className="text-gray-500">
+              发送: {formatDateTime(record.sendTime).substring(5, 16)}
+            </div>
+          )}
+        </div>
+      )
     },
     {
       title: '操作',
       key: 'action',
-      fixed: 'right',
-      width: 150,
+      fixed: 'right' as const,
+      width: 120,
       render: (_, record) => (
-        <Space size="middle">
-          <Button 
-            type="link" 
-            icon={<EyeOutlined />} 
-            onClick={() => viewMessageDetail(record.id)}
+        <Space size="small">
+          <Button
+            type="link"
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => viewMessageDetail(record.messageId)}
+            className="action-btn"
           >
             详情
           </Button>
           <Popconfirm
             title="确定要删除此消息吗？"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => handleDelete(record.messageId)}
             okText="确定"
             cancelText="取消"
           >
-            <Button 
-              type="link" 
-              danger 
+            <Button
+              type="text"
+              size="small"
+              danger
               icon={<DeleteOutlined />}
-            >
-              删除
-            </Button>
+              className="action-more-btn"
+            />
           </Popconfirm>
         </Space>
       )
     }
   ];
-  
+
   return (
     <div className="message-list-container">
       <Title level={2}>消息管理</Title>
-      
+
       <Card className="filter-container" style={{ marginBottom: 16 }}>
-        <Form 
-          form={form} 
-          layout="inline" 
+        <Form
+          form={form}
+          layout="inline"
           onFinish={handleSearch}
         >
           <Form.Item name="title" label="标题">
@@ -358,22 +346,22 @@ const MessageList: React.FC = () => {
           </Form.Item>
         </Form>
       </Card>
-      
+
       <Card>
         <div style={{ marginBottom: 16 }}>
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />} 
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
             onClick={openCreateModal}
           >
             发送消息
           </Button>
         </div>
-        
+
         <Table<MessageData>
           columns={columns}
           dataSource={messageList}
-          rowKey="id"
+          rowKey="messageId"
           loading={loading}
           pagination={{
             current: pagination.current,
@@ -384,54 +372,103 @@ const MessageList: React.FC = () => {
             onChange: handlePageChange,
             onShowSizeChange: handleSizeChange
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 900 }}
+          size="small"
         />
       </Card>
-      
+
       {/* 消息详情对话框 */}
       <Modal
         title="消息详情"
         open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={[
-          <Button key="close" onClick={() => setDetailModalVisible(false)}>
+          <Button key="close" type="primary" onClick={() => setDetailModalVisible(false)}>
             关闭
           </Button>
         ]}
         width={700}
+        className="message-detail-modal"
       >
-        {messageDetail ? (
-          <div>
-            <div style={{ marginBottom: 16 }}>
-              <Title level={4}>{messageDetail.title}</Title>
-              <p><strong>类型:</strong> {getTypeTag(messageDetail.type)}</p>
-              <p><strong>状态:</strong> {getStatusTag(messageDetail.status)}</p>
-              <p><strong>接收者类型:</strong> {getRecipientTypeText(messageDetail.recipientType)}</p>
-              <p><strong>接收者:</strong> {messageDetail.recipientType === 'all' ? '所有用户' : messageDetail.recipient || '-'}</p>
-              <p><strong>创建时间:</strong> {formatDateTime(messageDetail.createTime)}</p>
-              <p><strong>发送时间:</strong> {messageDetail.sendTime ? formatDateTime(messageDetail.sendTime) : '-'}</p>
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Space direction="vertical" size="middle">
+              <div className="loading-spinner" />
+              <span>加载中...</span>
+            </Space>
+          </div>
+        ) : messageDetail ? (
+          <div className="message-detail-content">
+            {/* 消息标题 */}
+            <div className="detail-section">
+              <Title level={4} style={{ marginBottom: 16 }}>
+                {messageDetail.title}
+              </Title>
             </div>
-            
-            <div>
-              <p><strong>消息内容:</strong></p>
-              <div 
-                style={{ 
-                  border: '1px solid #d9d9d9', 
-                  padding: 16, 
-                  borderRadius: 4,
-                  background: '#f5f5f5',
-                  minHeight: 100
-                }}
-              >
-                {messageDetail.content}
-              </div>
+
+            {/* 消息信息 */}
+            <div className="detail-section">
+              <Card size="small" title="消息信息" style={{ marginBottom: 16 }}>
+                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                  <div className="detail-item">
+                    <span className="detail-label">消息类型：</span>
+                    {getTypeTag(messageDetail.type)}
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">消息状态：</span>
+                    {getStatusTag(messageDetail.status)}
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">接收者类型：</span>
+                    <span className="detail-value">{getRecipientTypeText(messageDetail.recipientType)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">接收者：</span>
+                    <span className="detail-value">
+                      {messageDetail.recipientType === 'all' ? '所有用户' : messageDetail.recipient || '-'}
+                    </span>
+                  </div>
+                </Space>
+              </Card>
+            </div>
+
+            {/* 时间信息 */}
+            <div className="detail-section">
+              <Card size="small" title="时间信息" style={{ marginBottom: 16 }}>
+                <Space direction="vertical" size="small" style={{ width: '100%' }}>
+                  <div className="detail-item">
+                    <span className="detail-label">创建时间：</span>
+                    <span className="detail-value">{formatDateTime(messageDetail.createTime)}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">发送时间：</span>
+                    <span className="detail-value">
+                      {messageDetail.sendTime ? formatDateTime(messageDetail.sendTime) : '未发送'}
+                    </span>
+                  </div>
+                </Space>
+              </Card>
+            </div>
+
+            {/* 消息内容 */}
+            <div className="detail-section">
+              <Card size="small" title="消息内容">
+                <div className="message-content">
+                  {messageDetail.content || '暂无内容'}
+                </div>
+              </Card>
             </div>
           </div>
         ) : (
-          <div style={{ textAlign: 'center' }}>加载中...</div>
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <Space direction="vertical" size="middle">
+              <ExclamationCircleOutlined style={{ fontSize: 48, color: '#faad14' }} />
+              <span>暂无数据</span>
+            </Space>
+          </div>
         )}
       </Modal>
-      
+
       {/* 创建消息对话框 */}
       <Modal
         title="发送消息"
@@ -454,7 +491,7 @@ const MessageList: React.FC = () => {
           >
             <Input placeholder="请输入消息标题" />
           </Form.Item>
-          
+
           <Form.Item
             name="type"
             label="消息类型"
@@ -467,13 +504,13 @@ const MessageList: React.FC = () => {
               <Option value="notification">通知</Option>
             </Select>
           </Form.Item>
-          
+
           <Form.Item
             name="recipientType"
             label="接收者类型"
             rules={[{ required: true, message: '请选择接收者类型' }]}
           >
-            <Select 
+            <Select
               placeholder="请选择接收者类型"
               onChange={(value) => {
                 // 如果选择所有用户，清空接收者字段
@@ -488,7 +525,7 @@ const MessageList: React.FC = () => {
               <Option value="group">用户组</Option>
             </Select>
           </Form.Item>
-          
+
           <Form.Item
             noStyle
             dependencies={['recipientType']}
@@ -506,7 +543,7 @@ const MessageList: React.FC = () => {
               ) : null;
             }}
           </Form.Item>
-          
+
           <Form.Item
             name="content"
             label="消息内容"
@@ -517,13 +554,13 @@ const MessageList: React.FC = () => {
           >
             <TextArea rows={6} placeholder="请输入消息内容" />
           </Form.Item>
-          
+
           <Form.Item
             name="sendNow"
             valuePropName="checked"
             initialValue={true}
           >
-            <Select 
+            <Select
               placeholder="发送选项"
               defaultValue="now"
             >
@@ -532,7 +569,7 @@ const MessageList: React.FC = () => {
               <Option value="draft">保存为草稿</Option>
             </Select>
           </Form.Item>
-          
+
           <Form.Item
             noStyle
             dependencies={['sendNow']}
