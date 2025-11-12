@@ -317,7 +317,8 @@ const BrandManage: React.FC = () => {
           }}
           onChange={handleTableChange}
           bordered
-          scroll={{ x: 1100 }}
+          scroll={{ x: 900 }}
+          size="small"
         />
       </Card>
       

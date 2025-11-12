@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Card, Button, Input, Space, Tag, Image, Typography, Select, Form, message, Popconfirm, Modal, InputNumber, Upload } from 'antd'
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, UploadOutlined } from '@ant-design/icons'
+import { Table, Card, Button, Input, Space, Tag, Image, Typography, Select, Form, message, Modal, Dropdown } from 'antd'
+import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, MoreOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { productApi } from '../../api/product'
-import type { ProductData, PageResult } from '../../api/product'
+import type { ProductData } from '../../api/product'
 import { brandApi } from '../../api/product'
 import { categoryApi } from '../../api/product'
 import type { BrandData, CategoryData } from '../../api/product'
 import ProductDetailModal from '../../components/ProductDetailModal'
 import ProductEditModal from '../../components/ProductEditModal'
+import './ProductList.css'
 
 const { Title } = Typography
 const { Option } = Select
-const { TextArea } = Input
 
 // 安全的 toString 转换函数
 const safeToString = (value: any): string => {
@@ -272,43 +272,44 @@ const ProductList: React.FC = () => {
       title: 'ID',
       dataIndex: 'productId',
       key: 'productId',
-      width: 60
+      width: 60,
+      fixed: 'left' as const
     },
     {
-      title: '图片',
-      dataIndex: 'productImg',
-      key: 'image',
-      width: 100,
-      render: (image, record) => {
-        // 构建完整的图片URL
-        const imageUrl = image 
-          ? (image.startsWith('http') ? image : `http://localhost:5173/products/${image}`)
-          : 'https://via.placeholder.com/60?text=No+Image';
+      title: '商品信息',
+      key: 'productInfo',
+      width: 280,
+      fixed: 'left' as const,
+      render: (_, record) => {
+        const imageUrl = record.productImg 
+          ? (record.productImg.startsWith('http') ? record.productImg : `http://localhost:5173/products/${record.productImg}`)
+          : 'https://via.placeholder.com/50?text=No+Image';
           
         return (
-          <div className="dark:p-1 dark:bg-gray-700/30 dark:rounded-md">
+          <div className="flex items-start gap-2">
             <Image
               src={imageUrl}
               alt="商品图片"
-              width={60}
-              height={60}
+              width={50}
+              height={50}
               style={{ objectFit: 'cover' }}
-              fallback="https://via.placeholder.com/60?text=No+Image"
-              className="rounded-md dark:border dark:border-gray-600"
+              fallback="https://via.placeholder.com/50?text=No+Image"
+              className="rounded flex-shrink-0"
               preview={{
-                mask: <div className="dark:text-white">预览</div>
+                mask: <div>预览</div>
               }}
             />
+            <div className="flex-1 min-w-0">
+              <div className="font-medium text-sm line-clamp-2 mb-1">{record.productName}</div>
+              <div className="flex items-center gap-2 text-xs text-gray-500">
+                <span>{record.categoryName || '-'}</span>
+                <span>|</span>
+                <span>{record.brandName || '-'}</span>
+              </div>
+            </div>
           </div>
         );
       }
-    },
-    {
-      title: '商品名称',
-      dataIndex: 'productName',
-      key: 'name',
-      ellipsis: true,
-      width: 200
     },
     {
       title: '价格',
@@ -316,97 +317,109 @@ const ProductList: React.FC = () => {
       key: 'price',
       width: 100,
       render: (price, record) => (
-        <>
-          <div>¥{price !== undefined && price !== null ? price.toFixed(2) : '0.00'}</div>
-          {record.priceOld && (
-            <div style={{ textDecoration: 'line-through', color: '#999' }}>
+        <div>
+          <div className="text-red-500 font-medium">¥{price !== undefined && price !== null ? price.toFixed(2) : '0.00'}</div>
+          {record.priceOld && record.priceOld > price && (
+            <div className="text-xs text-gray-400 line-through">
               ¥{typeof record.priceOld === 'number' ? record.priceOld.toFixed(2) : '0.00'}
             </div>
           )}
-        </>
+        </div>
       )
-    },
-    {
-      title: '分类',
-      dataIndex: 'categoryName',
-      key: 'categoryName',
-      width: 100
-    },
-    {
-      title: '品牌',
-      dataIndex: 'brandName',
-      key: 'brandName',
-      width: 100
     },
     {
       title: '库存',
       dataIndex: 'stock',
       key: 'stock',
-      width: 80
+      width: 80,
+      render: (stock) => (
+        <Tag color={stock > 10 ? 'green' : stock > 0 ? 'orange' : 'red'}>
+          {stock}
+        </Tag>
+      )
     },
     {
       title: '状态',
       dataIndex: 'productStatus',
       key: 'status',
       width: 80,
-      render: (status) => {
-        // 根据状态文本显示不同颜色的标签
-        return (
-          <Tag color={status === '上架' ? 'green' : 'red'}>
-            {status}
-          </Tag>
-        );
-      }
+      render: (status) => (
+        <Tag color={status === '上架' ? 'green' : 'default'}>
+          {status}
+        </Tag>
+      )
     },
     {
       title: '创建时间',
       dataIndex: 'createTime',
       key: 'createTime',
-      width: 120,
-      render: (time) => time ? time.substring(0, 10) : ''
+      width: 100,
+      render: (time) => time ? time.substring(0, 10) : '-'
     },
     {
       title: '操作',
       key: 'action',
-      width: 240,
+      width: 160,
+      fixed: 'right' as const,
       render: (_, record) => (
-        <Space size="small" wrap>
+        <Space size="small">
           <Button 
+            type="link"
             size="small" 
             icon={<EyeOutlined />}
             onClick={() => handleView(record.productId)}
+            className="action-btn"
           >
             查看
           </Button>
           <Button 
-            type="primary" 
+            type="link"
             size="small" 
             icon={<EditOutlined />}
             onClick={() => handleEdit(record.productId)}
+            className="action-btn"
           >
             编辑
           </Button>
-          <Popconfirm
-            title="确定要删除该商品吗？"
-            onConfirm={() => handleDelete(record.productId)}
-            okText="确定"
-            cancelText="取消"
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'status',
+                  icon: record.productStatus === '上架' ? <EyeOutlined /> : <CheckCircleOutlined />,
+                  label: record.productStatus === '上架' ? '下架' : '上架',
+                  onClick: () => handleStatusChange(record.productId, record.productStatus === '上架' ? 1 : 0)
+                },
+                {
+                  type: 'divider' as const
+                },
+                {
+                  key: 'delete',
+                  icon: <DeleteOutlined />,
+                  label: '删除',
+                  danger: true,
+                  onClick: () => {
+                    Modal.confirm({
+                      title: '确定要删除该商品吗？',
+                      icon: <DeleteOutlined />,
+                      okText: '确定',
+                      cancelText: '取消',
+                      onOk: () => handleDelete(record.productId)
+                    });
+                  }
+                }
+              ]
+            }}
+            trigger={['click']}
+            placement="bottomRight"
           >
             <Button 
-              danger 
+              type="text" 
               size="small" 
-              icon={<DeleteOutlined />}
-            >
-              删除
-            </Button>
-          </Popconfirm>
-          <Button
-            type={record.productStatus === '上架' ? 'default' : 'primary'}
-            size="small"
-            onClick={() => handleStatusChange(record.productId, record.productStatus === '上架' ? 1 : 0)}
-          >
-            {record.productStatus === '上架' ? '下架' : '上架'}
-          </Button>
+              icon={<MoreOutlined />}
+              className="action-more-btn"
+            />
+          </Dropdown>
         </Space>
       )
     }
@@ -433,62 +446,52 @@ const ProductList: React.FC = () => {
     <div className="product-list-container">
       <Title level={2}>商品管理</Title>
       
-      <Card>
-        <Form
-          form={form}
-          layout="inline"
-          style={{ marginBottom: 16 }}
-        >
-          <Form.Item name="keyword">
-            <Input
-              placeholder="搜索商品名称/品牌"
-              style={{ width: 200 }}
-              allowClear
-            />
-          </Form.Item>
-          
-          <Form.Item name="categoryId">
-            <Select
-              placeholder="选择分类"
-              style={{ width: 150 }}
-              allowClear
-            >
-              {(categories || []).map(category => (
-                category && category.categoryId ? (
-                  <Option key={category.categoryId} value={safeToString(category.categoryId)}>
-                    {category.name || '未命名分类'}
-                  </Option>
-                ) : null
-              ))}
-            </Select>
-          </Form.Item>
-          
-          <Form.Item name="status">
-            <Select
-              placeholder="选择状态"
-              style={{ width: 150 }}
-              allowClear
-            >
-              <Option value="1">在售</Option>
-              <Option value="0">下架</Option>
-            </Select>
-          </Form.Item>
-          
-          <Form.Item>
-            <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
-              搜索
-            </Button>
-          </Form.Item>
-          
-          <Form.Item>
-            <Button onClick={handleReset}>重置</Button>
-          </Form.Item>
-          
-          <Form.Item>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              添加商品
-            </Button>
-          </Form.Item>
+      <Card className="mb-4">
+        <Form form={form}>
+          <div className="flex flex-wrap gap-2 items-end">
+            <Form.Item name="keyword" className="mb-0 flex-1 min-w-[200px]">
+              <Input
+                placeholder="搜索商品名称/品牌"
+                allowClear
+                prefix={<SearchOutlined />}
+              />
+            </Form.Item>
+            
+            <Form.Item name="categoryId" className="mb-0 w-[140px]">
+              <Select
+                placeholder="选择分类"
+                allowClear
+              >
+                {(categories || []).map(category => (
+                  category && category.categoryId ? (
+                    <Option key={category.categoryId} value={safeToString(category.categoryId)}>
+                      {category.name || '未命名分类'}
+                    </Option>
+                  ) : null
+                ))}
+              </Select>
+            </Form.Item>
+            
+            <Form.Item name="status" className="mb-0 w-[120px]">
+              <Select
+                placeholder="选择状态"
+                allowClear
+              >
+                <Option value="1">在售</Option>
+                <Option value="0">下架</Option>
+              </Select>
+            </Form.Item>
+            
+            <Space>
+              <Button type="primary" icon={<SearchOutlined />} onClick={handleSearch}>
+                搜索
+              </Button>
+              <Button onClick={handleReset}>重置</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                添加商品
+              </Button>
+            </Space>
+          </div>
         </Form>
         
         <Table<ProductData>
@@ -502,8 +505,8 @@ const ProductList: React.FC = () => {
             showTotal: (total) => `共 ${total} 条记录`
           }}
           onChange={handleTableChange}
-          scroll={{ x: 1300 }}
-          bordered
+          scroll={{ x: 900 }}
+          size="small"
         />
       </Card>
       
