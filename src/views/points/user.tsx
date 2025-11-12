@@ -50,20 +50,32 @@ const { RangePicker } = DatePicker;
 
 // 定义用户积分数据类型
 interface UserPointsData {
+  id?: number;
   userId: number;
   username: string;
   totalPoints: number;
+  points?: number;  // 总积分（兼容后端字段）
   availablePoints: number;
   usedPoints: number;
+  totalEarned?: number; // 已获得积分总数
+  totalUsed?: number; // 已使用积分总数
   expiredPoints: number;
+  expiringSoonPoints?: number; // 即将过期积分
   lastUpdateTime: string;
+  updateTime?: string;  // 兼容后端字段
   nextExpirePoints?: number;
   nextExpireDate?: string;
   registerDate?: string;
-  level?: number;
+  level?: number | string;
   levelName?: string;
   levelPoints?: number;
   nextLevelPoints?: number;
+  user?: {
+    userId: number;
+    username: string;
+    nickname?: string;
+    avatar?: string;
+  };
 }
 
 // 定义用户积分历史记录类型
@@ -84,9 +96,15 @@ const UserPointsManage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [form] = Form.useForm();
   const [adjustForm] = Form.useForm();
-  
+
   // 从Redux获取状态
   const { userPointsList, historyList, pagination, loading } = useSelector((state: RootState) => state.points);
+
+  // 格式化数字,添加千位分隔符
+  const formatNumber = (num: number | undefined | null): string => {
+    if (num === undefined || num === null) return '0';
+    return num.toLocaleString('zh-CN');
+  };
   
   // 本地状态
   const [adjustModalVisible, setAdjustModalVisible] = useState(false);
@@ -259,7 +277,9 @@ const UserPointsManage: React.FC = () => {
       title: '用户ID',
       dataIndex: 'userId',
       key: 'userId',
-      width: 80
+      width: 80,
+      sorter: (a, b) => a.userId - b.userId,
+      defaultSortOrder: 'ascend'
     },
     {
       title: '用户名',
@@ -269,8 +289,8 @@ const UserPointsManage: React.FC = () => {
       render: (text, record) => (
         <Space>
           <UserOutlined />
-          {text}
-          {record.level && getLevelTag(record.level)}
+          {record.user?.username || text}
+          {record.level && getLevelTag(typeof record.level === 'string' ? parseInt(record.level) : record.level)}
         </Space>
       )
     },
@@ -278,45 +298,76 @@ const UserPointsManage: React.FC = () => {
       title: '总积分',
       dataIndex: 'totalPoints',
       key: 'totalPoints',
-      width: 100
+      width: 100,
+      sorter: (a, b) => (a.totalPoints || a.points || 0) - (b.totalPoints || b.points || 0),
+      render: (totalPoints, record) => formatNumber(totalPoints || record.points || 0)
     },
     {
       title: '可用积分',
       dataIndex: 'availablePoints',
       key: 'availablePoints',
       width: 100,
-      render: (points) => <span className="font-bold">{points}</span>
+      sorter: (a, b) => (a.availablePoints || 0) - (b.availablePoints || 0),
+      render: (points) => <span className="font-bold" style={{ color: '#52c41a' }}>{formatNumber(points || 0)}</span>
     },
     {
-      title: '已使用积分',
-      dataIndex: 'usedPoints',
-      key: 'usedPoints',
-      width: 100
+      title: '已获得',
+      dataIndex: 'totalEarned',
+      key: 'totalEarned',
+      width: 100,
+      sorter: (a, b) => (a.totalEarned || 0) - (b.totalEarned || 0),
+      render: (points) => <span style={{ color: '#52c41a' }}>+{formatNumber(points || 0)}</span>
     },
     {
-      title: '已过期积分',
+      title: '已使用',
+      dataIndex: 'totalUsed',
+      key: 'totalUsed',
+      width: 100,
+      sorter: (a, b) => (a.totalUsed || a.usedPoints || 0) - (b.totalUsed || b.usedPoints || 0),
+      render: (totalUsed, record) => <span style={{ color: '#ff4d4f' }}>-{formatNumber(totalUsed || record.usedPoints || 0)}</span>
+    },
+    {
+      title: '已过期',
       dataIndex: 'expiredPoints',
       key: 'expiredPoints',
-      width: 100
+      width: 100,
+      sorter: (a, b) => (a.expiredPoints || 0) - (b.expiredPoints || 0),
+      render: (points) => <span style={{ color: '#999' }}>{formatNumber(points || 0)}</span>
     },
     {
       title: '即将过期',
       key: 'expiring',
       width: 120,
-      render: (_, record) => (
-        record.nextExpirePoints && record.nextExpireDate ? (
-          <Tooltip title={`将于 ${record.nextExpireDate} 过期`}>
-            <Badge color="orange" text={`${record.nextExpirePoints}积分`} />
-          </Tooltip>
-        ) : '-'
-      )
+      sorter: (a, b) => {
+        const aPoints = a.expiringSoonPoints || a.nextExpirePoints || 0;
+        const bPoints = b.expiringSoonPoints || b.nextExpirePoints || 0;
+        return aPoints - bPoints;
+      },
+      render: (_, record) => {
+        const expiringPoints = record.expiringSoonPoints || record.nextExpirePoints || 0;
+        const expireDate = record.nextExpireDate;
+
+        if (expiringPoints > 0 && expireDate) {
+          return (
+            <Tooltip title={`将于 ${expireDate} 过期`}>
+              <Badge color="orange" text={`${formatNumber(expiringPoints)}积分`} />
+            </Tooltip>
+          );
+        }
+        return <span style={{ color: '#999' }}>{formatNumber(expiringPoints)}</span>;
+      }
     },
     {
       title: '最后更新时间',
       dataIndex: 'lastUpdateTime',
       key: 'lastUpdateTime',
       width: 180,
-      render: (time) => formatDateTime(time)
+      sorter: (a, b) => {
+        const timeA = new Date(a.lastUpdateTime || a.updateTime || 0).getTime();
+        const timeB = new Date(b.lastUpdateTime || b.updateTime || 0).getTime();
+        return timeA - timeB;
+      },
+      render: (time, record) => formatDateTime(time || record.updateTime)
     },
     {
       title: '操作',
@@ -325,15 +376,15 @@ const UserPointsManage: React.FC = () => {
       width: 180,
       render: (_, record) => (
         <Space>
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             icon={<EditOutlined />}
             onClick={() => openAdjustModal(record)}
           >
             调整积分
           </Button>
-          <Button 
-            type="link" 
+          <Button
+            type="link"
             icon={<HistoryOutlined />}
             onClick={() => openHistoryDrawer(record)}
           >
@@ -361,7 +412,7 @@ const UserPointsManage: React.FC = () => {
         const isIncrease = points > 0;
         return (
           <span style={{ color: isIncrease ? '#52c41a' : '#f5222d' }}>
-            {isIncrease ? '+' : ''}{points}
+            {isIncrease ? '+' : ''}{formatNumber(Math.abs(points))}
           </span>
         );
       }
@@ -468,7 +519,8 @@ const UserPointsManage: React.FC = () => {
             onChange: handlePageChange,
             onShowSizeChange: handleSizeChange
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 900 }}
+          size="small"
         />
       </Card>
       
@@ -496,7 +548,7 @@ const UserPointsManage: React.FC = () => {
               </Descriptions.Item>
               <Descriptions.Item label="当前积分" span={2}>
                 <span className="text-xl font-bold">
-                  {userPointsDetail?.availablePoints || 0}
+                  {formatNumber(userPointsDetail?.availablePoints || 0)}
                 </span>
               </Descriptions.Item>
               {userPointsDetail?.level && (
@@ -588,8 +640,8 @@ const UserPointsManage: React.FC = () => {
               <Descriptions bordered column={2} size="small">
                 <Descriptions.Item label="用户ID">{currentUser.userId}</Descriptions.Item>
                 <Descriptions.Item label="用户名">{currentUser.username}</Descriptions.Item>
-                <Descriptions.Item label="可用积分">{currentUser.availablePoints}</Descriptions.Item>
-                <Descriptions.Item label="总积分">{currentUser.totalPoints}</Descriptions.Item>
+                <Descriptions.Item label="可用积分">{formatNumber(currentUser.availablePoints)}</Descriptions.Item>
+                <Descriptions.Item label="总积分">{formatNumber(currentUser.totalPoints)}</Descriptions.Item>
               </Descriptions>
             </div>
             

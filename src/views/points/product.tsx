@@ -670,7 +670,8 @@ const PointsProduct: React.FC = () => {
             onChange: handlePageChange,
             onShowSizeChange: handleSizeChange
           }}
-          scroll={{ x: 1500 }}
+          scroll={{ x: 900 }}
+          size="small"
         />
       </Card>
       

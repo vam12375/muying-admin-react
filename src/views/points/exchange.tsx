@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Table, 
-  Card, 
-  Button, 
-  Input, 
-  Space, 
-  Form, 
-  Select, 
-  DatePicker, 
+import {
+  Table,
+  Card,
+  Button,
+  Input,
+  Space,
+  Form,
+  Select,
+  DatePicker,
   Typography,
   Tag,
   Modal,
@@ -17,23 +17,29 @@ import {
   Steps,
   Divider,
   Alert,
-  Badge
+  Badge,
+  Row,
+  Col,
+  Statistic
 } from 'antd';
-import { 
-  SearchOutlined, 
-  ReloadOutlined, 
-  EyeOutlined, 
+import {
+  SearchOutlined,
+  ReloadOutlined,
+  EyeOutlined,
   SendOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  SyncOutlined
+  SyncOutlined,
+  ShoppingOutlined,
+  FireOutlined
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import type { ColumnsType } from 'antd/es/table';
 import { AppDispatch, RootState } from '@/store';
-import { 
-  fetchPointsExchangeList, 
-  setPagination 
+import {
+  fetchPointsExchangeList,
+  fetchExchangeStats,
+  setPagination
 } from '@/store/slices/pointsSlice';
 import { updateExchangeStatus } from '@/api/points';
 import { formatDateTime } from '@/utils/dateUtils';
@@ -67,10 +73,16 @@ interface PointsExchangeData {
 const PointsExchange: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const [form] = Form.useForm();
-  
+
   // 从Redux获取状态
-  const { exchangeList, pagination, loading } = useSelector((state: RootState) => state.points);
-  
+  const { exchangeList, exchangeStatsData, pagination, loading } = useSelector((state: RootState) => state.points);
+
+  // 格式化数字,添加千位分隔符
+  const formatNumber = (num: number | undefined | null): string => {
+    if (num === undefined || num === null) return '0';
+    return num.toLocaleString('zh-CN');
+  };
+
   // 本地状态
   const [detailVisible, setDetailVisible] = useState<boolean>(false);
   const [currentExchange, setCurrentExchange] = useState<PointsExchangeData | null>(null);
@@ -78,10 +90,12 @@ const PointsExchange: React.FC = () => {
   const [shipModalVisible, setShipModalVisible] = useState<boolean>(false);
   const [statusForm] = Form.useForm();
   const [shipForm] = Form.useForm();
-  
+
   // 初始加载
   useEffect(() => {
     fetchExchangeList();
+    // 加载统计数据
+    dispatch(fetchExchangeStats({}));
   }, [dispatch, pagination.current, pagination.pageSize]);
   
   // 获取积分兑换记录列表
@@ -301,13 +315,16 @@ const PointsExchange: React.FC = () => {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
-      width: 80
+      width: 80,
+      sorter: (a, b) => a.id - b.id,
+      defaultSortOrder: 'descend'
     },
     {
       title: '用户ID',
       dataIndex: 'userId',
       key: 'userId',
-      width: 100
+      width: 100,
+      sorter: (a, b) => a.userId - b.userId
     },
     {
       title: '用户名',
@@ -325,13 +342,16 @@ const PointsExchange: React.FC = () => {
       title: '积分',
       dataIndex: 'points',
       key: 'points',
-      width: 100
+      width: 100,
+      sorter: (a, b) => a.points - b.points,
+      render: (points) => formatNumber(points)
     },
     {
       title: '数量',
       dataIndex: 'quantity',
       key: 'quantity',
-      width: 80
+      width: 80,
+      sorter: (a, b) => a.quantity - b.quantity
     },
     {
       title: '状态',
@@ -345,6 +365,11 @@ const PointsExchange: React.FC = () => {
       dataIndex: 'createTime',
       key: 'createTime',
       width: 180,
+      sorter: (a, b) => {
+        const timeA = new Date(a.createTime).getTime();
+        const timeB = new Date(b.createTime).getTime();
+        return timeA - timeB;
+      },
       render: (time) => formatDateTime(time)
     },
     {
@@ -415,13 +440,61 @@ const PointsExchange: React.FC = () => {
   return (
     <div className="points-exchange-container">
       <Title level={2}>积分兑换记录</Title>
-      
+
+      {/* 统计面板 */}
+      {exchangeStatsData && (
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="总兑换次数"
+                value={exchangeStatsData.totalCount || 0}
+                prefix={<ShoppingOutlined />}
+                valueStyle={{ color: '#3f8600' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="总消耗积分"
+                value={formatNumber(exchangeStatsData.totalPoints || 0)}
+                prefix={<FireOutlined />}
+                valueStyle={{ color: '#cf1322' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="待处理订单"
+                value={exchangeStatsData.pendingCount || 0}
+                valueStyle={{ color: '#faad14' }}
+              />
+            </Card>
+          </Col>
+          <Col span={6}>
+            <Card>
+              <Statistic
+                title="今日兑换次数"
+                value={exchangeStatsData.todayCount || 0}
+                suffix={`/ ${formatNumber(exchangeStatsData.todayPoints || 0)}积分`}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
+        </Row>
+      )}
+
       <Card className="filter-container" style={{ marginBottom: 16 }}>
-        <Form 
-          form={form} 
-          layout="inline" 
+        <Form
+          form={form}
+          layout="inline"
           onFinish={handleSearch}
         >
+          <Form.Item name="orderNo" label="订单号">
+            <Input placeholder="订单号" allowClear style={{ width: 180 }} />
+          </Form.Item>
           <Form.Item name="userId" label="用户ID">
             <Input placeholder="用户ID" allowClear />
           </Form.Item>
@@ -471,7 +544,8 @@ const PointsExchange: React.FC = () => {
             onChange: handlePageChange,
             onShowSizeChange: handleSizeChange
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 900 }}
+          size="small"
         />
       </Card>
       
@@ -512,12 +586,12 @@ const PointsExchange: React.FC = () => {
               <Descriptions.Item label="商品ID">{currentExchange.productId}</Descriptions.Item>
               <Descriptions.Item label="商品名称">{currentExchange.productName}</Descriptions.Item>
               <Descriptions.Item label="所需积分">
-                <Badge count={currentExchange.points} style={{ backgroundColor: '#52c41a' }} />
+                <Badge count={formatNumber(currentExchange.points)} style={{ backgroundColor: '#52c41a' }} />
               </Descriptions.Item>
               <Descriptions.Item label="兑换数量">{currentExchange.quantity}</Descriptions.Item>
               <Descriptions.Item label="总积分">
                 <span style={{ fontSize: 16, fontWeight: 'bold', color: '#f5222d' }}>
-                  {currentExchange.points * currentExchange.quantity}
+                  {formatNumber(currentExchange.points * currentExchange.quantity)}
                 </span>
               </Descriptions.Item>
             </Descriptions>
@@ -649,7 +723,7 @@ const PointsExchange: React.FC = () => {
               <Descriptions.Item label="用户名">{currentExchange.username}</Descriptions.Item>
               <Descriptions.Item label="商品名称" span={2}>{currentExchange.productName}</Descriptions.Item>
               <Descriptions.Item label="兑换数量">{currentExchange.quantity}</Descriptions.Item>
-              <Descriptions.Item label="所需积分">{currentExchange.points * currentExchange.quantity}</Descriptions.Item>
+              <Descriptions.Item label="所需积分">{formatNumber(currentExchange.points * currentExchange.quantity)}</Descriptions.Item>
               <Descriptions.Item label="收货地址" span={2}>{currentExchange.address}</Descriptions.Item>
               <Descriptions.Item label="联系人">{currentExchange.contact}</Descriptions.Item>
               <Descriptions.Item label="联系电话">{currentExchange.phone}</Descriptions.Item>

@@ -559,7 +559,8 @@ const PointsRule: React.FC = () => {
             showSizeChanger: true,
             showTotal: (total) => `共 ${total} 条记录`
           }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 900 }}
+          size="small"
         />
       </Card>
       
