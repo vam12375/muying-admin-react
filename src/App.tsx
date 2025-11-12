@@ -12,6 +12,7 @@ import { useDispatch } from 'react-redux'
 import { setCredentials } from './store/slices/userSlice'
 import axios from 'axios'
 import './App.css'
+import './styles/common-table.css'
 
 // 懒加载路由组件
 const Router = lazy(() => import('./router'))
