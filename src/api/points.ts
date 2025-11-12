@@ -5,6 +5,30 @@ import request from '@/utils/request';
  */
 
 /**
+ * 用户积分数据类型定义
+ */
+export interface UserPointsData {
+  id: number;
+  userId: number;
+  points: number;
+  level: string;
+  createTime: string;
+  updateTime: string;
+  user?: {
+    userId: number;
+    username: string;
+    nickname?: string;
+    avatar?: string;
+  };
+  // 统计字段
+  totalEarned?: number;        // 已获得积分总数
+  totalUsed?: number;           // 已使用积分总数
+  availablePoints?: number;     // 可用积分
+  expiredPoints?: number;       // 已过期积分
+  expiringSoonPoints?: number;  // 即将过期积分
+}
+
+/**
  * 获取积分历史列表
  * @param params 查询参数
  */
@@ -246,4 +270,37 @@ export const getPointsStats = (params: any) => {
     method: 'get',
     params
   });
-}; 
+};
+
+/**
+ * 获取积分兑换统计数据
+ * @param params 查询参数（startDate, endDate）
+ */
+export const getExchangeStats = (params?: any) => {
+  return request({
+    url: '/admin/points/exchange/stats',
+    method: 'get',
+    params
+  });
+};
+
+/**
+ * 积分兑换统计数据类型定义
+ */
+export interface ExchangeStatsData {
+  totalCount: number;           // 总兑换次数
+  totalPoints: number;          // 总消耗积分
+  pendingCount: number;         // 待处理订单数
+  processingCount: number;      // 处理中订单数
+  shippedCount: number;         // 已发货订单数
+  completedCount: number;       // 已完成订单数
+  cancelledCount: number;       // 已取消订单数
+  todayCount: number;           // 今日兑换次数
+  todayPoints: number;          // 今日消耗积分
+  topProducts: Array<{          // 热门商品Top5
+    productId: number;
+    productName: string;
+    count: number;
+    points: number;
+  }>;
+} 

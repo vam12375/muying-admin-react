@@ -1,13 +1,14 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { 
-  getPointsHistoryList, 
-  getUserPointsList, 
-  getPointsRuleList, 
+import {
+  getPointsHistoryList,
+  getUserPointsList,
+  getPointsRuleList,
   getPointsProductList,
   getPointsProductDetail,
   getPointsOperationLogs,
   getPointsExchangeList,
-  getPointsStats
+  getPointsStats,
+  getExchangeStats
 } from '@/api/points';
 
 // 定义积分状态类型
@@ -20,6 +21,7 @@ interface PointsState {
   exchangeList: any[];
   productDetail: any | null;
   statsData: any | null;
+  exchangeStatsData: any | null;
   pagination: {
     current: number;
     pageSize: number;
@@ -39,6 +41,7 @@ const initialState: PointsState = {
   exchangeList: [],
   productDetail: null,
   statsData: null,
+  exchangeStatsData: null,
   pagination: {
     current: 1,
     pageSize: 10,
@@ -152,6 +155,19 @@ export const fetchPointsStats = createAsyncThunk(
   }
 );
 
+// 异步Action: 获取积分兑换统计数据
+export const fetchExchangeStats = createAsyncThunk(
+  'points/fetchExchangeStats',
+  async (params: any = {}, { rejectWithValue }) => {
+    try {
+      const response = await getExchangeStats(params);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to fetch exchange stats');
+    }
+  }
+);
+
 // 创建Slice
 const pointsSlice = createSlice({
   name: 'points',
@@ -168,6 +184,10 @@ const pointsSlice = createSlice({
     // 清除积分统计数据
     clearPointsStats: (state) => {
       state.statsData = null;
+    },
+    // 清除兑换统计数据
+    clearExchangeStats: (state) => {
+      state.exchangeStatsData = null;
     }
   },
   extraReducers: (builder) => {
@@ -287,11 +307,25 @@ const pointsSlice = createSlice({
       state.loading = false;
       state.error = action.payload as string;
     });
+
+    // 处理获取兑换统计数据
+    builder.addCase(fetchExchangeStats.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchExchangeStats.fulfilled, (state, action) => {
+      state.loading = false;
+      state.exchangeStatsData = action.payload.data;
+    });
+    builder.addCase(fetchExchangeStats.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload as string;
+    });
   }
 });
 
 // 导出Actions
-export const { setPagination, clearPointsProductDetail, clearPointsStats } = pointsSlice.actions;
+export const { setPagination, clearPointsProductDetail, clearPointsStats, clearExchangeStats } = pointsSlice.actions;
 
 // 导出Reducer
 export default pointsSlice.reducer; 
