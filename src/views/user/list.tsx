@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Table, Card, Button, Input, Space, Tag, Modal, message, Typography, Form, Select, Tooltip, InputNumber } from 'antd'
-import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, LockOutlined, UnlockOutlined, WalletOutlined } from '@ant-design/icons'
+import { Table, Card, Button, Input, Space, Tag, Modal, message, Typography, Form, Select, Tooltip, InputNumber, Dropdown } from 'antd'
+import { SearchOutlined, PlusOutlined, EditOutlined, DeleteOutlined, LockOutlined, UnlockOutlined, WalletOutlined, MoreOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import { getUserPage, deleteUser, toggleUserStatus, addUser, updateUser, getUserById } from '@/api/user'
 import { getUserAccountByUserId, rechargeUserAccount } from '@/api/userAccount'
@@ -320,114 +320,110 @@ const UserList: React.FC = () => {
       title: 'ID',
       dataIndex: 'userId',
       key: 'userId',
-      width: 60
+      width: 60,
+      fixed: 'left' as const
     },
     {
-      title: '用户名',
-      dataIndex: 'username',
-      key: 'username',
-      width: 120,
-      render: renderWithTooltip
-    },
-    {
-      title: '昵称',
-      dataIndex: 'nickname',
-      key: 'nickname',
-      width: 100,
-      render: renderWithTooltip
-    },
-    {
-      title: '邮箱',
-      dataIndex: 'email',
-      key: 'email',
-      width: 180,
-      render: renderWithTooltip
-    },
-    {
-      title: '手机号',
-      dataIndex: 'phone',
-      key: 'phone',
-      width: 120,
-      render: renderWithTooltip
-    },
-    {
-      title: '账户余额',
-      dataIndex: 'balance',
-      key: 'balance',
-      width: 100,
-      render: (balance) => `¥${balance?.toFixed(2) || '0.00'}`
-    },
-    {
-      title: '角色',
-      dataIndex: 'role',
-      key: 'role',
-      width: 100,
-      render: (role) => (
-        <Tag color={role === 'admin' ? 'purple' : 'blue'}>
-          {role === 'admin' ? '管理员' : '普通用户'}
-        </Tag>
+      title: '用户信息',
+      key: 'userInfo',
+      width: 220,
+      fixed: 'left' as const,
+      render: (_, record) => (
+        <div>
+          <div className="font-medium text-sm mb-1">
+            {record.username}
+            {record.nickname && (
+              <span className="text-gray-500 text-xs ml-2">({record.nickname})</span>
+            )}
+          </div>
+          <div className="text-xs text-gray-500 space-y-1">
+            {record.email && <div>{record.email}</div>}
+            {record.phone && <div>{record.phone}</div>}
+          </div>
+        </div>
       )
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 80,
-      render: (status) => (
-        <Tag color={status === 1 ? 'green' : 'red'}>
-          {status === 1 ? '正常' : '禁用'}
-        </Tag>
+      title: '账户信息',
+      key: 'accountInfo',
+      width: 120,
+      render: (_, record) => (
+        <div>
+          <div className="text-sm font-medium text-green-600 mb-1">
+            ¥{record.balance?.toFixed(2) || '0.00'}
+          </div>
+          <div className="flex gap-1">
+            <Tag color={record.role === 'admin' ? 'purple' : 'blue'} className="text-xs">
+              {record.role === 'admin' ? '管理员' : '用户'}
+            </Tag>
+            <Tag color={record.status === 1 ? 'green' : 'red'} className="text-xs">
+              {record.status === 1 ? '正常' : '禁用'}
+            </Tag>
+          </div>
+        </div>
       )
     },
     {
       title: '注册时间',
       dataIndex: 'createTime',
       key: 'createTime',
-      width: 150,
-      render: renderWithTooltip
+      width: 100,
+      render: (time) => time ? time.substring(0, 10) : '-'
     },
     {
       title: '操作',
       key: 'action',
-      fixed: 'right',
-      width: 240,
+      fixed: 'right' as const,
+      width: 160,
       render: (_, record) => (
-        <div className="action-buttons">
+        <Space size="small">
           <Button 
-            type="primary" 
+            type="link"
             size="small" 
             icon={<EditOutlined />}
             onClick={() => handleEdit(record.userId)}
+            className="action-btn"
           >
             编辑
           </Button>
-          <Button 
-            type="primary"
-            size="small" 
-            danger={record.status === 1}
-            icon={record.status === 1 ? <LockOutlined /> : <UnlockOutlined />}
-            onClick={() => handleStatusToggle(record.userId, record.status)}
+          <Dropdown
+            menu={{
+              items: [
+                {
+                  key: 'recharge',
+                  icon: <WalletOutlined />,
+                  label: '充值',
+                  onClick: () => handleRecharge(record.userId, record.username)
+                },
+                {
+                  key: 'status',
+                  icon: record.status === 1 ? <LockOutlined /> : <UnlockOutlined />,
+                  label: record.status === 1 ? '禁用' : '启用',
+                  onClick: () => handleStatusToggle(record.userId, record.status)
+                },
+                {
+                  type: 'divider' as const
+                },
+                {
+                  key: 'delete',
+                  icon: <DeleteOutlined />,
+                  label: '删除',
+                  danger: true,
+                  onClick: () => handleDelete(record.userId)
+                }
+              ]
+            }}
+            trigger={['click']}
+            placement="bottomRight"
           >
-            {record.status === 1 ? '禁用' : '启用'}
-          </Button>
-          <Button 
-            type="primary"
-            size="small"
-            style={{ background: '#52c41a' }}
-            icon={<WalletOutlined />}
-            onClick={() => handleRecharge(record.userId, record.username)}
-          >
-            充值
-          </Button>
-          <Button 
-            danger
-            size="small" 
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.userId)}
-          >
-            删除
-          </Button>
-        </div>
+            <Button 
+              type="text" 
+              size="small" 
+              icon={<MoreOutlined />}
+              className="action-more-btn"
+            />
+          </Dropdown>
+        </Space>
       )
     }
   ]
@@ -490,7 +486,8 @@ const UserList: React.FC = () => {
               className: 'pagination'
             }}
             onChange={handleTableChange}
-            scroll={{ x: 1200 }}
+            scroll={{ x: 800 }}
+            size="small"
             className="user-table"
           />
         </div>

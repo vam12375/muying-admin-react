@@ -443,7 +443,8 @@ const TransactionList: React.FC = () => {
               className: 'pagination'
             }}
             onChange={handleTableChange}
-            scroll={{ x: 1300 }}
+            scroll={{ x: 900 }}
+            size="small"
             className="transaction-table"
           />
         </div>

@@ -291,6 +291,42 @@
   flex-wrap: wrap;
 }
 
+/* 操作列按钮优化 */
+.action-btn {
+  padding: 0 8px;
+  height: 28px;
+  font-size: 13px;
+}
+
+.action-btn:hover {
+  background-color: #f0f5ff;
+}
+
+.action-more-btn {
+  padding: 4px 8px;
+  color: rgba(0, 0, 0, 0.45);
+  transition: all 0.3s;
+}
+
+.action-more-btn:hover {
+  color: #1890ff;
+  background-color: #f0f5ff;
+}
+
+/* 暗色主题操作按钮 */
+.dark .action-btn:hover {
+  background-color: var(--dark-hover-bg);
+}
+
+.dark .action-more-btn {
+  color: var(--dark-text-secondary);
+}
+
+.dark .action-more-btn:hover {
+  color: #3498db;
+  background-color: var(--dark-hover-bg);
+}
+
 /* 操作按钮增强样式 */
 .action-buttons button {
   border-radius: 6px;
