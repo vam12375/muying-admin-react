@@ -335,7 +335,7 @@ const messageSlice = createSlice({
       state.loading = false;
       // 从列表中移除被删除的消息
       if (action.payload.id) {
-        state.messageList = state.messageList.filter(msg => msg.id !== action.payload.id);
+        state.messageList = state.messageList.filter(msg => msg.messageId !== action.payload.id);
       }
     });
     builder.addCase(deleteMessage.rejected, (state, action) => {
@@ -439,7 +439,7 @@ const messageSlice = createSlice({
     builder.addCase(deleteMessageTemplate.fulfilled, (state, action) => {
       state.loading = false;
       if (action.payload.id) {
-        state.templateList = state.templateList.filter(template => template.id !== action.payload.id);
+        state.templateList = state.templateList.filter(template => template.messageId !== action.payload.id);
       }
     });
     builder.addCase(deleteMessageTemplate.rejected, (state, action) => {
